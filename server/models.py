@@ -53,10 +53,13 @@ class TableReservation(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     table_name = db.Column(db.String, nullable=False)
     
+<<<<<<< HEAD
     # Foreign key linking to Outlet
     # outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id'), nullable=False)
     # waiter_id = db.Column(db.Integer, nullable=False)
     
+=======
+>>>>>>> 434ee5a (update my models code)
     # Relationship to Outlet
     # outlet = relationship('Outlet', back_populates='table_reservations')
     
@@ -76,7 +79,11 @@ class Food(db.Model, SerializerMixin):
     outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id'), nullable=False)
     
     # Relationship to Outlet
+<<<<<<< HEAD
     outlet = relationship('Outlet', back_populates='foods')
+=======
+    outlet = relationship('Outlet', back_populates='food')
+>>>>>>> 434ee5a (update my models code)
     
     # One food item can be part of many orders
     orders = relationship('Order', back_populates='food', cascade="all, delete-orphan")
