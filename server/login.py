@@ -17,19 +17,6 @@ class UserCreate(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str
-
-# @app.post("/signup/")
-# def signup(user: UserCreate, db: Session = Depends(get_db)):
-#     if db.query(User).filter(User.email == user.email).first():
-#         raise HTTPException(status_code=400, detail="Email already registered")
-
-#     hashed_password = hash_password(user.password)
-#     db_user = User(email=user.email, password=hashed_password, is_admin=user.is_admin)
-#     db.add(db_user)
-#     db.commit()
-#     db.refresh(db_user)
-#     return {"message": "User created successfully"}
-
 @app.post("/login/")
 def login(request: LoginRequest, db: Session = Depends(get_db)):
     user = authenticate_user(db, request.email, request.password)
@@ -50,3 +37,16 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
             "message": "Login successful",
             "redirect_url": "/client/order-dashboard"
         }
+
+# @app.post("/signup/")
+# def signup(user: UserCreate, db: Session = Depends(get_db)):
+#     if db.query(User).filter(User.email == user.email).first():
+#         raise HTTPException(status_code=400, detail="Email already registered")
+
+#     hashed_password = hash_password(user.password)
+#     db_user = User(email=user.email, password=hashed_password, is_admin=user.is_admin)
+#     db.add(db_user)
+#     db.commit()
+#     db.refresh(db_user)
+#     return {"message": "User created successfully"}
+
