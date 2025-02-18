@@ -43,7 +43,7 @@ class Outlet(db.Model, SerializerMixin):
     owner = relationship('Owner', back_populates='outlets')
     
     # One outlet can have many food items and table reservations
-    food_items = relationship('Food', back_populates='outlet', cascade="all, delete-orphan")
+    foods = relationship('Food', back_populates='outlet', cascade="all, delete-orphan")
     table_reservations = relationship('TableReservation', back_populates='outlet', cascade="all, delete-orphan")
 
 # Table Reservation Model
@@ -54,11 +54,11 @@ class TableReservation(db.Model, SerializerMixin):
     table_name = db.Column(db.String, nullable=False)
     
     # Foreign key linking to Outlet
-    outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id'), nullable=False)
-    waiter_id = db.Column(db.Integer, nullable=False)
+    # outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id'), nullable=False)
+    # waiter_id = db.Column(db.Integer, nullable=False)
     
     # Relationship to Outlet
-    outlet = relationship('Outlet', back_populates='table_reservations')
+    # outlet = relationship('Outlet', back_populates='table_reservations')
     
     # One table reservation can have one order
     orders = relationship('Order', back_populates='table_reservation', cascade="all, delete-orphan")
@@ -76,7 +76,7 @@ class Food(db.Model, SerializerMixin):
     outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id'), nullable=False)
     
     # Relationship to Outlet
-    outlet = relationship('Outlet', back_populates='food_items')
+    outlet = relationship('Outlet', back_populates='foods')
     
     # One food item can be part of many orders
     orders = relationship('Order', back_populates='food', cascade="all, delete-orphan")
