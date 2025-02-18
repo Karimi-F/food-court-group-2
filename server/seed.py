@@ -27,7 +27,7 @@ def seed_data():
     # Seed Outlets
     outlets = []
     for _ in range(5):  # Creating 5 outlets
-        owner = choice(owners)  # Assigning each outlet to a random owner
+        # owner = choice(owners)  # Assigning each outlet to a random owner
         outlet = Outlet(
             name=fake.company(),
             owner_id=owner.id
@@ -57,7 +57,11 @@ def seed_data():
         table = TableReservation(
             table_name=f"Table {_+1}",
             outlet_id=outlet.id,
+<<<<<<< HEAD
             # waiter_id=randint(1, 10)  # Random waiter ID for now
+=======
+            # waiter_id=randint(1, 10)  #Random waiter ID for now
+>>>>>>> 434ee5a (update my models code)
         )
         db.session.add(table)
         tables.append(table)
