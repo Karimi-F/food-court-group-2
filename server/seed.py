@@ -53,11 +53,11 @@ def seed_data():
     # Seed Table Reservations
     tables = []
     for _ in range(8):  # Creating 8 table reservations
-        outlet = choice(outlets)
+        # outlet = choice(outlets)
         table = TableReservation(
             table_name=f"Table {_+1}",
             outlet_id=outlet.id,
-            waiter_id=randint(1, 10)  # Random waiter ID for now
+            # waiter_id=randint(1, 10)  # Random waiter ID for now
         )
         db.session.add(table)
         tables.append(table)
@@ -65,7 +65,7 @@ def seed_data():
     db.session.commit()
 
     # Seed Food Items
-    food_items = []
+    foods = []
     for _ in range(15):  # Creating 15 food items
         outlet = choice(outlets)
         food = Food(
@@ -75,7 +75,7 @@ def seed_data():
             outlet_id=outlet.id
         )
         db.session.add(food)
-        food_items.append(food)
+        foods.append(food)
     
     db.session.commit()
 
@@ -83,7 +83,7 @@ def seed_data():
     for _ in range(20):  # Creating 20 orders
         customer = choice(customers)
         table = choice(tables)
-        food = choice(food_items)
+        food = choice(foods)
         order = Order(
             customer_id=customer.id,
             tablereservation_id=table.id,
