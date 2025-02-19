@@ -1,5 +1,5 @@
 export async function getCustomer(email){
-    const customer = await fetch(`http://localhost:3001/customers?email=${email}`)
+    const customer = await fetch(`http://127.0.0.1:5000/customers?email=${email}`)
     .then(response => response.json())
     .then(data => data)
     .catch(error => console.error('Error:', error));
@@ -7,7 +7,7 @@ export async function getCustomer(email){
 }
 
 export async function createCustomer(fullName, email, password){
-    const response = await fetch("http://localhost:3001/customers",{
+    const response = await fetch("http://127.0.0.1:5000/customers",{
         method : "POST",
         headers:{
             "Content-Type": "application/json",
@@ -28,7 +28,7 @@ export async function createCustomer(fullName, email, password){
 
 export async function validateCustomerCredentials(email, password){
     try{
-        const response = await fetch (`http://localhost:3001/customers?email=${email}`)
+        const response = await fetch (`http://127.0.0.1:5000/customers?email=${email}`)
      
         if (!response.ok){
             throw new Error (`HTTP error! Status: ${response.status}`);
@@ -46,7 +46,7 @@ export async function validateCustomerCredentials(email, password){
 }
 
 export async function getOwner(email){
-    const owner = await fetch(`http://localhost:3001/owners?email=${email}`)
+    const owner = await fetch(`http://127.0.0.1:5000/owners?email=${email}`)
     .then(response => response.json())
     .then(data => data)
     .catch(error => console.error('Error:', error));
@@ -54,7 +54,7 @@ export async function getOwner(email){
 }
 
 export async function createOwner(fullName, email, password){
-    const response = await fetch("http://localhost:3001/owners",{
+    const response = await fetch("http://127.0.0.1:5000/owners",{
         method : "POST",
         headers:{
             "Content-Type": "application/json",
@@ -76,7 +76,7 @@ export async function createOwner(fullName, email, password){
 
 export async function validateOwnerCredentials(email, password){
     try{
-        const response = await fetch (`http://localhost:3001/owners?email=${email}`);
+        const response = await fetch (`http://127.0.0.1:5000/owners?email=${email}`);
         if (!response.ok){
             throw new Error("Failed to fetch owners");
         }
