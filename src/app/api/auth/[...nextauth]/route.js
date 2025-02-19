@@ -1,4 +1,4 @@
-import { getuser } from "@/app/lib/utils";
+import { getCustomer, getuser } from "@/app/lib/utils";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
@@ -12,18 +12,19 @@ export const authOptions = {
       },
       async authorize(credentials, req) {
         // const user = { id: "1", name: "J Smith", email: "jsmith@example.com" };
-       const user = await getuser(credentials.email)
+       const user = await getCustomer(credentials.email)
         console.log(user);
         
 // Pass in the code to log in
 
     if (user) {
       if (user[0].password !== credentials.password){
-        return "Incorrect password"
+        throw new Error("Wrong password.")
       }
       return user[0];
     } else {
-      return null;
+       throw new Error("Unable to login");
+
     }
   },
 }),
