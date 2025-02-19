@@ -18,7 +18,7 @@ def owner_login():
     
     user = authenticate_user(db, email, password)
     if not user or not user.is_admin:
-        return jsonify({"error": "Invalid credentials or not an owner"}), 400
+        return jsonify({"error": "Invalid credentials"}), 400
     
     access_token = create_access_token({"sub": user.email, "is_owner": True})
     
@@ -37,7 +37,7 @@ def customer_login():
     
     user = authenticate_user(db, email, password)
     if not user or user.is_admin:
-        return jsonify({"error": "Invalid credentials or not a customer"}), 400
+        return jsonify({"error": "Invalid credentials"}), 400
     
     access_token = create_access_token({"sub": user.email, "is_owner": False})
     
