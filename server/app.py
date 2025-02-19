@@ -17,8 +17,8 @@ db.init_app(app)
 migrate = Migrate(app, db)
 jwt = JWTManager(app)
 api = Api(app)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
-
+# CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app)
 
 class BaseSignup(Resource):
     model = None
