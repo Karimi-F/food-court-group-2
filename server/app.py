@@ -2,16 +2,15 @@ from flask import Flask, jsonify, request
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
-from models import db, Owner,Customer
+from models import db, Owner, Customer
 from flask_jwt_extended import JWTManager, create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
+
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
-
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["JWT_SECRET_KEY"] = ""
-app.config["SECRET_KEY"] = ""
-
+app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
+app.config["SECRET_KEY"] = "your_secret_key"  # Add a secure secret key
 
 # Initialize Extensions
 db.init_app(app)
@@ -22,8 +21,8 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 
 class BaseSignup(Resource):
-    model = None  
-    redirect_url = "/"  
+    model = None
+    redirect_url = "/"
 
     def post(self):
         data = request.get_json()
@@ -42,7 +41,7 @@ class BaseSignup(Resource):
 
         # Create new user or owner
         new_user = self.model(username=name_or_username, email=email) if hasattr(self.model, 'username') else self.model(name=name_or_username, email=email)
-        new_user.set_password(password)
+        new_user.set_password(password)  # Use the set_password method to hash the password
         db.session.add(new_user)
         db.session.commit()
 
@@ -69,7 +68,6 @@ class OwnerSignup(BaseSignup):
 
 
 class OwnerResource(Resource):
-
     def get(self, id=None):
         """Retrieve all owners or a single owner by ID."""
         if id is None:
@@ -95,7 +93,8 @@ class OwnerResource(Resource):
         if Owner.query.filter_by(email=email).first():
             return {"error": "Email already registered"}, 409  # ✅ No jsonify()
 
-        hashed_password = generate_password_hash(password)
+        # Use pbkdf2:sha256 as the hashing method
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
 
         new_owner = Owner(name=name, email=email, password=hashed_password)
         db.session.add(new_owner)
@@ -120,7 +119,8 @@ class OwnerResource(Resource):
         if 'email' in data:
             owner.email = data['email']
         if 'password' in data:
-            owner.password = generate_password_hash(data['password'])
+            # Use pbkdf2:sha256 as the hashing method
+            owner.password = generate_password_hash(data['password'], method='pbkdf2:sha256')
 
         db.session.commit()
         return owner.to_dict(), 200  # ✅ No jsonify()
@@ -134,7 +134,6 @@ class OwnerResource(Resource):
         db.session.delete(owner)
         db.session.commit()
         return {"message": "Owner deleted successfully"}, 200  # ✅ No jsonify()
-
 
 
 api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")
