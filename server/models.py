@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from sqlalchemy_serializer import SerializerMixin
 
+# Initialize SQLAlchemy
 db = SQLAlchemy()
 
 # Customer Model
@@ -42,8 +43,10 @@ class Outlet(db.Model, SerializerMixin):
     # Relationship to Owner
     owner = relationship('Owner', back_populates='outlets')
     
-    # One outlet can have many food items and table reservations
+    # One outlet can have many food items
     foods = relationship('Food', back_populates='outlet', cascade="all, delete-orphan")
+    
+    # One outlet can have many table reservations
     table_reservations = relationship('TableReservation', back_populates='outlet', cascade="all, delete-orphan")
 
 # Table Reservation Model
@@ -53,15 +56,11 @@ class TableReservation(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     table_name = db.Column(db.String, nullable=False)
     
-<<<<<<< HEAD
     # Foreign key linking to Outlet
-    # outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id'), nullable=False)
-    # waiter_id = db.Column(db.Integer, nullable=False)
+    outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id'), nullable=False)
     
-=======
->>>>>>> 434ee5a (update my models code)
     # Relationship to Outlet
-    # outlet = relationship('Outlet', back_populates='table_reservations')
+    outlet = relationship('Outlet', back_populates='table_reservations')
     
     # One table reservation can have one order
     orders = relationship('Order', back_populates='table_reservation', cascade="all, delete-orphan")
@@ -79,11 +78,7 @@ class Food(db.Model, SerializerMixin):
     outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id'), nullable=False)
     
     # Relationship to Outlet
-<<<<<<< HEAD
     outlet = relationship('Outlet', back_populates='foods')
-=======
-    outlet = relationship('Outlet', back_populates='food')
->>>>>>> 434ee5a (update my models code)
     
     # One food item can be part of many orders
     orders = relationship('Order', back_populates='food', cascade="all, delete-orphan")
