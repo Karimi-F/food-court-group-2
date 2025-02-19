@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify
-from sqlalchemy.orm import Session
-from auth import hash_password, create_access_token, authenticate_user
-from database import get_db, engine
-from models import Base, User
+from flask import Flask, jsonify, request
+from flask_migrate import Migrate
+from flask_restful import Api, Resource
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager, create_access_token
+from models import db, User, Owner
 
 app = Flask(__name__)
 
@@ -25,7 +26,7 @@ def owner_login():
     return jsonify({
         "access_token": access_token,
         "message": "Owner login successful",
-        "redirect_url": "/owner/ownerdashboard"
+        "redirect_url": "/ownerlogin/ownerdashboard" 
     })
 
 @app.route("/customer/login/", methods=["POST"])
@@ -44,7 +45,7 @@ def customer_login():
     return jsonify({
         "access_token": access_token,
         "message": "Customer login successful",
-        "redirect_url": "/customer/customerdashboard"
+        "redirect_url": "/customerlogin/customerdashboard"
     })
 
 if __name__ == "__main__":
