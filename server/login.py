@@ -20,3 +20,22 @@ jwt = JWTManager(app)
 # Ensure database is created
 with app.app_context():
     db.create_all()
+    
+# Owner Login API
+class OwnerLogin(Resource):
+    def post(self):
+        data = request.get_json()
+        email = data.get("email")
+        password = data.get("password")
+
+        owner = Owner.query.filter_by(email=email).first()
+        if not owner or not owner.check_password(password):
+            return {"error": "Invalid credentials"}, 400
+
+        access_token = create_access_token(identity={"email": owner.email, "is_owner": True})
+
+        return {
+            "access_token": access_token,
+            "message": "Owner login successful",
+            "redirect_url": "/ownerlogin/ownerdashboard"
+        }
