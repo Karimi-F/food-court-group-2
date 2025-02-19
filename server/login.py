@@ -3,7 +3,11 @@ from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token
+from werkzeug.security import check_password_hash
 from models import db, User, Owner
+
+# Initialize Flask app
+app = Flask(__name__)
 
 # Configuration
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///fitness_app.db"  # Update for production
@@ -20,7 +24,7 @@ jwt = JWTManager(app)
 # Ensure database is created
 with app.app_context():
     db.create_all()
-    
+
 # Owner Login API
 class OwnerLogin(Resource):
     def post(self):
@@ -29,7 +33,7 @@ class OwnerLogin(Resource):
         password = data.get("password")
 
         owner = Owner.query.filter_by(email=email).first()
-        if not owner or not owner.check_password(password):
+        if not owner or not check_password_hash(owner.password, password):
             return {"error": "Invalid credentials"}, 400
 
         access_token = create_access_token(identity={"email": owner.email, "is_owner": True})
@@ -39,8 +43,8 @@ class OwnerLogin(Resource):
             "message": "Owner login successful",
             "redirect_url": "/ownerlogin/ownerdashboard"
         }
-    
-    # Customer Login API
+
+# Customer Login API
 class CustomerLogin(Resource):
     def post(self):
         data = request.get_json()
@@ -48,7 +52,7 @@ class CustomerLogin(Resource):
         password = data.get("password")
 
         user = User.query.filter_by(email=email).first()
-        if not user or not user.check_password(password):
+        if not user or not check_password_hash(user.password, password):
             return {"error": "Invalid credentials"}, 400
 
         access_token = create_access_token(identity={"email": user.email, "is_owner": False})
@@ -63,3 +67,6 @@ class CustomerLogin(Resource):
 api.add_resource(OwnerLogin, "/owner/login/")
 api.add_resource(CustomerLogin, "/customer/login/")
 
+# Run the app
+if __name__ == "__main__":
+    app.run(debug=True)
