@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { signIn, useSession } from "next-auth/react"
+import { createOwner, getOwner } from "../lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function Signup() {
   
@@ -15,6 +17,7 @@ export default function Signup() {
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const { data: session, status } = useSession()
+  const router = useRouter ();
 
   const handleChange = (e) => {
     setFormData({ ...formData, 
@@ -42,17 +45,30 @@ export default function Signup() {
   const handleSubmit = async(e) => {
     e.preventDefault();
     if (validateForm()) {
-      console.log("User Data:", formData);
-      setSuccessMessage("Outlet Owner Signup successful! 🎉");
-      const signInResult = await signIn("credentials", {
-        redirect: false,
-        email: formData.email,
-        password1: formData.password1,
-        password2: formData.password2,
-      })
-      setFormData({ fullName: "", email: "", password1: "", password2: "" });
-      setErrors({});
-      // Call API here
+      try{
+        const existingOwner = await getOwner(formData.email);
+        if (existingOwner.length > 0){
+          setErrors({email: "Owner already exists. Log in instead."});
+          return ;
+        }
+        await createOwner(formData.fullName, formData.email, formData.password1)
+        setSuccessMessage("Outlet Owner Signup successful! 🎉");
+        
+        const signInResult = await signIn("credentials", {
+          redirect: false,
+          email: formData.email,
+          password: formData.password1,
+        });
+        // console.log(signInResult);
+
+        if(!signInResult?.error){
+          router.push("/ownerdashboard");
+        }else{
+          setErrors({general: "Login failed. Please try again."})
+        }
+      } catch(error){
+        setErrors({general: error.message});
+      }
     }
   };
 
