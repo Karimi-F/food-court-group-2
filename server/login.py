@@ -8,4 +8,12 @@ from models import db, User, Owner
 # Configuration
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///fitness_app.db"  # Update for production
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["JWT_SECRET_KEY"] = "your_secret_key"  # Change in productio
+app.config["JWT_SECRET_KEY"] = "your_secret_key"  # Change in production
+
+# Initialize extensions
+db.init_app(app)
+migrate = Migrate(app, db)
+api = Api(app)
+CORS(app)
+jwt = JWTManager(app)
+
