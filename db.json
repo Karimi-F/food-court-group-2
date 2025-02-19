@@ -1,10 +1,112 @@
 {
-    "users":[
-        {
-            "email":"user@gmail.com",
-            "password":"123456",
-            "name":"Jason",
-            "id": "2"
-        }
-    ]
+  "customers": [
+    {
+      "email": "user@gmail.com",
+      "password": "123456",
+      "name": "Jason",
+      "id": "2"
+    },
+    {
+      "id": "9597",
+      "fullName": "John Rambo",
+      "email": "johnrambo@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "85ff",
+      "fullName": "Trump Sheldon",
+      "email": "trumpsheldon@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "dedd",
+      "fullName": "donny",
+      "email": "donny@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "5dc6",
+      "fullName": "lennny",
+      "email": "leny@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "9514",
+      "fullName": "grumpy",
+      "email": "grumpy@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "1359",
+      "fullName": "jumpy",
+      "email": "jumpy@gmail.com",
+      "password": "123456"
+    }
+  ],
+  "owners": [
+    {
+      "email": "user@gmail.com",
+      "password": "123456",
+      "name": "Jason",
+      "id": "2"
+    },
+    {
+      "id": "5277",
+      "fullName": "Trumpy",
+      "email": "trumpy@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "468b",
+      "email": "wellsy@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "0b8c",
+      "email": "graham@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "9ee8",
+      "fullName": "dean",
+      "email": "dean@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "2c67",
+      "fullName": "Logan",
+      "email": "logan@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "6da9",
+      "fullName": "Allie",
+      "email": "allie@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "75ee",
+      "fullName": "Humpty",
+      "email": "humpty@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "ef68",
+      "fullName": "Fridah Karimi",
+      "email": "ashleyywhite977@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "5363",
+      "fullName": "Plate",
+      "email": "plate@gmail.com",
+      "password": "123456"
+    },
+    {
+      "id": "9817",
+      "fullName": "Trumpy",
+      "email": "Jackson@gmail.com",
+      "password": "123456"
+    }
+  ]
 }
