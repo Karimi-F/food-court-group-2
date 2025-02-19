@@ -17,3 +17,6 @@ api = Api(app)
 CORS(app)
 jwt = JWTManager(app)
 
+# Ensure database is created
+with app.app_context():
+    db.create_all()
