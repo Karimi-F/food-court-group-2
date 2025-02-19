@@ -9,22 +9,43 @@ app = Flask(__name__)
 with engine.begin() as conn:
     Base.metadata.create_all(bind=conn)
 
-@app.route("/login/", methods=["POST"])
-def login():
+@app.route("/owner/login/", methods=["POST"])
+def owner_login():
     db = next(get_db())
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
     
     user = authenticate_user(db, email, password)
-    if not user:
-        return jsonify({"error": "Invalid credentials"}), 400
+    if not user or not user.is_admin:
+        return jsonify({"error": "Invalid credentials or not an owner"}), 400
     
-    access_token = create_access_token({"sub": user.email, "is_admin": user.is_admin})
-    redirect_url = "/admin/dashboard" if user.is_admin else "/client/order-dashboard"
+    access_token = create_access_token({"sub": user.email, "is_owner": True})
     
     return jsonify({
         "access_token": access_token,
-        "message": "Login successful",
-        "redirect_url": redirect_url
+        "message": "Owner login successful",
+        "redirect_url": "/owner/dashboard"
     })
+
+@app.route("/customer/login/", methods=["POST"])
+def customer_login():
+    db = next(get_db())
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+    
+    user = authenticate_user(db, email, password)
+    if not user or user.is_admin:
+        return jsonify({"error": "Invalid credentials or not a customer"}), 400
+    
+    access_token = create_access_token({"sub": user.email, "is_owner": False})
+    
+    return jsonify({
+        "access_token": access_token,
+        "message": "Customer login successful",
+        "redirect_url": "/customer/order-dashboard"
+    })
+
+if __name__ == "__main__":
+    app.run(debug=True)
