@@ -25,7 +25,7 @@ def owner_login():
     return jsonify({
         "access_token": access_token,
         "message": "Owner login successful",
-        "redirect_url": "/owner/dashboard"
+        "redirect_url": "/owner/ownerdashboard"
     })
 
 @app.route("/customer/login/", methods=["POST"])
@@ -44,7 +44,7 @@ def customer_login():
     return jsonify({
         "access_token": access_token,
         "message": "Customer login successful",
-        "redirect_url": "/customer/order-dashboard"
+        "redirect_url": "/customer/customerdashboard"
     })
 
 if __name__ == "__main__":
