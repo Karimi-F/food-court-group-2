@@ -91,7 +91,7 @@ export default function Signup() {
         </form>
 
         <p className="text-center text-gray-600 mt-4">
-          Already have an account? <a href="/ownerlogin" className="text-blue-500">Login</a>
+          Already have an account? <a href="/owner-login" className="text-blue-500">Login</a>
         </p>
       </div>
     </div>

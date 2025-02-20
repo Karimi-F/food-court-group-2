@@ -1,8 +1,7 @@
 "use client";
-import { signIn, useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { validateOwnerCredentials } from "../lib/utils";
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -12,7 +11,6 @@ export default function Login() {
 
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
-  const data = useSession()
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -104,7 +102,7 @@ export default function Login() {
 
         <p className="text-center text-gray-600 mt-4">
           Don't have an account?{" "}
-          <a href="/ownersignup" className="text-blue-500">
+          <a href="/owner-signup" className="text-blue-500">
             Sign Up
           </a>
         </p>
