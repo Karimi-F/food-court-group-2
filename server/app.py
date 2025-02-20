@@ -92,7 +92,7 @@ class CustomerResource(Resource):
             customers = Customer.query.all()
             return [customer.to_dict() for customer in customers], 200  # ✅ No jsonify()
 
-        customer = Owner.query.get(id)
+        customer = Customer.query.get(id)
 
         if not customer:
             return {"error": "customer not found"}, 404  # ✅ No jsonify()
