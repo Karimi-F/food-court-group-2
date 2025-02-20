@@ -42,7 +42,7 @@ export default function Login() {
         password: formData.password,
       });
       if (signInResult.error) {
-        // setError("Unable to login");
+        setErrors(signInResult.error);
       } else {
         router.push("/owner-dashboard");
       }
