@@ -46,11 +46,11 @@ export default function Signup() {
     e.preventDefault();
     if (validateForm()) {
       try{
-        const existingOwner = await getOwner(formData.email);
-        if (existingOwner.length > 0){
-          setErrors({email: "Owner already exists. Log in instead."});
-          return ;
-        }
+        // const existingOwner = await getOwner(formData.email);
+        // if (existingOwner.length > 0){
+        //   setErrors({email: "Owner already exists. Log in instead."});
+        //   return ;
+        // }
         await createOwner(formData.fullName, formData.email, formData.password1)
         setSuccessMessage("Outlet Owner Signup successful! 🎉");
         
@@ -62,7 +62,7 @@ export default function Signup() {
         // console.log(signInResult);
 
         if(!signInResult?.error){
-          router.push("/ownerdashboard");
+          router.push("/owner-dashboard");
         }else{
           setErrors({general: "Login failed. Please try again."})
         }
