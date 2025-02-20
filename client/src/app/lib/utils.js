@@ -93,7 +93,7 @@ export async function validateOwnerCredentials(email, password){
 }
 
 export async function login(email, password) {
-    const response = await fetch("http://localhost:5000/owner/login", {
+    const response = await fetch("http://localhost:5000/login", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
