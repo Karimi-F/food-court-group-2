@@ -91,3 +91,23 @@ export async function validateOwnerCredentials(email, password){
         return null;
     }   
 }
+
+export async function login(email, password) {
+    const response = await fetch("http://localhost:5000/owner/login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+    });
+
+    // Handle response errors
+    if (!response.ok) {
+        console.error("Login failed:", response.status);
+        return null; // This will trigger 401 in NextAuth
+    }
+
+    const data = await response.json(); // Parse response body
+    return data; // Ensure it returns an object with { id, name, email }
+}

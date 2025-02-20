@@ -140,6 +140,55 @@ api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")
 api.add_resource(CustomerSignup, '/customerdashboard')
 api.add_resource(OwnerSignup, '/ownerdashboard')
 
+
+class OwnerLogin(Resource):
+    def post(self):
+        data = request.get_json()
+        email = data.get("email")
+        password = data.get("password")
+
+        owner = Owner.query.filter_by(email=email).first()
+        if not owner or not check_password_hash(owner.password, password):
+            return {"error": "Invalid credentials"}, 400
+
+        access_token = create_access_token(identity={"email": owner.email, "is_owner": True})
+
+        return {
+            "access_token": access_token,
+            "name": owner.name,
+            "email": owner.email,
+            "message": "Owner login successful",
+            "redirect_url": "/ownerlogin/ownerdashboard"
+        }
+
+# Customer Login API
+class CustomerLogin(Resource):
+    def post(self):
+        data = request.get_json()
+        email = data.get("email")
+        password = data.get("password")
+
+        user = User.query.filter_by(email=email).first()
+        if not user or not check_password_hash(user.password, password):
+            return {"error": "Invalid credentials"}, 400
+
+        access_token = create_access_token(identity={"email": user.email, "is_owner": False})
+
+        response_data = {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": "owner",  
+            "access_token": access_token
+        }
+
+        return jsonify(response_data), 200
+
+# Add API Resources
+api.add_resource(OwnerLogin, "/owner/login/")
+api.add_resource(CustomerLogin, "/customer/login/")
+
+
 if __name__ == '__main__':
     app.run(debug=True)
 
