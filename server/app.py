@@ -174,11 +174,15 @@ class CustomerLogin(Resource):
 
         access_token = create_access_token(identity={"email": user.email, "is_owner": False})
 
-        return {
-            "access_token": access_token,
-            "message": "Customer login successful",
-            "redirect_url": "/customerlogin/customerdashboard"
+        response_data = {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": "owner",  
+            "access_token": access_token
         }
+
+        return jsonify(response_data), 200
 
 # Add API Resources
 api.add_resource(OwnerLogin, "/owner/login/")
