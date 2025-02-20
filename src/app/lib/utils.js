@@ -1,21 +1,22 @@
-export async function getCustomer(email){
-    const customer = await fetch(`http://127.0.0.1:5000/customers?email=${email}`)
-    .then(response => response.json())
-    .then(data => data)
-    .catch(error => console.error('Error:', error));
-    return customer
-}
+// export async function getCustomer(email){
+//     const customer = await fetch(`http://127.0.0.1:5000/customers?email=${email}`)
+//     .then(response => response.json())
+//     .then(data => data)
+//     .catch(error => console.error('Error:', error));
+//     return customer
+// }
 
-export async function createCustomer(fullName, email, password){
+export async function createCustomer(name, email, password){
     const response = await fetch("http://127.0.0.1:5000/customers",{
         method : "POST",
         headers:{
             "Content-Type": "application/json",
+            "Accept": "application/json"
         },
         body: JSON.stringify({
-          fullName,
+          name,
           email,
-          password  
+          password
         }),
     });
     const data = await response.json();
@@ -28,7 +29,7 @@ export async function createCustomer(fullName, email, password){
 
 export async function validateCustomerCredentials(email, password){
     try{
-        const response = await fetch (`http://127.0.0.1:5000/customers?email=${email}`)
+        const response = await fetch(`http://127.0.0.1:5000/customers?email=${email}`)
      
         if (!response.ok){
             throw new Error (`HTTP error! Status: ${response.status}`);
@@ -45,22 +46,22 @@ export async function validateCustomerCredentials(email, password){
     }
 }
 
-export async function getOwner(email){
-    const owner = await fetch(`http://127.0.0.1:5000/owners?email=${email}`)
-    .then(response => response.json())
-    .then(data => data)
-    .catch(error => console.error('Error:', error));
-    return owner
-}
+// export async function getOwner(email){
+//     const owner = await fetch(`http://127.0.0.1:5000/owners?email=${email}`)
+//     .then(response => response.json())
+//     .then(data => data)
+//     .catch(error => console.error('Error:', error));
+//     return owner
+// }
 
-export async function createOwner(fullName, email, password){
+export async function createOwner(name, email, password){
     const response = await fetch("http://127.0.0.1:5000/owners",{
         method : "POST",
         headers:{
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          fullName,
+          name,
           email,
           password  
         }),
@@ -93,7 +94,7 @@ export async function validateOwnerCredentials(email, password){
 }
 
 export async function login(email, password) {
-    const response = await fetch("http://localhost:5000/owner/login", {
+    const response = await fetch("http://localhost:5000/login", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
