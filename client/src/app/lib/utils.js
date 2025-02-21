@@ -78,6 +78,7 @@ export async function createOwner(name, email, password){
 export async function validateOwnerCredentials(email, password){
     try{
         const response = await fetch (`http://127.0.0.1:5000/owners?email=${email}`);
+        const response = await fetch (`http://127.0.0.1:5000/owners?email=${email}`);
         if (!response.ok){
             throw new Error("Failed to fetch owners");
         }
@@ -92,6 +93,27 @@ export async function validateOwnerCredentials(email, password){
         return null;
     }   
 }
+
+export async function login(email, password) {
+    const response = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+    });
+
+    // Handle response errors
+    if (!response.ok) {
+        console.error("Login failed:", response.status);
+        return null; // This will trigger 401 in NextAuth
+    }
+
+    const data = await response.json(); // Parse response body
+    return data; // Ensure it returns an object with { id, name, email }
+}
+
 
 export async function login(email, password) {
     const response = await fetch("http://localhost:5000/login", {

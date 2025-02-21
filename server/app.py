@@ -121,6 +121,7 @@ class OwnerResource(Resource):
         new_owner = Owner(name=name, email=email, password=hashed_password)
         db.session.add(new_owner)
         db.session.commit() 
+        db.session.commit() 
 
 <<<<<<< HEAD
         # access_token = create_access_token(identity={'email': new_owner.email})
@@ -324,4 +325,6 @@ api.add_resource(Login, "/login")
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
 
