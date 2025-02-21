@@ -34,6 +34,42 @@ build/
 .ipynb_checkpoints
 
 # MacOS-specific
+# Python bytecode files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment directories
+/.venv/
+/.env/
+*.env
+
+# Flask-specific
+instance/
+*.db
+*.sqlite
+
+# Distribution / packaging
+*.egg
+*.egg-info/
+dist/
+build/
+*.tar.gz
+
+# Pytest
+.cache/
+
+# IDE/editor configurations
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# MacOS-specific
 .DS_Store
 
 # Windows-specific
@@ -41,3 +77,6 @@ Thumbs.db
 
 /.next/
 /.qodo/
+
+#Node.js dependencies 
+/.node_modules/

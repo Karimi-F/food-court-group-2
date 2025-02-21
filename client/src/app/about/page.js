@@ -1,11 +1,38 @@
 "use client"
 import { useSession } from "next-auth/react"
 
+import Link from "next/link";
+
 export default function About(){
-    const {data, status}= useSession()
-    console.log(data)
-    return(
-    <>
+    return (
+          <div className="bg-yellow-500 min-h-screen">
+            {/* <div className="bg-[url('/images/bg.jpg')] bg-cover bg-center h-screen"> */}
+            {/* Navbar */}
+            <nav className="bg-yellow-500 shadow-md p-4 fixed top-0 w-full z-50">
+              <div className="max-w-6xl mx-auto flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-red-500">Bite Scape</h1>
+                <ul className="hidden md:flex text-black space-x-6">
+                  
+                  <li className="cursor-pointer hover:text-red-500">
+                      <Link href="/home">Home</Link> </li>
+                      <li className="cursor-pointer hover:text-red-500">About us</li>
+                  <li className="cursor-pointer hover:text-red-500">Categories</li>
+                  <li className="cursor-pointer hover:text-red-500">Contact us</li>
+                  <li className="cursor-pointer hover:text-red-500">
+                      <button className="bg-red-500 p-1 rounded-md text-white">
+                      Get Started
+                      </button>   </li>
+                  
+                </ul>
+      
+            <button className="bg-red-500 text-white px-4 py-2 rounded-md md:hidden">
+              Menu
+            </button>
+          </div>
+        </nav>
+<br/>
+<br/>
+<br/>
     <div className="text-2xl min-h-screen bg-gray-100 py-10 px-6 md:px-20">
     <h1 className="text-4xl font-bold text-center text-gray-800 mb-6">About BiteScape</h1>
     <p className="text-gray-700">Welcome to <span className="font-semibold text-blue-600">BiteScape</span>, 
@@ -45,7 +72,7 @@ looking for a great place to hang out, we invite you to explore, indulge, and sa
 of tomorrow.</p>
 <h2 className="text-center text-2xl font-bold text-blue-600 mt-8">Welcome to BiteScape—your passport to the future of food.</h2>
     </div>
-    
-    </>
-    )   
+
+    </div>
+    )
 }
