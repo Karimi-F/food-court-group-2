@@ -1,10 +1,8 @@
 "use client"
 
 import Link from "next/link";
-
-<li className="cursor-pointer hover:text-red-500">
-  <Link href="/about">About us</Link>
-</li>
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import Image from "next/image";
 import image1 from '@/assets/images/image1.jpg';
@@ -13,7 +11,92 @@ import image3 from '@/assets/images/image3.jpg';
 import image4 from '@/assets/images/image4.jpg';
 
 export default function Home() {
+  const [role, setRole] = useState(""); // Store selected role
+  const [isOpen, setIsOpen] = useState(false); // State to control modal visibility
+  const router = useRouter();
+
+  const openModal = () => setIsOpen(true);
+  const closeModal = () => setIsOpen(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!role) {
+      alert("Please select an option before proceeding.");
+      return;
+    }
+
+    if (role === "owner") {
+      router.push("/owner-signup");
+    } else if (role === "customer") {
+      router.push("/customer-signup");
+    }
+    
+    closeModal(); // Close the modal after submission
+  };
   return (
+    <>
+    <div>
+    <div>
+      <button
+        className="bg-red-500 p-2 rounded-md text-white"
+        onClick={openModal}
+      >
+        Get Started
+      </button>
+
+      {isOpen && (
+        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
+          <div className="bg-red-500 p-6 rounded-lg shadow-md max-w-md w-full">
+            <h2 className="text-xl text-white font-bold mb-4 text-center">Sign Up As:</h2>
+
+            <form onSubmit={handleSubmit} className="space-y-4 text-white ">
+              {/* Owner Option */}
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="owner"
+                  checked={role === "owner"}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-5 h-5"
+                />
+                <span className="text-lg">Owner</span>
+              </label>
+
+              {/* Customer Option */}
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="customer"
+                  checked={role === "customer"}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-5 h-5"
+                />
+                <span className="text-lg">Customer</span>
+              </label>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                className="bg-yellow-500 text-white w-full p-2 rounded-md mt-4 hover:bg-red-500 transition"
+              >
+                Continue
+              </button>
+            </form>
+
+            <button
+              onClick={closeModal}
+              className="absolute top-2 right-2 text-xl text-gray-500"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+    </div>
     <div className="bg-yellow-500 min-h-screen">
       <div className="bg-[url('/images/bg.jpg')] bg-cover bg-center h-screen">
       {/* Navbar */}
@@ -27,9 +110,12 @@ export default function Home() {
             <li className="cursor-pointer hover:text-red-500">Outlets</li>
             <li className="cursor-pointer hover:text-red-500">Contact us</li>
             <li className="cursor-pointer hover:text-red-500">
-                <button className="bg-red-500 p-1 rounded-md text-white">
-                Get Started
-                </button>   </li>
+                <button
+        className="bg-red-500 p-2 rounded-md text-white"
+        onClick={openModal}
+      >
+        Get Started
+      </button>   </li>
             
           </ul>
 
@@ -134,6 +220,10 @@ export default function Home() {
   </footer>
 </div>
 
-  );
-}
+ 
 
+
+    </>
+     );
+    }
+    
