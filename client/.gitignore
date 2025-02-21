@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+
+node_modules/@next/swc-linux-x64-gnu/*
+node_modules/@next/swc-linux-x64-musl/*
