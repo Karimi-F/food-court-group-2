@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 from flask import Flask, jsonify,make_response, request
+=======
+from flask import Flask, jsonify, make_response, request
+>>>>>>> 6f49dda4123d9b2bd4b79563f86bfd7e8a695c72
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
@@ -20,6 +24,7 @@ api = Api(app)
 # CORS(app, resources={r"/api/*": {"origins": "*"}})
 CORS(app)
 
+<<<<<<< HEAD
 class BaseSignup(Resource):
     model = None
     redirect_url = "/"
@@ -69,6 +74,8 @@ class CustomerSignup(BaseSignup):
 class OwnerSignup(BaseSignup):
     model = Owner
     redirect_url = "/ownerdashboard"  # Redirect to Owner Dashboard
+=======
+>>>>>>> 6f49dda4123d9b2bd4b79563f86bfd7e8a695c72
 
 
 
@@ -113,14 +120,17 @@ class OwnerResource(Resource):
 
         new_owner = Owner(name=name, email=email, password=hashed_password)
         db.session.add(new_owner)
-        db.session.commit()
+        db.session.commit() 
 
+<<<<<<< HEAD
         # access_token = create_access_token(identity={'email': new_owner.email})
 
         # return {
         #     "message": "Owner Signup successful",
         #     "access_token": access_token
         # }, 201  # ✅ No jsonify()
+=======
+>>>>>>> 6f49dda4123d9b2bd4b79563f86bfd7e8a695c72
         return make_response(new_owner.to_dict(), 200)
 
     def patch(self, id):
@@ -150,7 +160,15 @@ class OwnerResource(Resource):
         db.session.delete(owner)
         db.session.commit()
         return {"message": "Owner deleted successfully"}, 200  # ✅ No jsonify()
+    
+class CustomerResource(Resource):
+    def get(self, id=None):
+        """Retrieve all customer or a single owner by ID."""
+        if id is None:
+            customers = Customer.query.all()
+            return [customer.to_dict() for customer in customers], 200  # ✅ No jsonify()
 
+<<<<<<< HEAD
 class CustomerResource(Resource):
     def get(self, id=None):
         """Retrieve all customer or a single owner by ID."""
@@ -171,13 +189,35 @@ class CustomerResource(Resource):
         email = data.get('email')
         password = data.get('password')
 
+=======
+        customer = Customer.query.get(id)
+
+        if not customer:
+            return {"error": "customer not found"}, 404  # ✅ No jsonify()
+
+        return make_response(customer.to_dict(), 200)  # ✅ No jsonify()
+    
+
+    def post(self):
+        """Create a new customer."""
+        data = request.get_json()
+        name = data.get('name')
+        email = data.get('email')
+        password = data.get('password')
+
+>>>>>>> 6f49dda4123d9b2bd4b79563f86bfd7e8a695c72
         if not name or not email or not password:
             return {"error": "All fields are required"}, 400  # ✅ No jsonify()
 
         if Customer.query.filter_by(email=email).first():
             return {"error": "Email already registered"}, 409  # ✅ No jsonify()
+<<<<<<< HEAD
         
          # Use pbkdf2:sha256 as the hashing method
+=======
+
+        # Use pbkdf2:sha256 as the hashing method
+>>>>>>> 6f49dda4123d9b2bd4b79563f86bfd7e8a695c72
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
 
         new_customer = Customer(name=name, email=email, password=hashed_password)
@@ -185,14 +225,22 @@ class CustomerResource(Resource):
         db.session.commit() 
 
         return make_response(new_customer.to_dict(), 200)
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 6f49dda4123d9b2bd4b79563f86bfd7e8a695c72
 class Login(Resource):
     def post(self):
         data = request.get_json()
         email = data.get("email")
         password = data.get("password")
 
+<<<<<<< HEAD
         # owner = Owner.query.filter_by(email=email).first()
+=======
+        owner = Owner.query.filter_by(email=email).first()
+>>>>>>> 6f49dda4123d9b2bd4b79563f86bfd7e8a695c72
 
         user = Owner.query.filter_by(email=email).first() or Customer.query.filter_by(email=email).first()
 
@@ -216,6 +264,7 @@ class Login(Resource):
 
 api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")  
 api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")  
+<<<<<<< HEAD
 api.add_resource(Login, "/login")    
 # api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")
 # api.add_resource(CustomerSignup, '/customerdashboard')
@@ -268,6 +317,9 @@ api.add_resource(Login, "/login")
 # # Add API Resources
 # api.add_resource(OwnerLogin, "/owner/login/")
 # api.add_resource(CustomerLogin, "/customer/login/")
+=======
+api.add_resource(Login, "/login")
+>>>>>>> 6f49dda4123d9b2bd4b79563f86bfd7e8a695c72
 
 
 if __name__ == '__main__':
