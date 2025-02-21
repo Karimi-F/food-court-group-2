@@ -41,3 +41,6 @@ Thumbs.db
 
 /.next/
 /.qodo/
+
+#Node.js dependencies 
+node_modules/
