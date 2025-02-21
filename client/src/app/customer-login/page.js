@@ -53,7 +53,7 @@ export default function Login() {
         }
         else{
           // setSuccessMessage("Customer Login successful! 🎉");
-          router.push("/customerdashboard")
+          router.push("/customer-dashboard")
         }
       // }
       // else{
