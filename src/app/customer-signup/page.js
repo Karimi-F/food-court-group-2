@@ -141,7 +141,7 @@ export default function Signup() {
         </form>
 
         <p className="text-center text-gray-600 mt-4">
-          Already have an account? <a href="/customerlogin" className="text-blue-500">Login</a>
+          Already have an account? <a href="/customer-login" className="text-blue-500">Login</a>
         </p>
       </div>
     </div>
