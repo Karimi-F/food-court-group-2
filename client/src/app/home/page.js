@@ -5,10 +5,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import Image from "next/image";
-import image1 from '@/assets/images/image1.jpg';
-import image2 from '@/assets/images/image2.jpg';
-import image3 from '@/assets/images/image3.jpg';
-import image4 from '@/assets/images/image4.jpg';
+import image1 from '@/app/assets/images/image1.jpg';
+import image2 from '@/app/assets/images/image2.jpg';
+import image3 from '@/app/assets/images/image3.jpg';
+import image4 from '@/app/assets/images/image4.jpg';
 
 export default function Home() {
   const [role, setRole] = useState(""); // Store selected role
