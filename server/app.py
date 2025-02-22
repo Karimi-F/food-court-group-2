@@ -239,6 +239,20 @@ class OrdersResource(Resource):
             orders = Order.query.all()
             return jsonify([order.to_dict() for order in orders]), 200
         
+    def patch(self, id):
+        """Update order status"""
+        order = Order.query.get(id)
+        if not order:
+            return {"error": "Order not found"}, 404
+        
+        data = request.get_json()
+        if 'status' in data:
+            order.status = data['status']
+
+        db.session.commit()
+        return order.to_dict(), 200
+
+        
 
 
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
