@@ -2,7 +2,7 @@ from flask import Flask, jsonify, make_response, request
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
-from models import db, Owner, Customer
+from models import db, Owner, Customer,Order
 from flask_jwt_extended import JWTManager, create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -225,6 +225,20 @@ api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")
 api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")  
 api.add_resource(Login, "/login")
 
+
+#Resource to get all orders
+class OrdersResource(Resource):
+    def get(self):
+        try:
+            orders = Order.query.all()
+            orders_list = [order.to_dict() for order in orders]
+            return orders_list, 200
+        except Exception as e :
+            return {"message": str(e)}, 500
+        
+
+
+api.add_resource(OrdersResource, "/orders")
 
 if __name__ == '__main__':
     app.run(debug=True)
