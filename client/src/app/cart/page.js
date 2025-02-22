@@ -12,7 +12,7 @@ export default function Cart({cart, closeCart}) {
       
     return (
              <div className="h-screen bg-blue-100">
-             <h2 className="text-2xl text-blue-700 font-bold flex justify-center items center mb-4">Customer Cart</h2>
+             <h2 className="text-2xl text-blue-700 font-bold flex justify-center items center mb-4">Customer Name Cart</h2>
     
     <div className="space-y-4">
       {cart?.map((item) => (
