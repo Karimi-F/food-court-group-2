@@ -295,6 +295,45 @@ class OrdersResource(Resource):
 
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 
+#Resource to get all orders
+class OrdersResource(Resource):
+    def get(self, id =None):
+        """Retrieve a single orders by ID or all orders if no ID is provided."""
+        if id:
+            order = Order.query.get(id)
+            if not order:
+                return ({'error': 'Order not found'}), 404
+            return (order.to_dict()), 200
+        else:
+            orders = Order.query.all()
+            return jsonify([order.to_dict() for order in orders]), 200
+        
+    def patch(self, id):
+        """Update order status"""
+        order = Order.query.get(id)
+        if not order:
+            return {"error": "Order not found"}, 404
+        
+        data = request.get_json()
+        if 'status' in data:
+            order.status = data['status']
+
+        db.session.commit()
+        return order.to_dict(), 200
+    
+    def delete(self, id):
+        """Delete order"""
+        order = Order.query.get(id)
+        if not order:
+            return {"error": "Order not found"}, 404
+        
+        db.session.delete(order)
+        db.session.commit()
+        return {"message": "Order has been deleted successfully"}, 200
+
+        
+api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
+
 if __name__ == '__main__':
     app.run(debug=True)
 
