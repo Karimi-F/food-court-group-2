@@ -41,7 +41,7 @@ class Outlet(db.Model, SerializerMixin):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
-    
+    photo_url = db.Column(db.String, nullable=True)
     # Foreign key linking to Owner
     owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'), nullable=False)
     
@@ -75,7 +75,7 @@ class Food(db.Model, SerializerMixin):
     name = db.Column(db.String, nullable=False)
     price = db.Column(db.Float, nullable=False)
     waiting_time = db.Column(db.String, nullable=False)
-    
+    category = db.Column(db.String,nullable=True)
     # Foreign key linking to Outlet
     outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id'), nullable=False)
     

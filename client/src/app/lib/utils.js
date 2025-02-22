@@ -92,6 +92,22 @@ export async function validateOwnerCredentials(email, password){
         return null;
     }   
 }
+export async function searchOutletByName(outletName) {
+    try {
+        const response = await fetch(`http://127.0.0.1:5000/outlets?name=${encodeURIComponent(outletName)}`);
+        if (!response.ok) {
+            throw new Error("Failed to fetch outlets");
+        }
+
+        const outlets = await response.json();
+        console.log("Outlets fetched:", outlets);
+
+        return outlets.length > 0 ? outlets : null; // Return found outlets or null
+    } catch (error) {
+        console.error("Error fetching outlets:", error);
+        return null;
+    }
+}
 
 export async function login(email, password) {
     const response = await fetch("http://localhost:5000/login", {
@@ -102,7 +118,9 @@ export async function login(email, password) {
         },
         body: JSON.stringify({ email, password }),
     });
+    
 
+    
     // Handle response errors
     if (!response.ok) {
         console.error("Login failed:", response.status);
