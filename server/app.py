@@ -2,12 +2,12 @@ from flask import Flask, jsonify, make_response, request
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
-from models import db, Owner, Customer
+from models import db, Owner, Customer,Outlet,Food
 from flask_jwt_extended import JWTManager, create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://beren:123456@localhost:5432/food_court_db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
 app.config["SECRET_KEY"] = "your_secret_key"  # Add a secure secret key
@@ -220,7 +220,146 @@ class Login(Resource):
         }
 
         return make_response(jsonify(response_data), 200)
+    
+class OutletResource(Resource):
+    def get(self, id=None):
+    # """Retrieve all outlets, a single outlet by ID, or search by name."""
+        if id is None:
+            name = request.args.get('name')  # Get the 'name' query parameter
+            if name:
+                outlet = Outlet.query.filter(Outlet.name.ilike(f"%{name}%")).all()
+                if not outlet:
+                    return {"error": "Outlet not found"}, 404  
+                return [o.to_dict() for o in outlet], 200  
 
+            # If no name is provided, return all outlets
+            outlets = Outlet.query.all()
+            return [outlet.to_dict() for outlet in outlets], 200  
+
+        # Retrieve by ID
+        outlet = Outlet.query.get(id)
+        if not outlet:
+            return {"error": "Outlet not found"}, 404  
+
+        return make_response(outlet.to_dict(), 200)
+  
+    
+    def post(self):
+        """Create a new outlet."""
+        data = request.get_json()
+        name = data.get('name')
+        owner_id = data.get('owner_id')
+
+        if not name or not owner_id:
+            return {"error": "All fields are required"}, 400  # ✅ No jsonify()
+
+        if Outlet.query.filter_by(name=name).first():
+            return {"error": "Outlet with this name already exists"}, 409  # ✅ No jsonify()
+
+        new_outlet = Outlet(name=name, owner_id=owner_id)
+        db.session.add(new_outlet)
+        db.session.commit()
+
+        return make_response(new_outlet.to_dict(), 201)  # ✅ No jsonify()
+    
+class FoodsResource(Resource):
+    def get(self):
+        try:
+            foods = Food.query.all()
+            foods_list = [food.to_dict() for food in foods]
+            return foods_list, 200
+        except Exception as e:
+            return {"message": str(e)}, 500
+        
+    def post(self):
+        """Create a new food"""
+        data = request.get_json()
+
+        name = data.get('name')
+        price = data.get('price')
+        waiting_time = data.get('waiting_time')
+        outlet_id = data.get('outlet_id')
+
+        if not name or not price or not waiting_time or not outlet_id:
+            return {"error": "All fields are required"}, 400  
+        
+        if Food.query.filter_by(name=name).first():
+            return {"error": "Food already exists"}, 409
+        
+        new_food = Food(name=name, price=price, waiting_time=waiting_time, outlet_id=outlet_id)
+        db.session.add(new_food)
+        db.session.commit()
+
+        return ({"message": "Food updated successfully"}), 200
+
+# Resource to get food by name
+class FoodByNameResource(Resource):
+    def get(self, name):
+        try:
+            food = Food.query.filter_by(name = name).first()  # Ensure the field name matches the model
+            if food:
+                return food.to_dict(), 200
+            return {"message": "Food not found"}, 404
+        except Exception as e:
+            return {"message": str(e)}, 500
+               
+    def patch(self, name):
+        """Update food details by name."""
+        food = Food.query.filter_by(name=name).first()
+
+        if not food:
+            return jsonify({'error': 'Food not found'}), 404
+
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No update data provided'}), 400
+
+        # Update only the provided fields
+        if 'name' in data:
+            food.name = data['name']
+        if 'price' in data:
+            food.price = data['price']
+        if 'waiting_time' in data:
+            food.waiting_time = data['waiting_time']
+
+        db.session.commit()
+
+        return ({'message': 'Food updated successfully', 'food': food.to_dict()}), 200
+    
+    
+    def delete(self, name):
+        """Delete food by name."""
+        food = Food.query.filter_by(name=name).first()
+        if not food:
+            return ({'error': 'Customer not found'}), 404
+
+        db.session.delete(food)
+        db.session.commit()
+        return ({'message': 'Customer deleted successfully'}), 200
+        
+# Resource to get food by price
+class FoodByPriceResource(Resource):
+    def get(self, price):
+        try:
+            food = Food.query.filter_by(price = price).first()
+            if food:
+                return food.to_dict(), 200
+            return {"message": "Price not found"}, 404
+        except Exception as e:
+            return {"message": str(e)}, 500
+        
+#Resource to add food
+class FoodResource(Resource):
+
+
+# Registering the resources with Flask-RESTful
+    api.add_resource(FoodsResource, "/foods")
+api.add_resource(FoodByNameResource, "/foods/<string:name>")
+api.add_resource(FoodByPriceResource, "/foods/<int:price>")  
+    
+
+# Add the resource to the API
+api.add_resource(OutletResource, '/outlets', '/outlets/<int:id>')
 api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")  
 api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")  
 api.add_resource(Login, "/login")
