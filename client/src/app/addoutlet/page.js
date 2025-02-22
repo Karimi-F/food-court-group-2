@@ -50,14 +50,17 @@ export default function Signup() {
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Add Outlet</h2>
+        <h2 className="text-2xl font-bold text-center text-blue-700 mb-6">
+          New Here?
+          <br/>
+          Add your outlet</h2>
 
         {successMessage && <p className="text-green-600 text-center">{successMessage}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Outlet Name */}
           <div>
-            <label className="block text-gray-700">Outlet Name</label>
+            <label className="block font-semibold text-blue-700">Outlet Name</label>
             <input
               type="text"
               name="outletName"
@@ -86,13 +89,9 @@ export default function Signup() {
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-300"
           >
-            Sign Up
+            Add outlet
           </button>
         </form>
-
-        <p className="text-center text-gray-600 mt-4">
-          Already have an account? <a href="/owner-login" className="text-blue-500">Login</a>
-        </p>
       </div>
     </div>
   );
