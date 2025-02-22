@@ -251,10 +251,18 @@ class OrdersResource(Resource):
 
         db.session.commit()
         return order.to_dict(), 200
+    
+    def delete(self, id):
+        """Delete order"""
+        order = Order.query.get(id)
+        if not order:
+            return {"error": "Order not found"}, 404
+        
+        db.session.delete(order)
+        db.session.commit()
+        return {"message": "Order has been deleted successfully"}, 200
 
         
-
-
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 
 if __name__ == '__main__':
