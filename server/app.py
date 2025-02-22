@@ -2,9 +2,10 @@ from flask import Flask, jsonify, make_response, request
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
-from models import db, Owner, Customer,Order
+from models import db, Owner, Customer, Order, TableReservation 
 from flask_jwt_extended import JWTManager, create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
@@ -225,6 +226,74 @@ api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")
 api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")  
 api.add_resource(Login, "/login")
 
+class OrdersResource(Resource):
+    def get(self, id=None):
+        """Retrieve a single order by ID or all orders if no ID is provided."""
+        if id:
+            order = Order.query.get(id)
+            if not order:
+                return {'error': 'Order not found'}, 404
+            return order.to_dict(), 200
+        else:
+            orders = Order.query.all()
+            return jsonify([order.to_dict() for order in orders]), 200
+    
+    def patch(self, id):
+        """Update order status and handle table reservation."""
+        order = Order.query.get(id)
+        if not order:
+            return {"error": "Order not found"}, 404
+        
+        data = request.get_json()
+        if 'status' in data:
+            order.status = data['status']
+            
+            # If order is completed, ask client if they want to reserve a table
+            if order.status == "completed" and 'reserve_table' in data and data['reserve_table']:
+                return self.reserve_table(order.id)
+        
+        db.session.commit()
+        return order.to_dict(), 200
+    
+    def delete(self, id):
+        """Delete order."""
+        order = Order.query.get(id)
+        if not order:
+            return {"error": "Order not found"}, 404
+        
+        db.session.delete(order)
+        db.session.commit()
+        return {"message": "Order has been deleted successfully"}, 200
+    
+    def reserve_table(self, order_id):
+        """Handles table reservation."""
+        available_tables = TableReservation.query.filter_by(is_reserved=False).all()
+        if not available_tables:
+            return {"error": "No available tables"}, 400
+        
+        # Assign the first available table
+        table = available_tables[0]
+        table.is_reserved = True
+        table.order_id = order_id
+        table.reserved_at = datetime.utcnow()
+        db.session.commit()
+        
+        return {"message": f"TableReservation {table.id} has been successfully reserved. You may be there in 30 minutes."}, 200
+    
+    def release_expired_tables(self):
+        """Releases tables if the client hasn't arrived within 30 minutes."""
+        expiration_time = datetime.utcnow() - timedelta(minutes=30)
+        expired_tables = TableReservation.query.filter(TableReservation.is_reserved == True, TableReservation.reserved_at < expiration_time).all()
+        
+        for table in expired_tables:
+            table.is_reserved = False
+            table.order_id = None
+            table.reserved_at = None
+        
+        db.session.commit()
+        return {"message": "Expired tables have been released."}, 200
+
+api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 
 #Resource to get all orders
 class OrdersResource(Resource):
