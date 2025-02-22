@@ -2,9 +2,10 @@ from flask import Flask, jsonify, make_response, request
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
-from models import db, Owner, Customer
+from models import db, Owner, Customer, Order, TableReservation 
 from flask_jwt_extended import JWTManager, create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
@@ -225,6 +226,7 @@ api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")
 api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")  
 api.add_resource(Login, "/login")
 
+            # If order is completed, ask client if they want to reserve a table
 
 if __name__ == '__main__':
     app.run(debug=True)
