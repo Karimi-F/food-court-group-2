@@ -97,18 +97,20 @@ export default function Home() {
         )}
       </div>
 
-      <div className="bg-yellow-500 min-h-screen">
+      <div className="bg-blue-100 min-h-screen">
         <div className="bg-[url('/images/bg.jpg')] bg-cover bg-center h-screen">
-          <nav className="bg-yellow-500 shadow-md p-4 fixed top-0 w-full z-50">
+          <nav className="bg-blue-100 shadow-md p-4 fixed top-0 w-full z-50">
             <div className="max-w-6xl mx-auto flex justify-between items-center">
               <h1 className="text-2xl font-bold text-red-500">Bite Scape</h1>
               <ul className="hidden md:flex text-black space-x-6">
-                <li className="cursor-pointer hover:text-red-500">Home</li>
+                <li className="cursor-pointer hover:text-red-500">
+                <Link href="/home">Home</Link> </li>
                 <li className="cursor-pointer hover:text-red-500">
                   <Link href="/about">About us</Link>
                 </li>
                 <li className="cursor-pointer hover:text-red-500">Outlets</li>
-                <li className="cursor-pointer hover:text-red-500">Contact us</li>
+                <li className="cursor-pointer hover:text-red-500">
+                <Link href="/contact-us">Contact Us</Link></li>
                 <li className="cursor-pointer hover:text-red-500">
                   <button className="bg-red-500 p-2 rounded-md text-white" onClick={openModal}>
                     Get Started
@@ -140,7 +142,7 @@ export default function Home() {
               <div className="mt-6 grid grid-cols-3 gap-4">
                 {outlets.map((outlet) => (
                   <div key={outlet.id} className="p-4 border rounded-lg shadow-md cursor-pointer bg-white" onClick={() => handleOutletClick(outlet.id)}>
-                    <Image src={outlet.image} alt={outlet.name} width={200} height={150} className="rounded-lg" />
+                    <Image src={outlet.photo_url} alt={outlet.name} width={200} height={150} className="rounded-lg" />
                     <h2 className="text-lg font-bold mt-2 text-black">{outlet.name}</h2>
                   </div>
                 ))}
