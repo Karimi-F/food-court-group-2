@@ -6,19 +6,14 @@ from sqlalchemy_serializer import SerializerMixin
 db = SQLAlchemy()
 
 # Customer Model
-class Customer(db.Model, SerializerMixin):
+class Customer(db.Model):
     __tablename__ = 'customers'
-    
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    email = db.Column(db.String, unique=True, nullable=False)
-    password = db.Column(db.String, nullable=False)
-    
-    # One customer can have many orders
-    orders = relationship('Order', back_populates='customer', cascade="all, delete-orphan")
-    
-    # Serialization rules
-    serialize_rules = ('-password', '-orders.customer')
+    name = db.Column(db.String(100))
+    email = db.Column(db.String(100), unique=True)
+    password = db.Column(db.String(200))
+    # Define relationship to orders. SQLAlchemy will use the foreign key on Order.
+    orders = db.relationship('Order', backref='customer', lazy=True)
 
 # Owner Model
 class Owner(db.Model, SerializerMixin):
@@ -93,7 +88,9 @@ class Food(db.Model, SerializerMixin):
 class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
-    table_id = db.Column(db.Integer, nullable=False)  # New field for table reference
+    # Add a foreign key linking to the Customer table.
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=True)
+    table_id = db.Column(db.Integer, nullable=False)  # or adjust field name as needed
     datetime = db.Column(db.DateTime, nullable=False)
     total = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(50), default="pending")
@@ -101,6 +98,7 @@ class Order(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
+            "customer_id": self.customer_id,
             "table_id": self.table_id,
             "datetime": self.datetime.isoformat(),
             "total": self.total,
