@@ -432,7 +432,6 @@ class OrdersResource(Resource):
         db.session.commit()
         return {"message": "Expired tables have been released."}, 200
 
-api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 
 #Resource to get all orders
 class OrdersResource(Resource):
