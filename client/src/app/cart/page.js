@@ -12,7 +12,6 @@ export default function Cart() {
   const [selectedDateTime, setSelectedDateTime] = useState("");
 
   // Dummy confirmed bookings (simulate tables already booked)
-  // In a real app, you'd fetch these from your DB.
   const [confirmedBookings, setConfirmedBookings] = useState([
     { tableId: 3, datetime: "2025-02-23T10:30" },
   ]);
@@ -95,20 +94,24 @@ export default function Cart() {
       cart,
       tableId: selectedTable,
       datetime: selectedDateTime,
-      total: cart.reduce((total, item) => total + item.quantity * item.price, 0),
+      total: cart.reduce(
+        (total, item) => total + item.quantity * item.price,
+        0
+      ),
     };
 
     try {
-      // Adjust the URL below to match your Flask API endpoint
       const res = await fetch("http://localhost:5000/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
       });
+      const result = await res.json();
       if (res.ok) {
         setOrderStatus("Your order has been confirmed!");
       } else {
-        setOrderStatus("Failed to place order. Please try again.");
+        console.error("Server error:", result);
+        setOrderStatus(`Failed to place order: ${result.error}`);
       }
     } catch (error) {
       console.error("Error placing order:", error);
