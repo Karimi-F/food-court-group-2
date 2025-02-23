@@ -286,7 +286,7 @@ class OrdersResource(Resource):
             return {"error": "No input data provided"}, 400
 
         try:
-            # We now ignore the cart field since the Order model does not support it.
+            # We now ignore the 'cart' field since the Order model doesn't support it.
             table_id = data.get('tableId')
             datetime_str = data.get('datetime')
             total = data.get('total')
@@ -299,8 +299,11 @@ class OrdersResource(Resource):
             # Convert the datetime string into a datetime object
             order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
 
+            # IMPORTANT: Update the keyword argument below to match your Order model.
+            # For example, if your Order model expects the table reference as 'table',
+            # then use table=table_id (or adjust if your field name is different).
             new_order = Order(
-                table_id=table_id,
+                table=table_id,         # Use the correct field name as per your Order model
                 datetime=order_datetime,
                 total=total,
                 status="pending"
