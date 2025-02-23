@@ -277,6 +277,7 @@ class FoodByPriceResource(Resource):
         except Exception as e:
             return {"message": str(e)}, 500
 
+
 class OrdersResource(Resource):
     def post(self):
         data = request.get_json()
@@ -286,23 +287,24 @@ class OrdersResource(Resource):
             return {"error": "No input data provided"}, 400
 
         try:
-            # For now, we ignore the 'cart' field.
-            # Optionally, you can also include a customer ID if your front end provides it.
+            # Extract data from the request payload
             table_id = data.get('tableId')
             datetime_str = data.get('datetime')
             total = data.get('total')
-            # Example: get customer id if available (or set to None)
-            customer_id = data.get('customerId', None)
+            customer_id = data.get('customerId', None)  # Optional; if not provided, remains None
 
             print("Table ID:", table_id)
             print("Datetime string:", datetime_str)
             print("Total:", total)
             print("Customer ID:", customer_id)
 
+            # Convert the datetime string into a datetime object.
+            # Expected format: "YYYY-MM-DDTHH:MM" (e.g., "2025-02-23T10:30")
             order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
 
+            # Create a new Order. Note: table_id here is a foreign key referencing TableReservation.id.
             new_order = Order(
-                customer_id=customer_id,  # This will be None if not provided
+                customer_id=customer_id,
                 table_id=table_id,
                 datetime=order_datetime,
                 total=total,
@@ -315,18 +317,17 @@ class OrdersResource(Resource):
 
         except Exception as e:
             db.session.rollback()
-            print("Error creating order:", e)
+            print("Error creating order:", e)  # Debug log
             return {"error": str(e)}, 500
 
     def get(self, id=None):
         if id:
             order = Order.query.get(id)
             if not order:
-                return {'error': 'Order not found'}, 404
+                return {"error": "Order not found"}, 404
             return order.to_dict(), 200
-        else:
-            orders = Order.query.all()
-            return [order.to_dict() for order in orders], 200
+        orders = Order.query.all()
+        return [order.to_dict() for order in orders], 200
 
     def patch(self, id):
         order = Order.query.get(id)
@@ -334,10 +335,8 @@ class OrdersResource(Resource):
             return {"error": "Order not found"}, 404
 
         data = request.get_json()
-        if 'status' in data:
-            order.status = data['status']
-            # Optionally, handle table reservation here if needed.
-
+        if "status" in data:
+            order.status = data["status"]
         db.session.commit()
         return order.to_dict(), 200
 
@@ -345,11 +344,9 @@ class OrdersResource(Resource):
         order = Order.query.get(id)
         if not order:
             return {"error": "Order not found"}, 404
-
         db.session.delete(order)
         db.session.commit()
-        return {"message": "Order has been deleted successfully"}, 200
-
+        return {"message": "Order deleted successfully"}, 200
 
 # Register resources with the API
 api.add_resource(FoodsResource, "/foods")
