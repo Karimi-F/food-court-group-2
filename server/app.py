@@ -286,20 +286,23 @@ class OrdersResource(Resource):
             return {"error": "No input data provided"}, 400
 
         try:
+            # For now, we ignore the 'cart' field.
+            # Optionally, you can also include a customer ID if your front end provides it.
             table_id = data.get('tableId')
             datetime_str = data.get('datetime')
             total = data.get('total')
+            # Example: get customer id if available (or set to None)
+            customer_id = data.get('customerId', None)
 
-            # Debug prints to verify incoming data
             print("Table ID:", table_id)
             print("Datetime string:", datetime_str)
             print("Total:", total)
+            print("Customer ID:", customer_id)
 
-            # Convert the datetime string into a datetime object
             order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
 
-            # Create a new Order using the correct keyword "table_id"
             new_order = Order(
+                customer_id=customer_id,  # This will be None if not provided
                 table_id=table_id,
                 datetime=order_datetime,
                 total=total,
@@ -312,7 +315,7 @@ class OrdersResource(Resource):
 
         except Exception as e:
             db.session.rollback()
-            print("Error creating order:", e)  # Debug log
+            print("Error creating order:", e)
             return {"error": str(e)}, 500
 
     def get(self, id=None):
@@ -333,8 +336,7 @@ class OrdersResource(Resource):
         data = request.get_json()
         if 'status' in data:
             order.status = data['status']
-            if order.status == "completed" and data.get('reserve_table'):
-                return self.reserve_table(order.id)
+            # Optionally, handle table reservation here if needed.
 
         db.session.commit()
         return order.to_dict(), 200
