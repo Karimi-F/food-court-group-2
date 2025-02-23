@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, make_response, request
 from flask_migrate import Migrate
-from flask_restful import Api, Resource
+from flask_restful import Api, Resource,reqparse
 from flask_cors import CORS
 from models import db, Owner, Customer,Outlet,Food, Order, TableReservation 
 from flask_jwt_extended import JWTManager, create_access_token
@@ -12,7 +12,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://beren:123456@localhost:543
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
 app.config["SECRET_KEY"] = "your_secret_key"  # Add a secure secret key
-
+api = Api(app)
 # Initialize Extensions
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -248,16 +248,17 @@ class OutletResource(Resource):
     def post(self):
         """Create a new outlet."""
         data = request.get_json()
+        print("Received data:", data)
         name = data.get('name')
         owner_id = data.get('owner_id')
-
+        photo_url= data.get('photo_url')
         if not name or not owner_id:
             return {"error": "All fields are required"}, 400  # ✅ No jsonify()
 
         if Outlet.query.filter_by(name=name).first():
             return {"error": "Outlet with this name already exists"}, 409  # ✅ No jsonify()
 
-        new_outlet = Outlet(name=name, owner_id=owner_id)
+        new_outlet = Outlet(name=name, owner_id=owner_id,photo_url=photo_url)
         db.session.add(new_outlet)
         db.session.commit()
 
@@ -337,7 +338,16 @@ class FoodByNameResource(Resource):
         db.session.delete(food)
         db.session.commit()
         return ({'message': 'Customer deleted successfully'}), 200
-        
+class FoodByOutletResource(Resource):
+    def get(self, outlet_id):
+        try:
+            food_items = Food.query.filter_by(outlet_id=outlet_id).all()
+            if food_items:
+                return [food.to_dict() for food in food_items], 200
+            return {"message": "No food found for this outlet"}, 404
+        except Exception as e:
+            return {"message": str(e)}, 500
+
 # Resource to get food by price
 class FoodByPriceResource(Resource):
     def get(self, price):
@@ -350,14 +360,16 @@ class FoodByPriceResource(Resource):
             return {"message": str(e)}, 500
         
 #Resource to add food
-class FoodResource(Resource):
+
+
 
 
 # Registering the resources with Flask-RESTful
     api.add_resource(FoodsResource, "/foods")
 api.add_resource(FoodByNameResource, "/foods/<string:name>")
 api.add_resource(FoodByPriceResource, "/foods/<int:price>")  
-    
+api.add_resource(FoodByOutletResource, "/food/outlet_id/<int:outlet_id>")
+
 
 # Add the resource to the API
 api.add_resource(OutletResource, '/outlets', '/outlets/<int:id>')
@@ -471,7 +483,7 @@ class OrdersResource(Resource):
         return {"message": "Order has been deleted successfully"}, 200
 
         
-api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
+# api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 
 if __name__ == '__main__':
     app.run(debug=True)
