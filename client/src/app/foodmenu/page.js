@@ -1,17 +1,18 @@
 "use client"
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getFood } from "../lib/utils";
 
 export default function MenuPage() {
   const [cart, setCart] = useState([]);
-  const [menu] = useState([
-    { id: 1, name: "Burger", price: 5.99, waitTime: "10 mins" },
-    { id: 2, name: "Pizza", price: 8.99, waitTime: "15 mins" },
-    { id: 3, name: "Sushi", price: 12.99, waitTime: "20 mins" },
-    { id: 4, name: "Pasta", price: 7.99, waitTime: "15 mins" },
-    { id: 5, name: "Salad", price: 4.99, waitTime: "5 mins" },
-    { id: 6, name: "Dessert", price: 3.99, waitTime: "10 mins" },
-    { id: 7, name: "Beverage", price: 2.99, waitTime: "3 mins" },
-  ]);
+  const [menu, setMenu] = useState([]);
+
+  useEffect(() => {
+    async function fetchMenu() {
+      const foodData = await getFood();
+      setMenu(foodData);
+    }
+    fetchMenu();
+  }, []);
 
   const addToCart = (item) => {
     const existingItem = cart.find((cartItem) => cartItem.id === item.id);
@@ -46,6 +47,7 @@ export default function MenuPage() {
   const closeCart = () => {
     setCart([]);
   };
+
 
   return (
     <div className="flex">
