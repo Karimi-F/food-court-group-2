@@ -286,7 +286,6 @@ class OrdersResource(Resource):
             return {"error": "No input data provided"}, 400
 
         try:
-            # We now ignore the 'cart' field since the Order model doesn't support it.
             table_id = data.get('tableId')
             datetime_str = data.get('datetime')
             total = data.get('total')
@@ -299,11 +298,9 @@ class OrdersResource(Resource):
             # Convert the datetime string into a datetime object
             order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
 
-            # IMPORTANT: Update the keyword argument below to match your Order model.
-            # For example, if your Order model expects the table reference as 'table',
-            # then use table=table_id (or adjust if your field name is different).
+            # Create a new Order using the correct keyword "table_id"
             new_order = Order(
-                table=table_id,         # Use the correct field name as per your Order model
+                table_id=table_id,
                 datetime=order_datetime,
                 total=total,
                 status="pending"
@@ -332,13 +329,13 @@ class OrdersResource(Resource):
         order = Order.query.get(id)
         if not order:
             return {"error": "Order not found"}, 404
-        
+
         data = request.get_json()
         if 'status' in data:
             order.status = data['status']
             if order.status == "completed" and data.get('reserve_table'):
                 return self.reserve_table(order.id)
-        
+
         db.session.commit()
         return order.to_dict(), 200
 
@@ -346,38 +343,11 @@ class OrdersResource(Resource):
         order = Order.query.get(id)
         if not order:
             return {"error": "Order not found"}, 404
-        
+
         db.session.delete(order)
         db.session.commit()
         return {"message": "Order has been deleted successfully"}, 200
 
-    def reserve_table(self, order_id):
-        available_tables = TableReservation.query.filter_by(is_reserved=False).all()
-        if not available_tables:
-            return {"error": "No available tables"}, 400
-        
-        table = available_tables[0]
-        table.is_reserved = True
-        table.order_id = order_id
-        table.reserved_at = datetime.utcnow()
-        db.session.commit()
-        
-        return {"message": f"TableReservation {table.id} has been successfully reserved. You may be there in 30 minutes."}, 200
-
-    def release_expired_tables(self):
-        expiration_time = datetime.utcnow() - timedelta(minutes=30)
-        expired_tables = TableReservation.query.filter(
-            TableReservation.is_reserved == True,
-            TableReservation.reserved_at < expiration_time
-        ).all()
-        
-        for table in expired_tables:
-            table.is_reserved = False
-            table.order_id = None
-            table.reserved_at = None
-        
-        db.session.commit()
-        return {"message": "Expired tables have been released."}, 200
 
 # Register resources with the API
 api.add_resource(FoodsResource, "/foods")
