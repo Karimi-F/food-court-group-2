@@ -89,32 +89,20 @@ class Food(db.Model, SerializerMixin):
     serialize_rules = ('-outlet.foods', '-orders.food')
 
 # Order Model
-class Order(db.Model, SerializerMixin):
+
+class Order(db.Model):
     __tablename__ = 'orders'
-    
     id = db.Column(db.Integer, primary_key=True)
+    table_id = db.Column(db.Integer, nullable=False)  # New field for table reference
+    datetime = db.Column(db.DateTime, nullable=False)
+    total = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(50), default="pending")
     
-    # Foreign key linking to Customer
-    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
-    
-    # Foreign key linking to TableReservation
-    tablereservation_id = db.Column(db.Integer, db.ForeignKey('table_reservations.id'), nullable=False)
-    
-    # Foreign key linking to Food
-    food_id = db.Column(db.Integer, db.ForeignKey('foods.id'), nullable=False)
-    
-    quantity = db.Column(db.Integer, nullable=False)
-    status = db.Column(db.String, nullable=False)
-    datetime = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationship to Customer
-    customer = relationship('Customer', back_populates='orders')
-    
-    # Relationship to Table Reservation
-    table_reservation = relationship('TableReservation', back_populates='orders')
-    
-    # Relationship to Food
-    food = relationship('Food', back_populates='orders')
-    
-    # Serialization rules
-    serialize_rules = ('-customer.orders', '-table_reservation.orders', '-food.orders')
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "table_id": self.table_id,
+            "datetime": self.datetime.isoformat(),
+            "total": self.total,
+            "status": self.status,
+        }
