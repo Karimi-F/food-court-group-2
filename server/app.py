@@ -286,13 +286,12 @@ class OrdersResource(Resource):
             return {"error": "No input data provided"}, 400
 
         try:
-            cart = data.get('cart')
+            # We now ignore the cart field since the Order model does not support it.
             table_id = data.get('tableId')
             datetime_str = data.get('datetime')
             total = data.get('total')
 
             # Debug prints to verify incoming data
-            print("Cart:", cart)
             print("Table ID:", table_id)
             print("Datetime string:", datetime_str)
             print("Total:", total)
@@ -300,11 +299,7 @@ class OrdersResource(Resource):
             # Convert the datetime string into a datetime object
             order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
 
-            # Serialize the cart (if your Order model expects a JSON string)
-            serialized_cart = json.dumps(cart)
-
             new_order = Order(
-                cart=serialized_cart,  # Ensure your model can accept this field
                 table_id=table_id,
                 datetime=order_datetime,
                 total=total,
