@@ -89,7 +89,7 @@ export default function CustomerDashboard() {
             <div key={index} className="border p-4 rounded-lg shadow bg-white">
               {/* Outlet Image */}
               <img
-                src={outlet.image_url} // Ensure this matches your API response key
+                src={outlet.photo_url} // Ensure this matches your API response key
                 alt={outlet.name}
                 className="w-full h-48 object-cover rounded-lg mb-2"
               />
