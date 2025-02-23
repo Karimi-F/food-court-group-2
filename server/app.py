@@ -2,10 +2,11 @@ from flask import Flask, request
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
-from models import db, Owner, Customer, Outlet, Food, Order, TableReservation 
+from models import db, Owner, Customer, Outlet, Food, Order, TableReservation
 from flask_jwt_extended import JWTManager, create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+import json
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://food_court_user:123456@localhost:5432/food_court_db"
@@ -279,47 +280,51 @@ class FoodByPriceResource(Resource):
 class OrdersResource(Resource):
     def post(self):
         data = request.get_json()
-        print("Received order data:", data)  # Debug print
+        print("Received order data:", data)  # Debug log
 
-    if not data:
-        return {"error": "No input data provided"}, 400
+        if not data:
+            return {"error": "No input data provided"}, 400
 
-    try:
-        cart = data.get('cart')
-        table_id = data.get('tableId')
-        datetime_str = data.get('datetime')
-        total = data.get('total')
+        try:
+            cart = data.get('cart')
+            table_id = data.get('tableId')
+            datetime_str = data.get('datetime')
+            total = data.get('total')
 
-        # Print the extracted data
-        print("Cart:", cart)
-        print("Table ID:", table_id)
-        print("Datetime string:", datetime_str)
-        print("Total:", total)
+            # Debug prints to verify incoming data
+            print("Cart:", cart)
+            print("Table ID:", table_id)
+            print("Datetime string:", datetime_str)
+            print("Total:", total)
 
-        order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
+            # Convert the datetime string into a datetime object
+            order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
 
-        new_order = Order(
-            cart=cart,  # Check if your model accepts a list or requires a JSON/string
-            table_id=table_id,
-            datetime=order_datetime,
-            total=total,
-            status="pending"
-        )
+            # Serialize the cart (if your Order model expects a JSON string)
+            serialized_cart = json.dumps(cart)
 
-        db.session.add(new_order)
-        db.session.commit()
-        return new_order.to_dict(), 201
+            new_order = Order(
+                cart=serialized_cart,  # Ensure your model can accept this field
+                table_id=table_id,
+                datetime=order_datetime,
+                total=total,
+                status="pending"
+            )
 
-    except Exception as e:
-        db.session.rollback()
-        print("Error creating order:", e)  # Debug print
-        return {"error": str(e)}, 500
+            db.session.add(new_order)
+            db.session.commit()
+            return new_order.to_dict(), 201
+
+        except Exception as e:
+            db.session.rollback()
+            print("Error creating order:", e)  # Debug log
+            return {"error": str(e)}, 500
 
     def get(self, id=None):
         if id:
             order = Order.query.get(id)
             if not order:
-                return {"error": "Order not found"}, 404
+                return {'error': 'Order not found'}, 404
             return order.to_dict(), 200
         else:
             orders = Order.query.all()
@@ -361,8 +366,22 @@ class OrdersResource(Resource):
         
         return {"message": f"TableReservation {table.id} has been successfully reserved. You may be there in 30 minutes."}, 200
 
-# Ensure you register this resource with both endpoints:
-# Register the resources with the API
+    def release_expired_tables(self):
+        expiration_time = datetime.utcnow() - timedelta(minutes=30)
+        expired_tables = TableReservation.query.filter(
+            TableReservation.is_reserved == True,
+            TableReservation.reserved_at < expiration_time
+        ).all()
+        
+        for table in expired_tables:
+            table.is_reserved = False
+            table.order_id = None
+            table.reserved_at = None
+        
+        db.session.commit()
+        return {"message": "Expired tables have been released."}, 200
+
+# Register resources with the API
 api.add_resource(FoodsResource, "/foods")
 api.add_resource(FoodByNameResource, "/foods/<string:name>")
 api.add_resource(FoodByPriceResource, "/foods/<int:price>")
