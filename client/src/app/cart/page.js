@@ -8,26 +8,25 @@ export default function Cart() {
   const cartParam = searchParams.get("data");
   const [cart, setCart] = useState([]);
 
-  // New state for date and time selection
+  // State for the date and time selected by the customer
   const [selectedDateTime, setSelectedDateTime] = useState("");
 
-  // Dummy confirmed bookings data (simulate tables that are already booked)
+  // Dummy confirmed bookings (simulate tables already booked)
+  // In a real application, you'd fetch these from your DB.
   const [confirmedBookings, setConfirmedBookings] = useState([
-    { tableId: 3, datetime: "2025-02-23T10:30" }
+    { tableId: 3, datetime: "2025-02-23T10:30" },
   ]);
-
-  // Pending bookings from orders placed but not yet confirmed
-  const [pendingBookings, setPendingBookings] = useState([]);
 
   // Sample tables data
   const [tables, setTables] = useState([
     { id: 1, name: "Table 1" },
     { id: 2, name: "Table 2" },
     { id: 3, name: "Table 3" },
-    { id: 4, name: "Table 4" }
+    { id: 4, name: "Table 4" },
   ]);
 
   const [selectedTable, setSelectedTable] = useState(null);
+  const [orderStatus, setOrderStatus] = useState("");
 
   useEffect(() => {
     if (cartParam) {
@@ -42,12 +41,9 @@ export default function Cart() {
 
   // Update the quantity of an item
   const updateItemQuantity = (id, newQuantity) => {
-    const updatedCart = cart.map((item) => {
-      if (item.id === id) {
-        return { ...item, quantity: newQuantity };
-      }
-      return item;
-    });
+    const updatedCart = cart.map((item) =>
+      item.id === id ? { ...item, quantity: newQuantity } : item
+    );
     setCart(updatedCart);
   };
 
@@ -76,25 +72,15 @@ export default function Cart() {
   // Determine the table's status based on the selected date/time
   const getTableStatus = (table) => {
     if (!selectedDateTime) return "N/A";
-    // Check pending bookings first
-    const isPending = pendingBookings.some(
-      (booking) =>
-        booking.tableId === table.id && booking.datetime === selectedDateTime
-    );
-    if (isPending) return "pending";
-
-    // Check confirmed bookings
     const isBooked = confirmedBookings.some(
       (booking) =>
         booking.tableId === table.id && booking.datetime === selectedDateTime
     );
-    if (isBooked) return "booked";
-
-    return "available";
+    return isBooked ? "booked" : "available";
   };
 
-  const closeCart = () => {
-    // Ensure a date/time and table are selected before placing an order.
+  // Send the order to your DB via an API endpoint.
+  const placeOrder = async () => {
     if (!selectedDateTime) {
       alert("Please select a date and time before placing your order.");
       return;
@@ -103,18 +89,33 @@ export default function Cart() {
       alert("Please select a table before placing your order.");
       return;
     }
-    // Add the booking as pending
-    setPendingBookings([
-      ...pendingBookings,
-      { tableId: selectedTable, datetime: selectedDateTime }
-    ]);
-    // Simulate order placement (you may update confirmedBookings later)
-    console.log(
-      "Order placed for table:",
-      selectedTable,
-      "at",
-      selectedDateTime
-    );
+    setOrderStatus("Please wait as your order is being confirmed...");
+
+    const orderData = {
+      cart,
+      tableId: selectedTable,
+      datetime: selectedDateTime,
+      total: cart.reduce(
+        (total, item) => total + item.quantity * item.price,
+        0
+      ),
+    };
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderData),
+      });
+      if (res.ok) {
+        setOrderStatus("Your order has been confirmed!");
+      } else {
+        setOrderStatus("Failed to place order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      setOrderStatus("Error placing order. Please try again.");
+    }
   };
 
   return (
@@ -155,9 +156,7 @@ export default function Cart() {
                         +
                       </button>
                     </div>
-                    <p className="text-gray-600 mt-2">
-                      Price: Ksh {item.price}
-                    </p>
+                    <p className="text-gray-600 mt-2">Price: Ksh {item.price}</p>
                     <p className="text-gray-600">
                       Total: Ksh {item.quantity * item.price}
                     </p>
@@ -198,7 +197,9 @@ export default function Cart() {
               </label>
               <select
                 value={selectedTable || ""}
-                onChange={(e) => setSelectedTable(Number(e.target.value))}
+                onChange={(e) =>
+                  setSelectedTable(Number(e.target.value))
+                }
                 disabled={!selectedDateTime}
                 className="w-full p-3 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50 text-gray-800"
               >
@@ -215,29 +216,38 @@ export default function Cart() {
                       value={table.id}
                       disabled={status !== "available"}
                       style={{
-                        color: status === "available" ? "green" : "red"
+                        color: status === "available" ? "green" : "red",
                       }}
                     >
                       {table.name} -{" "}
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                      {status.charAt(0).toUpperCase() +
+                        status.slice(1)}
                     </option>
                   );
                 })}
               </select>
             </div>
 
+            {/* Notification Message */}
+            {orderStatus && (
+              <div className="mt-4 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded">
+                {orderStatus}
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row justify-between items-center mt-6">
               <p className="text-blue-700 font-semibold text-xl mb-4 sm:mb-0">
                 Total: Ksh{" "}
                 {cart
                   .reduce(
-                    (total, item) => total + item.quantity * item.price,
+                    (total, item) =>
+                      total + item.quantity * item.price,
                     0
                   )
                   .toFixed(2)}
               </p>
               <button
-                onClick={closeCart}
+                onClick={placeOrder}
                 disabled={!selectedDateTime || !selectedTable}
                 className={`bg-red-500 hover:bg-red-600 transition text-white px-6 py-2 rounded-md ${
                   (!selectedDateTime || !selectedTable) &&
