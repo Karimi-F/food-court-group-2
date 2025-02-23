@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://beren:123456@localhost:5432/food_court_db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://food_court_user:123456@localhost:5432/food_court_db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
 app.config["SECRET_KEY"] = "your_secret_key"  # Add a secure secret key

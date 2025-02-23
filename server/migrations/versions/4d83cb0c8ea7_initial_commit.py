@@ -1,8 +1,8 @@
-"""Initial migration
+"""initial commit
 
-Revision ID: 0b33d0e9655a
+Revision ID: 4d83cb0c8ea7
 Revises: 
-Create Date: 2025-02-19 15:36:32.111359
+Create Date: 2025-02-23 15:53:35.444457
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '0b33d0e9655a'
+revision = '4d83cb0c8ea7'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -42,6 +42,7 @@ def upgrade():
     op.create_table('outlets',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
+    sa.Column('photo_url', sa.String(), nullable=True),
     sa.Column('owner_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['owner_id'], ['owners.id'], ),
     sa.PrimaryKeyConstraint('id'),
@@ -52,6 +53,7 @@ def upgrade():
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('price', sa.Float(), nullable=False),
     sa.Column('waiting_time', sa.String(), nullable=False),
+    sa.Column('category', sa.String(), nullable=True),
     sa.Column('outlet_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['outlet_id'], ['outlets.id'], ),
     sa.PrimaryKeyConstraint('id')
