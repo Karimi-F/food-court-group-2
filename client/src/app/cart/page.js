@@ -91,7 +91,7 @@ export default function Cart() {
     setOrderStatus("Please wait as your order is being confirmed...");
 
     const orderData = {
-      cart, // Sent from front end if needed for further processing
+      cart, // Sent for additional processing if needed
       tableId: selectedTable,
       datetime: selectedDateTime,
       total: cart.reduce(
