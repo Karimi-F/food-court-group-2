@@ -277,16 +277,50 @@ class FoodByPriceResource(Resource):
             return {"message": str(e)}, 500
 
 class OrdersResource(Resource):
+    def post(self):
+        data = request.get_json()
+        if not data:
+            return {"error": "No input data provided"}, 400
+
+        try:
+            # Extract data sent from the front end
+            cart = data.get('cart')
+            table_id = data.get('tableId')
+            datetime_str = data.get('datetime')
+            total = data.get('total')
+
+            # Convert datetime string (e.g., "2025-02-23T10:30") to a datetime object
+            order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
+
+            # Create a new Order instance.
+            # Adjust this according to your actual Order model fields.
+            new_order = Order(
+                cart=cart,            # If your model stores cart details, you may want to serialize/store it appropriately
+                table_id=table_id,
+                datetime=order_datetime,
+                total=total,
+                status="pending"      # You can initialize status or any other field as needed
+            )
+
+            db.session.add(new_order)
+            db.session.commit()
+
+            return new_order.to_dict(), 201
+
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
     def get(self, id=None):
         if id:
             order = Order.query.get(id)
             if not order:
-                return {'error': 'Order not found'}, 404
+                return {"error": "Order not found"}, 404
             return order.to_dict(), 200
         else:
             orders = Order.query.all()
             return [order.to_dict() for order in orders], 200
-        
+
     def patch(self, id):
         order = Order.query.get(id)
         if not order:
@@ -300,7 +334,7 @@ class OrdersResource(Resource):
         
         db.session.commit()
         return order.to_dict(), 200
-    
+
     def delete(self, id):
         order = Order.query.get(id)
         if not order:
@@ -323,21 +357,7 @@ class OrdersResource(Resource):
         
         return {"message": f"TableReservation {table.id} has been successfully reserved. You may be there in 30 minutes."}, 200
 
-    def release_expired_tables(self):
-        expiration_time = datetime.utcnow() - timedelta(minutes=30)
-        expired_tables = TableReservation.query.filter(
-            TableReservation.is_reserved == True,
-            TableReservation.reserved_at < expiration_time
-        ).all()
-        
-        for table in expired_tables:
-            table.is_reserved = False
-            table.order_id = None
-            table.reserved_at = None
-        
-        db.session.commit()
-        return {"message": "Expired tables have been released."}, 200
-
+# Ensure you register this resource with both endpoints:
 # Register the resources with the API
 api.add_resource(FoodsResource, "/foods")
 api.add_resource(FoodByNameResource, "/foods/<string:name>")
