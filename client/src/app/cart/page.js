@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Cart({cart, closeCart}) {
     const [showForm, setShowForm] = useState(false);
