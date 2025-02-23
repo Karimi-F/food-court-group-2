@@ -279,37 +279,41 @@ class FoodByPriceResource(Resource):
 class OrdersResource(Resource):
     def post(self):
         data = request.get_json()
-        if not data:
-            return {"error": "No input data provided"}, 400
+        print("Received order data:", data)  # Debug print
 
-        try:
-            # Extract data sent from the front end
-            cart = data.get('cart')
-            table_id = data.get('tableId')
-            datetime_str = data.get('datetime')
-            total = data.get('total')
+    if not data:
+        return {"error": "No input data provided"}, 400
 
-            # Convert datetime string (e.g., "2025-02-23T10:30") to a datetime object
-            order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
+    try:
+        cart = data.get('cart')
+        table_id = data.get('tableId')
+        datetime_str = data.get('datetime')
+        total = data.get('total')
 
-            # Create a new Order instance.
-            # Adjust this according to your actual Order model fields.
-            new_order = Order(
-                cart=cart,            # If your model stores cart details, you may want to serialize/store it appropriately
-                table_id=table_id,
-                datetime=order_datetime,
-                total=total,
-                status="pending"      # You can initialize status or any other field as needed
-            )
+        # Print the extracted data
+        print("Cart:", cart)
+        print("Table ID:", table_id)
+        print("Datetime string:", datetime_str)
+        print("Total:", total)
 
-            db.session.add(new_order)
-            db.session.commit()
+        order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
 
-            return new_order.to_dict(), 201
+        new_order = Order(
+            cart=cart,  # Check if your model accepts a list or requires a JSON/string
+            table_id=table_id,
+            datetime=order_datetime,
+            total=total,
+            status="pending"
+        )
 
-        except Exception as e:
-            db.session.rollback()
-            return {"error": str(e)}, 500
+        db.session.add(new_order)
+        db.session.commit()
+        return new_order.to_dict(), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print("Error creating order:", e)  # Debug print
+        return {"error": str(e)}, 500
 
     def get(self, id=None):
         if id:
