@@ -12,7 +12,7 @@ export default function Cart() {
   const [selectedDateTime, setSelectedDateTime] = useState("");
 
   // Dummy confirmed bookings (simulate tables already booked)
-  // In a real application, you'd fetch these from your DB.
+  // In a real app, you'd fetch these from your DB.
   const [confirmedBookings, setConfirmedBookings] = useState([
     { tableId: 3, datetime: "2025-02-23T10:30" },
   ]);
@@ -79,7 +79,7 @@ export default function Cart() {
     return isBooked ? "booked" : "available";
   };
 
-  // Send the order to your DB via an API endpoint.
+  // Send the order data to the Flask API endpoint
   const placeOrder = async () => {
     if (!selectedDateTime) {
       alert("Please select a date and time before placing your order.");
@@ -95,14 +95,12 @@ export default function Cart() {
       cart,
       tableId: selectedTable,
       datetime: selectedDateTime,
-      total: cart.reduce(
-        (total, item) => total + item.quantity * item.price,
-        0
-      ),
+      total: cart.reduce((total, item) => total + item.quantity * item.price, 0),
     };
 
     try {
-      const res = await fetch("/api/orders", {
+      // Adjust the URL below to match your Flask API endpoint
+      const res = await fetch("http://localhost:5000/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
@@ -197,9 +195,7 @@ export default function Cart() {
               </label>
               <select
                 value={selectedTable || ""}
-                onChange={(e) =>
-                  setSelectedTable(Number(e.target.value))
-                }
+                onChange={(e) => setSelectedTable(Number(e.target.value))}
                 disabled={!selectedDateTime}
                 className="w-full p-3 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50 text-gray-800"
               >
@@ -220,8 +216,7 @@ export default function Cart() {
                       }}
                     >
                       {table.name} -{" "}
-                      {status.charAt(0).toUpperCase() +
-                        status.slice(1)}
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
                     </option>
                   );
                 })}
@@ -240,8 +235,7 @@ export default function Cart() {
                 Total: Ksh{" "}
                 {cart
                   .reduce(
-                    (total, item) =>
-                      total + item.quantity * item.price,
+                    (total, item) => total + item.quantity * item.price,
                     0
                   )
                   .toFixed(2)}
