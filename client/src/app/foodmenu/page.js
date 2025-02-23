@@ -3,6 +3,7 @@ import { useState } from "react";
 
 export default function MenuPage() {
   const [cart, setCart] = useState([]);
+  const router = useRouter();
   const [menu] = useState([
     { id: 1, name: "Burger", price: 5.99, waitTime: "10 mins" },
     { id: 2, name: "Pizza", price: 8.99, waitTime: "15 mins" },
