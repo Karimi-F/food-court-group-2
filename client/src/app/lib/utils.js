@@ -220,4 +220,27 @@ export async function login(email, password) {
     return data; // Ensure it returns an object with { id, name, email }
 }
 
+export async function getFood() {
+    try {
+        const response = await fetch("http://127.0.0.1:5000/foods");
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const foods = await response.json();
+
+        const formattedFoods = foods.map(food => ({
+            category: food.category,
+            name: food.name,
+            price: food.price,
+            waiting_time: food.waiting_time
+        }));
+
+        return formattedFoods;
+    } catch (error) {
+        console.error("Error fetching food data:", error);
+        return [];
+    }
+}
+
+
 
