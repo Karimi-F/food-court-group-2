@@ -141,6 +141,7 @@ export async function getFood() {
 
         const formattedFoods = foods.map(food => ({
             category: food.category,
+            name: food.name,
             price: food.price,
             waiting_time: food.waiting_time
         }));
