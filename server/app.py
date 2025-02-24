@@ -1,6 +1,6 @@
 from flask import Flask, request
 from flask_migrate import Migrate
-from flask_restful import Api, Resource
+from flask_restful import Api, Resource,reqparse
 from flask_cors import CORS
 from models import db, Owner, Customer, Outlet, Food, Order, TableReservation
 from flask_jwt_extended import JWTManager, create_access_token
@@ -9,10 +9,12 @@ from datetime import datetime, timedelta
 import json
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://food_court_user:123456@localhost:5432/food_court_db"
+
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://food_court_user:098765@localhost:5432/food_court_db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # secure JWT secret key
-app.config["SECRET_KEY"] = "your_secret_key"  # secure secret key
+app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
+app.config["SECRET_KEY"] = "your_secret_key"  # Add a secure secret key
+api = Api(app)
 
 # Initialize Extensions
 db.init_app(app)
@@ -185,16 +187,17 @@ class OutletResource(Resource):
   
     def post(self):
         data = request.get_json()
+        print("Received data:", data)
         name = data.get('name')
         owner_id = data.get('owner_id')
-
+        photo_url= data.get('photo_url')
         if not name or not owner_id:
             return {"error": "All fields are required"}, 400
 
         if Outlet.query.filter_by(name=name).first():
             return {"error": "Outlet with this name already exists"}, 409
 
-        new_outlet = Outlet(name=name, owner_id=owner_id)
+        new_outlet = Outlet(name=name, owner_id=owner_id,photo_url=photo_url)
         db.session.add(new_outlet)
         db.session.commit()
 
@@ -265,7 +268,19 @@ class FoodByNameResource(Resource):
 
         db.session.delete(food)
         db.session.commit()
-        return {'message': 'Food deleted successfully'}, 200
+
+        return ({'message': 'Customer deleted successfully'}), 200
+class FoodByOutletResource(Resource):
+    def get(self, outlet_id):
+        try:
+            food_items = Food.query.filter_by(outlet_id=outlet_id).all()
+            if food_items:
+                return [food.to_dict() for food in food_items], 200
+            return {"message": "No food found for this outlet"}, 404
+        except Exception as e:
+            return {"message": str(e)}, 500
+
+# Resource to get food by price
 
 class FoodByPriceResource(Resource):
     def get(self, price):
@@ -278,10 +293,12 @@ class FoodByPriceResource(Resource):
             return {"message": str(e)}, 500
 
 
+
 class OrdersResource(Resource):
     def post(self):
         data = request.get_json()
         print("Received order data:", data)  # Debug log
+
 
         if not data:
             return {"error": "No input data provided"}, 400
@@ -329,6 +346,21 @@ class OrdersResource(Resource):
         orders = Order.query.all()
         return [order.to_dict() for order in orders], 200
 
+
+
+#Resource to get all orders
+class OrdersResource(Resource):
+    def get(self, id =None):
+        """Retrieve a single orders by ID or all orders if no ID is provided."""
+        if id:
+            order = Order.query.get(id)
+            if not order:
+                return ({'error': 'Order not found'}), 404
+            return (order.to_dict()), 200
+        else:
+            orders = Order.query.all()
+            return jsonify([order.to_dict() for order in orders]), 200
+
     def patch(self, id):
         order = Order.query.get(id)
         if not order:
@@ -348,6 +380,7 @@ class OrdersResource(Resource):
         db.session.commit()
         return {"message": "Order deleted successfully"}, 200
 
+
 # Register resources with the API
 api.add_resource(FoodsResource, "/foods")
 api.add_resource(FoodByNameResource, "/foods/<string:name>")
@@ -357,6 +390,7 @@ api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")
 api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")
 api.add_resource(Login, "/login")
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
+
 
 if __name__ == '__main__':
     app.run(debug=True)

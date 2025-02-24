@@ -46,14 +46,48 @@ export async function validateCustomerCredentials(email, password){
     }
 }
 
-// export async function getOwner(email){
-//     const owner = await fetch(`http://127.0.0.1:5000/owners?email=${email}`)
-//     .then(response => response.json())
-//     .then(data => data)
-//     .catch(error => console.error('Error:', error));
-//     return owner
-// }
+// utils/fetchOutlets.js
 
+export async function fetchOutlets({ outlet, food, category }) {
+    try {
+      // Log the input parameters
+      console.log("Fetching outlets with parameters:", { outlet, food, category });
+  
+      // Construct query parameters
+      const queryParams = new URLSearchParams({
+        name: outlet || "",
+        food: food || "",
+        category: category || "",
+      });
+  
+      // Log the constructed query parameters
+      console.log("Query parameters:", queryParams.toString());
+  
+      // Replace with your actual backend API URL
+      const url = `http://127.0.0.1:5000/outlets?${queryParams.toString()}`;
+      console.log("Fetching from URL:", url); // Log the full URL
+  
+      const response = await fetch(url);
+  
+      // Log the response status
+      console.log("Response status:", response.status);
+  
+      if (!response.ok) {
+        throw new Error("Failed to fetch outlets");
+      }
+  
+      const data = await response.json();
+  
+      // Log the fetched data
+      console.log("Fetched data:", data);
+  
+      return data;
+    } catch (error) {
+      console.error("Error fetching outlets:", error);
+      return [];
+    }
+  }
+  
 export async function createOwner(name, email, password){
     const response = await fetch("http://127.0.0.1:5000/owners",{
         method : "POST",
@@ -74,7 +108,62 @@ export async function createOwner(name, email, password){
     return data;
     
 }
-
+export async function fetchMenu(outletId) {
+    try {
+      const response = await fetch(`http://127.0.0.1:5000/food/outlet_id/${outletId}`);
+  
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+  
+      const data = await response.json();
+  
+      if (data.length === 0) {
+        throw new Error("No food items found for this outlet.");
+      }
+  
+      return data;
+    } catch (error) {
+      console.error("Error fetching food data:", error);
+      throw error;
+    }
+  }
+  
+  
+  export const addToCart = (cart, item, setCart) => {
+    const existingItem = cart.find((cartItem) => cartItem.id === item.id);
+    if (existingItem) {
+      setCart(
+        cart.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem
+        )
+      );
+    } else {
+      setCart([...cart, { ...item, quantity: 1 }]);
+    }
+  };
+  
+  export const removeFromCart = (cart, item, setCart) => {
+    const existingItem = cart.find((cartItem) => cartItem.id === item.id);
+    if (existingItem.quantity === 1) {
+      setCart(cart.filter((cartItem) => cartItem.id !== item.id));
+    } else {
+      setCart(
+        cart.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity - 1 }
+            : cartItem
+        )
+      );
+    }
+  };
+  
+  export const closeCart = (setCart) => {
+    setCart([]);
+  };
+    
 export async function validateOwnerCredentials(email, password){
     try{
         const response = await fetch (`http://127.0.0.1:5000/owners?email=${email}`);
@@ -130,5 +219,28 @@ export async function login(email, password) {
     const data = await response.json(); // Parse response body
     return data; // Ensure it returns an object with { id, name, email }
 }
+
+export async function getFood() {
+    try {
+        const response = await fetch("http://127.0.0.1:5000/foods");
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const foods = await response.json();
+
+        const formattedFoods = foods.map(food => ({
+            category: food.category,
+            name: food.name,
+            price: food.price,
+            waiting_time: food.waiting_time
+        }));
+
+        return formattedFoods;
+    } catch (error) {
+        console.error("Error fetching food data:", error);
+        return [];
+    }
+}
+
 
 
