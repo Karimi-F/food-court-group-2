@@ -6,19 +6,14 @@ from sqlalchemy_serializer import SerializerMixin
 db = SQLAlchemy()
 
 # Customer Model
-class Customer(db.Model, SerializerMixin):
+class Customer(db.Model):
     __tablename__ = 'customers'
-    
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    email = db.Column(db.String, unique=True, nullable=False)
-    password = db.Column(db.String, nullable=False)
-    
-    # One customer can have many orders
-    orders = relationship('Order', back_populates='customer', cascade="all, delete-orphan")
-    
-    # Serialization rules
-    serialize_rules = ('-password', '-orders.customer')
+    name = db.Column(db.String(100))
+    email = db.Column(db.String(100), unique=True)
+    password = db.Column(db.String(200))
+    # Define relationship to orders. SQLAlchemy will use the foreign key on Order.
+    orders = db.relationship('Order', backref='customer', lazy=True)
 
 # Owner Model
 class Owner(db.Model, SerializerMixin):
@@ -41,7 +36,7 @@ class Outlet(db.Model, SerializerMixin):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
-    
+    photo_url = db.Column(db.String, nullable=True)
     # Foreign key linking to Owner
     owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'), nullable=False)
     
@@ -61,11 +56,16 @@ class TableReservation(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     table_name = db.Column(db.String, nullable=False)
     
-    # One table reservation can have one order
-    orders = relationship('Order', back_populates='table_reservation', cascade="all, delete-orphan")
+    # One table reservation can have one order (one-to-one relationship)
+    order = db.relationship(
+        'Order',
+        back_populates='table_reservation',
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
     
-    # Serialization rules
-    serialize_rules = ('-orders.table_reservation',)
+    # Serialization rules (exclude the order to avoid circular references)
+    serialize_rules = ('-order',)
 
 # Food Model
 class Food(db.Model, SerializerMixin):
@@ -75,46 +75,40 @@ class Food(db.Model, SerializerMixin):
     name = db.Column(db.String, nullable=False)
     price = db.Column(db.Float, nullable=False)
     waiting_time = db.Column(db.String, nullable=False)
-    
+    category = db.Column(db.String, nullable=True)
     # Foreign key linking to Outlet
     outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id'), nullable=False)
     
     # Relationship to Outlet
-    outlet = relationship('Outlet', back_populates='foods')
+    outlet = db.relationship('Outlet', back_populates='foods')
     
-    # One food item can be part of many orders
-    orders = relationship('Order', back_populates='food', cascade="all, delete-orphan")
+    # (Note: The previous relationship to Order has been removed. 
+    # Typically an Order would reference multiple foods via an association table.)
     
     # Serialization rules
-    serialize_rules = ('-outlet.foods', '-orders.food')
+    serialize_rules = ('-outlet.foods',)
 
 # Order Model
-class Order(db.Model, SerializerMixin):
+class Order(db.Model):
     __tablename__ = 'orders'
-    
     id = db.Column(db.Integer, primary_key=True)
-    
     # Foreign key linking to Customer
-    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=True)
+    # Now table_id is defined as a foreign key referencing table_reservations.id
+    table_id = db.Column(db.Integer, db.ForeignKey('table_reservations.id'), nullable=False)
+    datetime = db.Column(db.DateTime, nullable=False)
+    total = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(50), default="pending")
     
-    # Foreign key linking to TableReservation
-    tablereservation_id = db.Column(db.Integer, db.ForeignKey('table_reservations.id'), nullable=False)
+    # Relationship to TableReservation (one-to-one)
+    table_reservation = db.relationship('TableReservation', back_populates='order')
     
-    # Foreign key linking to Food
-    food_id = db.Column(db.Integer, db.ForeignKey('foods.id'), nullable=False)
-    
-    quantity = db.Column(db.Integer, nullable=False)
-    status = db.Column(db.String, nullable=False)
-    datetime = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationship to Customer
-    customer = relationship('Customer', back_populates='orders')
-    
-    # Relationship to Table Reservation
-    table_reservation = relationship('TableReservation', back_populates='orders')
-    
-    # Relationship to Food
-    food = relationship('Food', back_populates='orders')
-    
-    # Serialization rules
-    serialize_rules = ('-customer.orders', '-table_reservation.orders', '-food.orders')
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "customer_id": self.customer_id,
+            "table_id": self.table_id,
+            "datetime": self.datetime.isoformat(),
+            "total": self.total,
+            "status": self.status,
+        }

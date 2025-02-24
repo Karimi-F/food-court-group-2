@@ -1,101 +1,75 @@
-from faker import Faker
-from random import randint, choice
 from app import app, db
 from models import Customer, Owner, Outlet, TableReservation, Food, Order
+from datetime import datetime
 
-fake = Faker()
-
-# Function to seed data
-def seed_data():
-    # Drop all tables before seeding new data
+# Initialize the app context
+with app.app_context():
+    # Drop and recreate the tables
     db.drop_all()
-    db.create_all()  # Recreate tables based on updated models
+    db.create_all()
 
-    # Seed Owners
-    owners = []
-    for _ in range(3):  # Creating 3 owners
-        owner = Owner(
-            name=fake.name(),
-            email=fake.email(),
-            password=fake.password()
-        )
-        db.session.add(owner)
-        owners.append(owner)
+    # Create Owners
+    owner1 = Owner(name="Alice Johnson", email="alice@example.com", password="securepass")
+    owner2 = Owner(name="Bob Smith", email="bob@example.com", password="strongpass")
     
+    db.session.add_all([owner1, owner2])
     db.session.commit()
 
-    # Seed Outlets
-    outlets = []
-    for _ in range(5):  # Creating 5 outlets
-        owner = choice(owners)  # Assigning each outlet to a random owner
-        outlet = Outlet(
-            name=fake.company(),
-            owner_id=owner.id
-        )
-        db.session.add(outlet)
-        outlets.append(outlet)
+    # Create Outlets with real images
+    outlet1 = Outlet(
+        name="Alice's Diner", 
+        photo_url="https://images.unsplash.com/photo-1555396273-367ea4eb4db5", 
+        owner_id=owner1.id
+    )
+    outlet2 = Outlet(
+        name="Bob's Burgers", 
+        photo_url="https://images.unsplash.com/photo-1565299507177-b0ac66763828", 
+        owner_id=owner2.id
+    )
     
+    db.session.add_all([outlet1, outlet2])
     db.session.commit()
 
-    # Seed Customers
-    customers = []
-    for _ in range(10):  # Creating 10 customers
-        customer = Customer(
-            name=fake.name(),
-            email=fake.email(),
-            password=fake.password()
-        )
-        db.session.add(customer)
-        customers.append(customer)
+    # Create Customers
+    customer1 = Customer(name="Charlie Davis", email="charlie@example.com", password="mypassword")
+    customer2 = Customer(name="Dana White", email="dana@example.com", password="secure123")
     
+    db.session.add_all([customer1, customer2])
     db.session.commit()
 
-    # Seed Table Reservations
-    tables = []
-    for _ in range(8):  # Creating 8 table reservations
-        
-        table = TableReservation(
-            table_name=f"Table {_+1}",
-           
-        )
-        db.session.add(table)
-        tables.append(table)
-    
+    # Create Table Reservations
+    table1 = TableReservation(table_name="Table 1")
+    table2 = TableReservation(table_name="Table 2")
+
+    db.session.add_all([table1, table2])
     db.session.commit()
 
-    # Seed Food Items
-    foods = []
-    for _ in range(15):  # Creating 15 food items
-        outlet = choice(outlets)
-        food = Food(
-            name=fake.word(),
-            price=round(fake.random_number(digits=2), 2),
-            waiting_time=f"{randint(5, 30)} min",
-            outlet_id=outlet.id
-        )
-        db.session.add(food)
-        foods.append(food)
+    # Create Food Items
+    food1 = Food(name="Cheeseburger", price=8.99, waiting_time="10 mins", category="Burgers", outlet_id=outlet2.id)
+    food2 = Food(name="Pasta Alfredo", price=12.99, waiting_time="15 mins", category="Pasta", outlet_id=outlet1.id)
     
+    db.session.add_all([food1, food2])
     db.session.commit()
 
-    # Seed Orders
-    for _ in range(20):  # Creating 20 orders
-        customer = choice(customers)
-        table = choice(tables)
-        food = choice(foods)
-        order = Order(
-            customer_id=customer.id,
-            tablereservation_id=table.id,
-            food_id=food.id,
-            quantity=randint(1, 5),
-            status=choice(["Pending", "Completed", "Cancelled"])
-        )
-        db.session.add(order)
-    
+    # Create Orders
+    # Order 1: 2 cheeseburgers for customer1 at table1.
+    order1 = Order(
+        customer_id=customer1.id,
+        table_id=table1.id,    # Use table_id to link to the TableReservation
+        status="Pending",
+        datetime=datetime.utcnow(),
+        total=2 * food1.price  # For 2 cheeseburgers
+    )
+    # Order 2: 1 Pasta Alfredo for customer2 at table2.
+    order2 = Order(
+        customer_id=customer2.id,
+        table_id=table2.id,
+        status="Pending",
+        datetime=datetime.utcnow(),
+        total=1 * food2.price  # For 1 pasta dish
+    )
+
+    db.session.add_all([order1, order2])
     db.session.commit()
+
     print("Database seeded successfully!")
-
-# Run the seed function inside the app context
-if __name__ == '__main__':
-    with app.app_context():
-        seed_data()
