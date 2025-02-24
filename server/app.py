@@ -3,9 +3,10 @@ from flask_migrate import Migrate
 from flask_restful import Api, Resource,reqparse
 from flask_cors import CORS
 from models import db, Owner, Customer,Outlet,Food, Order, TableReservation 
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+from flask import session
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://karimi:123456@localhost:5432/food_court_db"
@@ -20,6 +21,9 @@ jwt = JWTManager(app)
 api = Api(app)
 # CORS(app, resources={r"/api/*": {"origins": "*"}})
 CORS(app)
+
+# Store revoked tokens(use a database in production)
+blacklist = set()
 
 class BaseSignup(Resource):
     model = None
@@ -50,8 +54,17 @@ class BaseSignup(Resource):
         db.session.add(new_user)
         db.session.commit()
 
+        # store user data in session
+        session['user_id'] = new_user.id  # Store the user ID in session
+        session['logged_in'] = True
+
         # Generate JWT Token
         access_token = create_access_token(identity={'email': new_user.email})
+        session['access_token'] = access_token
+
+        print("Session Data:", session)
+        
+
 
         return jsonify({
             'message': f'{self.model.__name__} Signup successful',
@@ -70,17 +83,6 @@ class CustomerSignup(BaseSignup):
 class OwnerSignup(BaseSignup):
     model = Owner
     redirect_url = "/ownerdashboard"  # Redirect to Owner Dashboard
-
-
-
-
-
-
-
-
-
-
-
 
 
 class OwnerResource(Resource):
@@ -222,6 +224,13 @@ class Login(Resource):
 
         return make_response(jsonify(response_data), 200)
     
+class Logout(Resource):
+    def post(self):
+        session.pop('user_id', None)
+        session.pop('user', None)
+        return jsonify({'message': 'Logged out successfully'}), 200
+
+
 class OutletResource(Resource):
     def get(self, id=None):
     # """Retrieve all outlets, a single outlet by ID, or search by name."""
@@ -359,24 +368,6 @@ class FoodByPriceResource(Resource):
         except Exception as e:
             return {"message": str(e)}, 500
         
-#Resource to add food
-
-
-
-
-# Registering the resources with Flask-RESTful
-    api.add_resource(FoodsResource, "/foods")
-api.add_resource(FoodByNameResource, "/foods/<string:name>")
-api.add_resource(FoodByPriceResource, "/foods/<int:price>")  
-api.add_resource(FoodByOutletResource, "/food/outlet_id/<int:outlet_id>")
-
-
-# Add the resource to the API
-api.add_resource(OutletResource, '/outlets', '/outlets/<int:id>')
-api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")  
-api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")  
-api.add_resource(Login, "/login")
-
 class OrdersResource(Resource):
     def get(self, id=None):
         """Retrieve a single order by ID or all orders if no ID is provided."""
@@ -444,7 +435,7 @@ class OrdersResource(Resource):
         db.session.commit()
         return {"message": "Expired tables have been released."}, 200
 
-api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
+# api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 
 #Resource to get all orders
 class OrdersResource(Resource):
@@ -483,7 +474,25 @@ class OrdersResource(Resource):
         return {"message": "Order has been deleted successfully"}, 200
 
         
-# api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
+#Resource to add food
+
+
+
+
+# Registering the resources with Flask-RESTful
+    api.add_resource(FoodsResource, "/foods")
+api.add_resource(FoodByNameResource, "/foods/<string:name>")
+api.add_resource(FoodByPriceResource, "/foods/<int:price>")  
+api.add_resource(FoodByOutletResource, "/food/outlet_id/<int:outlet_id>")
+
+
+# Add the resource to the API
+api.add_resource(OutletResource, '/outlets', '/outlets/<int:id>')
+api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")  
+api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")  
+api.add_resource(Login, "/login")
+api.add_resource(Logout, "/logout")
+api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 
 if __name__ == '__main__':
     app.run(debug=True)
