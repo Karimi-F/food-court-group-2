@@ -1,10 +1,11 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function Cart() {
   const searchParams = useSearchParams();
+  const router = useRouter(); // For redirection
   const cartParam = searchParams.get("data");
   const [cart, setCart] = useState([]);
 
@@ -78,7 +79,7 @@ export default function Cart() {
     return isBooked ? "booked" : "available";
   };
 
-  // Send the order data to the Flask API endpoint
+  // Send the order data to the Flask API endpoint and redirect customer
   const placeOrder = async () => {
     if (!selectedDateTime) {
       alert("Please select a date and time before placing your order.");
@@ -109,6 +110,10 @@ export default function Cart() {
       const result = await res.json();
       if (res.ok) {
         setOrderStatus("Your order has been confirmed!");
+        // Redirect the customer to their dashboard after order confirmation
+        setTimeout(() => {
+          router.push("/customer-dashboard");
+        }, 2000);
       } else {
         console.error("Server error:", result);
         setOrderStatus(`Failed to place order: ${result.error}`);
