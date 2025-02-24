@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, make_response, jsonify
 from flask_migrate import Migrate
 from flask_restful import Api, Resource,reqparse
 from flask_cors import CORS
@@ -288,7 +288,9 @@ class FoodByNameResource(Resource):
 
         db.session.delete(food)
         db.session.commit()
+
         return ({'message': 'Customer deleted successfully'}), 200
+    
 class FoodByOutletResource(Resource):
     def get(self, outlet_id):
         try:
@@ -300,6 +302,7 @@ class FoodByOutletResource(Resource):
             return {"message": str(e)}, 500
 
 # Resource to get food by price
+
 class FoodByPriceResource(Resource):
     def get(self, price):
         try:
@@ -309,61 +312,59 @@ class FoodByPriceResource(Resource):
             return {"message": "Price not found"}, 404
         except Exception as e:
             return {"message": str(e)}, 500
-        
-
-
 class OrdersResource(Resource):
     def post(self):
         data = request.get_json()
-        if 'status' in data:
-            order.status = data['status']
-            
-            # If order is completed, ask client if they want to reserve a table
-            if order.status == "completed" and 'reserve_table' in data and data['reserve_table']:
-                return self.reserve_table(order.id)
-        
-        db.session.commit()
-        return order.to_dict(), 200
-    
-    def delete(self, id):
-        """Delete order."""
-        order = Order.query.get(id)
-        if not order:
-            return {"error": "Order not found"}, 404
-        
-        db.session.delete(order)
-        db.session.commit()
-        return {"message": "Order has been deleted successfully"}, 200
-    
-    def reserve_table(self, order_id):
-        """Handles table reservation."""
-        available_tables = TableReservation.query.filter_by(is_reserved=False).all()
-        if not available_tables:
-            return {"error": "No available tables"}, 400
-        
-        # Assign the first available table
-        table = available_tables[0]
-        table.is_reserved = True
-        table.order_id = order_id
-        table.reserved_at = datetime.utcnow()
-        db.session.commit()
-        
-        return {"message": f"TableReservation {table.id} has been successfully reserved. You may be there in 30 minutes."}, 200
-    
-    def release_expired_tables(self):
-        """Releases tables if the client hasn't arrived within 30 minutes."""
-        expiration_time = datetime.utcnow() - timedelta(minutes=30)
-        expired_tables = TableReservation.query.filter(TableReservation.is_reserved == True, TableReservation.reserved_at < expiration_time).all()
-        
-        for table in expired_tables:
-            table.is_reserved = False
-            table.order_id = None
-            table.reserved_at = None
-        
-        db.session.commit()
-        return {"message": "Expired tables have been released."}, 200
+        print("Received order data:", data)  # Debug log
 
-# api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
+
+        if not data:
+            return {"error": "No input data provided"}, 400
+
+        try:
+            # Extract data from the request payload
+            table_id = data.get('tableId')
+            datetime_str = data.get('datetime')
+            total = data.get('total')
+            customer_id = data.get('customerId', None)  # Optional; if not provided, remains None
+
+            print("Table ID:", table_id)
+            print("Datetime string:", datetime_str)
+            print("Total:", total)
+            print("Customer ID:", customer_id)
+
+            # Convert the datetime string into a datetime object.
+            # Expected format: "YYYY-MM-DDTHH:MM" (e.g., "2025-02-23T10:30")
+            order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
+
+            # Create a new Order. Note: table_id here is a foreign key referencing TableReservation.id.
+            new_order = Order(
+                customer_id=customer_id,
+                table_id=table_id,
+                datetime=order_datetime,
+                total=total,
+                status="pending"
+            )
+
+            db.session.add(new_order)
+            db.session.commit()
+            return new_order.to_dict(), 201
+
+        except Exception as e:
+            db.session.rollback()
+            print("Error creating order:", e)  # Debug log
+            return {"error": str(e)}, 500
+
+    def get(self, id=None):
+        if id:
+            order = Order.query.get(id)
+            if not order:
+                return {"error": "Order not found"}, 404
+            return order.to_dict(), 200
+        orders = Order.query.all()
+        return [order.to_dict() for order in orders], 200
+
+
 
 #Resource to get all orders
 class OrdersResource(Resource):
@@ -372,10 +373,11 @@ class OrdersResource(Resource):
         if id:
             order = Order.query.get(id)
             if not order:
-                return {"error": "Order not found"}, 404
-            return order.to_dict(), 200
-        orders = Order.query.all()
-        return [order.to_dict() for order in orders], 200
+                return ({'error': 'Order not found'}), 404
+            return (order.to_dict()), 200
+        else:
+            orders = Order.query.all()
+            return jsonify([order.to_dict() for order in orders]), 200
 
     def patch(self, id):
         order = Order.query.get(id)
@@ -396,6 +398,9 @@ class OrdersResource(Resource):
         db.session.commit()
         return {"message": "Order deleted successfully"}, 200
 
+
+# Register resources with the API
+api.add_resource(FoodsResource, "/foods")
         
 #Resource to add food
 
@@ -403,7 +408,7 @@ class OrdersResource(Resource):
 
 
 # Registering the resources with Flask-RESTful
-    api.add_resource(FoodsResource, "/foods")
+api.add_resource(FoodsResource, "/foods")
 api.add_resource(FoodByNameResource, "/foods/<string:name>")
 api.add_resource(FoodByPriceResource, "/foods/<int:price>")  
 api.add_resource(FoodByOutletResource, "/food/outlet_id/<int:outlet_id>")
@@ -416,6 +421,7 @@ api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")
 api.add_resource(Login, "/login")
 api.add_resource(Logout, "/logout")
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
+
 
 if __name__ == '__main__':
     app.run(debug=True)
