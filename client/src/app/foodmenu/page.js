@@ -62,9 +62,10 @@ export default function MenuPage() {
               className="flex justify-between items-center p-4 border rounded-md bg-white shadow-md"
             >
               <div>
+                <p className="text-green-600 font-semibold">{item.category}</p>
                 <p className="text-blue-700 font-semibold">{item.name}</p>
                 <p className="text-gray-600">Price: Ksh {item.price}</p>
-                <p className="text-gray-600">Wait Time: {item.waitTime}</p>
+                <p className="text-gray-600">Wait Time: {item.waiting_time}</p>
               </div>
 
               {/* Add/Remove Quantity Buttons */}
