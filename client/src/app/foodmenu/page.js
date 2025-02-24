@@ -1,3 +1,4 @@
+
 "use client"
 import { useState, useEffect } from "react";
 import { getFood } from "../lib/utils";
@@ -13,6 +14,7 @@ export default function MenuPage() {
     }
     fetchMenu();
   }, []);
+
 
   const addToCart = (item) => {
     const existingItem = cart.find((cartItem) => cartItem.id === item.id);
@@ -44,16 +46,21 @@ export default function MenuPage() {
     }
   };
 
+
   const closeCart = () => {
     setCart([]);
   };
+
+
 
 
   return (
     <div className="flex">
       {/* Menu Section */}
       <div className="w-3/4 p-6 bg-gray-100">
-        <h2 className="text-2xl text-blue-700 flex justify-center items-center font-bold mb-4">Menu</h2>
+        <h2 className="text-2xl text-blue-700 flex justify-center items-center font-bold mb-4">
+          Menu
+        </h2>
 
         <div className="space-y-4">
           {menu.map((item) => (
@@ -68,7 +75,6 @@ export default function MenuPage() {
                 <p className="text-gray-600">Wait Time: {item.waiting_time}</p>
               </div>
 
-              {/* Add/Remove Quantity Buttons */}
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => addToCart(item)}
@@ -88,20 +94,13 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* Cart Section (pops up when there's an item in the cart) */}
+      {/* Cart Section */}
       {cart.length > 0 && (
         <div
           className="w-1/4 bg-white shadow-md fixed top-0 right-0 h-full overflow-auto p-6"
           style={{ zIndex: 999 }}
         >
-          <button
-            onClick={closeCart}
-            className="bg-red-500 text-white px-4 py-2 rounded-md mb-4"
-          >
-            Close Cart
-          </button>
           <h2 className="text-2xl text-blue-700 font-bold mb-4">Cart</h2>
-
           <div className="space-y-4">
             {cart.map((item) => (
               <div
@@ -109,25 +108,25 @@ export default function MenuPage() {
                 className="flex justify-between items-center p-4 border rounded-md bg-gray-50"
               >
                 <div>
-                  <p className=" text-blue-700 font-semibold">{item.name}</p>
+                  <p className="text-blue-700 font-semibold">{item.name}</p>
                   <p className="text-gray-600">Quantity: {item.quantity}</p>
                   <p className="text-gray-600">Price: Ksh {item.price}</p>
-                  <p className="text-gray-600">
-                    Total: Ksh {item.quantity * item.price}
-                  </p>
+                  <p className="text-gray-600">Total: Ksh {item.quantity * item.price}</p>
                 </div>
               </div>
             ))}
           </div>
 
           <div className="mt-6">
-            <p className="text-blue-700 font-semibold">Total: Ksh {cart.reduce((total, item) => total + item.quantity * item.price, 0).toFixed(2)}</p>
+            <p className="text-blue-700 font-semibold">
+              Total: Ksh {cart.reduce((total, item) => total + item.quantity * item.price, 0).toFixed(2)}
+            </p>
           </div>
           <button
-            onClick={closeCart}
+            onClick={() => router.push(`/cart?data=${encodeURIComponent(JSON.stringify(cart))}`)}
             className="bg-red-500 text-white px-4 py-2 rounded-md mb-4"
           >
-            Order
+            Go To Cart
           </button>
         </div>
       )}

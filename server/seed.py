@@ -21,7 +21,6 @@ with app.app_context():
         photo_url="https://images.unsplash.com/photo-1555396273-367ea4eb4db5", 
         owner_id=owner1.id
     )
-    
     outlet2 = Outlet(
         name="Bob's Burgers", 
         photo_url="https://images.unsplash.com/photo-1565299507177-b0ac66763828", 
@@ -53,8 +52,22 @@ with app.app_context():
     db.session.commit()
 
     # Create Orders
-    order1 = Order(customer_id=customer1.id, tablereservation_id=table1.id, food_id=food1.id, quantity=2, status="Pending", datetime=datetime.utcnow())
-    order2 = Order(customer_id=customer2.id, tablereservation_id=table2.id, food_id=food2.id, quantity=1, status="Completed", datetime=datetime.utcnow())
+    # Order 1: 2 cheeseburgers for customer1 at table1.
+    order1 = Order(
+        customer_id=customer1.id,
+        table_id=table1.id,    # Use table_id to link to the TableReservation
+        status="Pending",
+        datetime=datetime.utcnow(),
+        total=2 * food1.price  # For 2 cheeseburgers
+    )
+    # Order 2: 1 Pasta Alfredo for customer2 at table2.
+    order2 = Order(
+        customer_id=customer2.id,
+        table_id=table2.id,
+        status="Pending",
+        datetime=datetime.utcnow(),
+        total=1 * food2.price  # For 1 pasta dish
+    )
 
     db.session.add_all([order1, order2])
     db.session.commit()
