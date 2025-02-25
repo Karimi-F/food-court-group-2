@@ -396,3 +396,10 @@ export const addOutlet = async (outletData) => {
     throw error; // Re-throw the error to handle it in the component
   }
 };
+export async function fetchOutletDetails(outletId) {
+  const response = await fetch(`http://127.0.0.1:5000/outlets/${outletId}`); // Replace with your API endpoint
+  if (!response.ok) {
+    throw new Error("Failed to fetch outlet details");
+  }
+  return response.json();
+}
