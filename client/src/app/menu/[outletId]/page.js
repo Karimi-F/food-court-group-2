@@ -2,17 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { fetchFoodByOutlet, updateFoodItem, deleteFoodItem, addFoodItem } from "../../lib/utils";
-// import { deleteFoodItem } from "../../lib/utils";
+import {
+  fetchFoodByOutlet,
+  updateFoodItem,
+  deleteFoodItem,
+  addFoodItem,
+} from "../../lib/utils"; // Removed the import for addOutlet
 
 export default function OutletMenu() {
   const router = useRouter();
   const { outletId } = useParams();
   const [foods, setFoods] = useState([]);
   const [editingFood, setEditingFood] = useState(null);
-  const [isAdding, setIsAdding] = useState(false);
+  const [isAddingFood, setIsAddingFood] = useState(false);
   const [newFood, setNewFood] = useState({ name: "", price: "", waiting_time: "", category: "" });
+  const [loggedInUser, setLoggedInUser] = useState(null); // State for logged-in user
 
+  // Fetch food items for the outlet
   useEffect(() => {
     if (!outletId) return;
 
@@ -28,53 +34,53 @@ export default function OutletMenu() {
     fetchFoods();
   }, [outletId]);
 
+  // Fetch the logged-in user
+  useEffect(() => {
+    const fetchLoggedInUser = async () => {
+      try {
+        const user = await fetch("/api/user"); // Replace with your actual API endpoint
+        const userData = await user.json();
+        setLoggedInUser(userData);
+      } catch (error) {
+        console.error("Error fetching logged-in user:", error);
+      }
+    };
+    fetchLoggedInUser();
+  }, []);
+
+  // Handle deleting a food item
   const handleDelete = async (foodId) => {
     if (confirm("Are you sure you want to delete this item?")) {
       try {
-        // Attempt to delete the food item
         await deleteFoodItem(foodId);
-  
-        // Update UI after deletion (remove the item from the list)
         setFoods((prevFoods) => prevFoods.filter((item) => item.id !== foodId));
       } catch (error) {
         console.error("Error deleting food item:", error);
       }
     }
   };
-  
 
+  // Handle editing a food item
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    
-    // Debugging: Log the editingFood object and its foodId
-    console.log("Editing food object:", editingFood);
-    console.log("Editing food ID:", editingFood?.id);
-  
-    // Ensure editingFood and editingFood.id are defined
     if (!editingFood || !editingFood.id) {
       console.error("No food item or food ID provided for editing");
       return;
     }
-  
+
     try {
-      // Call updateFoodItem with the foodId (not the food name)
       await updateFoodItem(editingFood.id, editingFood);
-      
-      // Update the frontend state to reflect the changes
       setFoods((prevFoods) =>
-        prevFoods.map((food) =>
-          food.id === editingFood.id ? editingFood : food
-        )
+        prevFoods.map((food) => (food.id === editingFood.id ? editingFood : food))
       );
-      
-      // Reset the editing state
       setEditingFood(null);
     } catch (error) {
       console.error("Error updating food item:", error);
     }
   };
-  
-  const handleAddSubmit = async (e) => {
+
+  // Handle adding a food item
+  const handleAddFoodSubmit = async (e) => {
     e.preventDefault();
     if (!newFood.name || !newFood.price || !newFood.waiting_time || !newFood.category) return;
 
@@ -90,7 +96,7 @@ export default function OutletMenu() {
       if (addedFood?.id) {
         setFoods((prevFoods) => [...prevFoods, addedFood]);
         setNewFood({ name: "", price: "", waiting_time: "", category: "" });
-        setIsAdding(false);
+        setIsAddingFood(false);
       }
     } catch (error) {
       console.error("Error adding food item:", error);
@@ -106,7 +112,10 @@ export default function OutletMenu() {
       <div className="max-w-4xl mx-auto mt-6 bg-white p-6 shadow-md rounded-lg">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold mb-4">Food Items</h2>
-          <button onClick={() => setIsAdding(true)} className="bg-blue-500 text-white px-4 py-2 rounded-md">
+          <button
+            onClick={() => setIsAddingFood(true)}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md"
+          >
             + Add Food
           </button>
         </div>
@@ -175,11 +184,12 @@ export default function OutletMenu() {
         )}
       </div>
 
-      {isAdding && (
+      {/* Add Food Modal */}
+      {isAddingFood && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-md w-96">
             <h2 className="text-lg font-semibold mb-4">Add New Food</h2>
-            <form onSubmit={handleAddSubmit} className="space-y-3">
+            <form onSubmit={handleAddFoodSubmit} className="space-y-3">
               <input
                 type="text"
                 placeholder="Food Name"
@@ -213,7 +223,7 @@ export default function OutletMenu() {
                 required
               />
               <div className="flex justify-end gap-2">
-                <button onClick={() => setIsAdding(false)} className="bg-gray-400 text-white px-4 py-2 rounded">
+                <button onClick={() => setIsAddingFood(false)} className="bg-gray-400 text-white px-4 py-2 rounded">
                   Cancel
                 </button>
                 <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">
