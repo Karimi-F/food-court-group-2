@@ -374,3 +374,25 @@ export async function addFoodItem(foodData) {
     return null;
   }
 }
+// utils.js
+
+export const addOutlet = async (outletData) => {
+  try {
+    const response = await fetch("http://127.0.0.1:5000/outlets", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(outletData),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to add outlet");
+    }
+
+    return await response.json(); // Return the newly created outlet
+  } catch (error) {
+    console.error("Error adding outlet:", error);
+    throw error; // Re-throw the error to handle it in the component
+  }
+};
