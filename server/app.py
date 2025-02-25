@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request,jsonify
 from flask_migrate import Migrate
 from flask_restful import Api, Resource,reqparse
 from flask_cors import CORS
@@ -10,7 +10,7 @@ import json
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://food_court_user:098765@localhost:5432/food_court_db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://beren:123456@localhost:5432/food_court_db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
 app.config["SECRET_KEY"] = "your_secret_key"  # Add a secure secret key
@@ -73,8 +73,7 @@ class OwnerResource(Resource):
         if not owner:
             return {"error": "Owner not found"}, 404
         return owner.to_dict(), 200
-
-    def post(self):
+    
         data = request.get_json()
         name = data.get('name')
         email = data.get('email')
@@ -217,6 +216,7 @@ class FoodsResource(Resource):
         name = data.get('name')
         price = data.get('price')
         waiting_time = data.get('waiting_time')
+        category=data.get('category')
         outlet_id = data.get('outlet_id')
 
         if not name or not price or not waiting_time or not outlet_id:
@@ -225,7 +225,7 @@ class FoodsResource(Resource):
         if Food.query.filter_by(name=name).first():
             return {"error": "Food already exists"}, 409
         
-        new_food = Food(name=name, price=price, waiting_time=waiting_time, outlet_id=outlet_id)
+        new_food = Food(name=name, price=price, waiting_time=waiting_time, outlet_id=outlet_id,category=category)
         db.session.add(new_food)
         db.session.commit()
 
@@ -380,16 +380,36 @@ class OrdersResource(Resource):
         db.session.commit()
         return {"message": "Order deleted successfully"}, 200
 
+class OwnerFoodResource(Resource):
+    def get(self, owner_id):
+        owner = Owner.query.get(owner_id)
+        if not owner:
+            return {"message": "Owner not found"}, 404
+
+        # Get all outlets owned by this owner
+        outlets = Outlet.query.filter_by(owner_id=owner_id).all()
+        if not outlets:
+            return {"message": "No outlets found for this owner"}, 404
+
+        # Get food from these outlets
+        food_items = Food.query.filter(Food.outlet_id.in_([outlet.id for outlet in outlets])).all()
+
+        return [food.to_dict() for food in food_items], 200
+
+
+
 
 # Register resources with the API
 api.add_resource(FoodsResource, "/foods")
 api.add_resource(FoodByNameResource, "/foods/<string:name>")
+api.add_resource(FoodByOutletResource, "/food/outlet_id/<int:outlet_id>")
 api.add_resource(FoodByPriceResource, "/foods/<int:price>")
 api.add_resource(OutletResource, '/outlets', '/outlets/<int:id>')
 api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")
 api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")
 api.add_resource(Login, "/login")
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
+api.add_resource(OwnerFoodResource, "/owner/<int:owner_id>/foods")
 
 
 if __name__ == '__main__':
