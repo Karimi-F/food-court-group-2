@@ -244,3 +244,28 @@ export async function getFood() {
 
 
 
+// Logout
+
+// utils.js
+export const logoutUser = async (apiUrl) => {
+  try {
+    const response = await fetch(`${apiUrl}/logout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", // Ensure cookies are sent with the request
+    });
+
+    if (response.ok) {
+      console.log("Successfully logged out");
+      return true; // Return true if logout is successful
+    } else {
+      console.error("Logout failed");
+      return false; // Return false if logout fails
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
+    return false; // Return false in case of error
+  }
+};
