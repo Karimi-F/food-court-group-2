@@ -84,6 +84,7 @@ export default function CustomerDashboard() {
 
       {/* Restaurant Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
         {outlets.length > 0 ? (
           outlets.map((outlet, index) => (
             <div key={index} className="border p-4 rounded-lg shadow bg-white">
