@@ -9,7 +9,11 @@ export default function MenuPage() {
   const [menu, setMenu] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [category, setCategory] = useState("");
+  const [searchFood, setSearchFood] = useState("");
 
+
+  
   useEffect(() => {
     if (id) {
       fetchMenu(id)
@@ -31,14 +35,49 @@ export default function MenuPage() {
         <h2 className="text-2xl text-blue-700 flex justify-center items-center font-bold mb-4">
           Menu for Restaurant {id} 
         </h2>
+        <div className="flex justify-between gap-60 ">
+  {/* Search Bar */}
+  <div className="flex-1 p-4">
+    <input
+      type="text"
+      placeholder="Search food..."
+      className="w-full h-12 px-4 rounded-lg 
+                 text-gray-600 text-lg
+                 placeholder:text-gray-400
+                 border border-gray-300
+                 outline-none"
+                 value={searchFood}
+                 onChange={(e) => setSearchFood(e.target.value)}
+    />
+  </div>
 
+  {/* Category Dropdown */}
+  <div className="flex-1 p-4">
+    <select
+      className="w-full h-12 px-4 border rounded-lg text-blue-700"
+      value={category}
+      onChange={(e) => setCategory(e.target.value)}
+    >
+      <option value="">Pick a category</option>
+      <option value="Breakfast">Breakfast</option>
+      <option value="Lunch">Lunch</option>
+      <option value="Snacks">Snacks</option>
+      <option value="Beverages">Beverages</option>
+      <option value="Desserts">Desserts</option>
+    </select>
+  </div>
+</div>
+
+        
         {loading && <p className="text-gray-600">Loading menu...</p>}
         {error && <p className="text-red-600">Error: {error}</p>}
 
         <div className="space-y-4">
           {!loading &&
             !error &&
-            menu.map((item) => (
+            menu
+            .filter((item) => item.name.toLowerCase().includes(searchFood.toLowerCase()))
+            .map((item) => (
               <div
                 key={item.id}
                 className="flex justify-between items-center p-4 border rounded-md bg-white shadow-md"
