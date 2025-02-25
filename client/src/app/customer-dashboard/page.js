@@ -158,7 +158,7 @@ export default function CustomerDashboard() {
             <h2 className="text-xl text-blue-700 font-bold">{name}</h2>
             {/* <p className="text-gray-600">{name}</p> */}
             <p className="text-gray-800">Description(20 words){name}</p>
-            {/* <p className="text-yellow-500">⭐ 4.5</p> */}
+            {/* <p className="text-yellow-500">⭝ 4.5</p> */}
             <button className="mt-2 bg-blue-700 text-white p-2 rounded w-full">
               View Menu
             </button>
