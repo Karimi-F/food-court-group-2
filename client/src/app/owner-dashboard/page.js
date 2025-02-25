@@ -3,13 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { fetchOwnerOutlets } from "../lib/utils"; // ✅ Ensure correct path
+import { fetchOwnerOutlets, addOutlet } from "../lib/utils"; // ✅ Ensure correct path
 
 export default function OwnerDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [outlets, setOutlets] = useState([]);
+  const [isAddingOutlet, setIsAddingOutlet] = useState(false); // State for modal visibility
+  const [newOutlet, setNewOutlet] = useState({ name: "", photo_url: "" }); // State for new outlet form
 
+  // Fetch outlets owned by the logged-in user
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login"); // Redirect if not logged in
@@ -19,6 +22,29 @@ export default function OwnerDashboard() {
       fetchOwnerOutlets(session.user.id).then(setOutlets);
     }
   }, [status, session, router]);
+
+  // Handle adding a new outlet
+  const handleAddOutletSubmit = async (e) => {
+    e.preventDefault();
+    if (!newOutlet.name || !newOutlet.photo_url) return;
+
+    const outletData = {
+      ...newOutlet,
+      owner_id: session.user.id, // Auto-fill the owner ID
+    };
+
+    try {
+      const addedOutlet = await addOutlet(outletData);
+      if (addedOutlet?.id) {
+        setOutlets((prevOutlets) => [...prevOutlets, addedOutlet]);
+        setNewOutlet({ name: "", photo_url: "" });
+        setIsAddingOutlet(false);
+        alert("Outlet added successfully!");
+      }
+    } catch (error) {
+      console.error("Error adding outlet:", error);
+    }
+  };
 
   if (status === "loading") return <p>Loading...</p>;
 
@@ -54,6 +80,53 @@ export default function OwnerDashboard() {
           <p className="text-gray-600">No outlets found.</p>
         )}
       </div>
+
+      {/* Add Outlet Button */}
+      <button
+        onClick={() => setIsAddingOutlet(true)}
+        className="mt-6 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+      >
+        + Add Outlet
+      </button>
+
+      {/* Add Outlet Modal */}
+      {isAddingOutlet && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-md w-96">
+            <h2 className="text-lg font-semibold mb-4">Add New Outlet</h2>
+            <form onSubmit={handleAddOutletSubmit} className="space-y-3">
+              <input
+                type="text"
+                placeholder="Outlet Name"
+                value={newOutlet.name}
+                onChange={(e) => setNewOutlet({ ...newOutlet, name: e.target.value })}
+                className="w-full p-2 border rounded"
+                required
+              />
+              <input
+                type="url"
+                placeholder="Photo URL"
+                value={newOutlet.photo_url}
+                onChange={(e) => setNewOutlet({ ...newOutlet, photo_url: e.target.value })}
+                className="w-full p-2 border rounded"
+                required
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddingOutlet(false)}
+                  className="bg-gray-400 text-white px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">
+                  Add
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
