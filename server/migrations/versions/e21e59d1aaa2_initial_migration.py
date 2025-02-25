@@ -1,14 +1,14 @@
 """initial commit
 
-<<<<<<<< HEAD:server/migrations/versions/e21e59d1aaa2_initial_migration.py
+
 Revision ID: e21e59d1aaa2
 Revises: 
 Create Date: 2025-02-23 23:59:35.115717
-========
+
 Revision ID: 4d83cb0c8ea7
 Revises: 
 Create Date: 2025-02-23 15:53:35.444457
->>>>>>>> 13dffea005265068cead9f407f0f42ea4feb0c5b:server/migrations/versions/4d83cb0c8ea7_initial_commit.py
+
 
 """
 from alembic import op
@@ -16,11 +16,11 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-<<<<<<<< HEAD:server/migrations/versions/e21e59d1aaa2_initial_migration.py
+
 revision = 'e21e59d1aaa2'
-========
+
 revision = '4d83cb0c8ea7'
->>>>>>>> 13dffea005265068cead9f407f0f42ea4feb0c5b:server/migrations/versions/4d83cb0c8ea7_initial_commit.py
+
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -52,11 +52,11 @@ def upgrade():
     op.create_table('outlets',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-<<<<<<<< HEAD:server/migrations/versions/e21e59d1aaa2_initial_migration.py
+
     sa.Column('photo_url', sa.String(), nullable=False),
-========
+
     sa.Column('photo_url', sa.String(), nullable=True),
->>>>>>>> 13dffea005265068cead9f407f0f42ea4feb0c5b:server/migrations/versions/4d83cb0c8ea7_initial_commit.py
+
     sa.Column('owner_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['owner_id'], ['owners.id'], ),
     sa.PrimaryKeyConstraint('id'),
