@@ -393,7 +393,7 @@ class OrdersResource(Resource):
 api.add_resource(FoodsResource, "/foods")
 api.add_resource(FoodByNameResource, "/foods/<string:name>")
 api.add_resource(FoodByPriceResource, "/foods/<int:price>")  
-api.add_resource(FoodByOutletResource, "/food/outlet_id/<int:outlet_id>")
+api.add_resource(FoodByOutletResource, "/foods/outlet_id/<int:outlet_id>")
 
 api.add_resource(OutletResource, '/outlets', '/outlets/<int:id>')
 api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")  
