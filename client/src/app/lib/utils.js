@@ -244,3 +244,133 @@ export async function getFood() {
 
 
 
+export async function fetchOwnerOutlets(ownerId) {
+  if (!ownerId) {
+    console.error("fetchOwnerOutlets: ownerId is undefined");
+    return [];
+  }
+
+  console.log(`Fetching outlets for owner_id: ${ownerId}`);
+
+  try {
+    const response = await fetch('http://127.0.0.1:5000/owner/3/outlets');
+    const data = await response.json();
+    console.log("Fetched outlets:", data);
+    return data;
+  } catch (error) {
+    console.error("Error fetching outlets:", error);
+    return [];
+  }
+}
+export async function fetchFoodByOutlet(outletId) {
+  if (!outletId) {
+    console.error("fetchFoodByOutlet: outletId is undefined");
+    return [];
+  }
+
+  console.log(`Fetching food for outlet_id: ${outletId}`);
+
+  try {
+    const response = await fetch(`http://127.0.0.1:5000/outlets/${outletId}/foods`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("Fetched food items:", data);
+    return data;
+  } catch (error) {
+    console.error("Error fetching food:", error);
+    return [];
+  }
+}
+
+export async function updateFoodItem(foodId, updatedData) {
+  // Debugging: Log the foodId parameter
+  console.log("foodId in updateFoodItem:", foodId);
+
+  if (!foodId || typeof foodId !== "number") {
+    console.error("updateFoodItem: foodId must be a valid number");
+    return null;
+  }
+
+  try {
+    // Use the correct endpoint with foodId in the URL
+    const response = await fetch(`http://127.0.0.1:5000/api/food/id/${foodId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(updatedData)
+    });
+
+    if (!response.ok) {
+      console.error(`Failed to update food item with ID "${foodId}"`);
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating food item:", error);
+    return null;
+  }
+}
+
+export async function deleteFoodItem(foodId) {  // Change to use 'foodId'
+  if (!foodId) {
+    console.error("deleteFoodItem: foodId is missing");
+    return null;
+  }
+
+  console.log(`Deleting food item with ID: ${foodId}`);
+
+  try {
+    // Use the correct 'foodId' in the API endpoint
+    const response = await fetch(`http://127.0.0.1:5000/api/food/id/${foodId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete food: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("Deleted food item:", data);
+    return data;
+  } catch (error) {
+    console.error("Error deleting food item:", error);
+    return null;
+  }
+}
+
+
+export async function addFoodItem(foodData) {
+  if (!foodData.name || !foodData.price || !foodData.waiting_time || !foodData.outlet_id) {
+    console.error("All fields are required to add food");
+    return null;
+  }
+
+  console.log("Adding new food:", foodData);
+
+  try {
+    const response = await fetch("http://127.0.0.1:5000/foods", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(foodData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to add food: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("Food added successfully:", data);
+    return data;
+  } catch (error) {
+    console.error("Error adding food:", error);
+    return null;
+  }
+}
