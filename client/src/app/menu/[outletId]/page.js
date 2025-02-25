@@ -7,7 +7,8 @@ import {
   updateFoodItem,
   deleteFoodItem,
   addFoodItem,
-} from "../../lib/utils"; // Removed the import for addOutlet
+  fetchOutletDetails, // Add this function to fetch outlet details
+} from "../../lib/utils";
 
 export default function OutletMenu() {
   const router = useRouter();
@@ -16,7 +17,8 @@ export default function OutletMenu() {
   const [editingFood, setEditingFood] = useState(null);
   const [isAddingFood, setIsAddingFood] = useState(false);
   const [newFood, setNewFood] = useState({ name: "", price: "", waiting_time: "", category: "" });
-  const [loggedInUser, setLoggedInUser] = useState(null); // State for logged-in user
+  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [outletName, setOutletName] = useState(""); // State for outlet name
 
   // Fetch food items for the outlet
   useEffect(() => {
@@ -47,6 +49,22 @@ export default function OutletMenu() {
     };
     fetchLoggedInUser();
   }, []);
+
+  // Fetch outlet details (including name)
+  useEffect(() => {
+    if (!outletId) return;
+
+    const fetchOutlet = async () => {
+      try {
+        const outletData = await fetchOutletDetails(outletId); // Fetch outlet details
+        setOutletName(outletData.name); // Set the outlet name
+      } catch (error) {
+        console.error("Error fetching outlet details:", error);
+      }
+    };
+
+    fetchOutlet();
+  }, [outletId]);
 
   // Handle deleting a food item
   const handleDelete = async (foodId) => {
@@ -105,8 +123,9 @@ export default function OutletMenu() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
+      {/* Updated Header with Outlet Name */}
       <header className="bg-blue-600 text-white p-4 text-center text-2xl font-bold">
-        Outlet Menu
+        {outletName ? `${outletName}'s Menu` : "Loading..."}
       </header>
 
       <div className="max-w-4xl mx-auto mt-6 bg-white p-6 shadow-md rounded-lg">
@@ -214,14 +233,20 @@ export default function OutletMenu() {
                 className="w-full p-2 border rounded"
                 required
               />
-              <input
-                type="text"
-                placeholder="Category"
+              <select
                 value={newFood.category}
                 onChange={(e) => setNewFood({ ...newFood, category: e.target.value })}
                 className="w-full p-2 border rounded"
                 required
-              />
+              >
+                <option value="" disabled>Select Category</option>
+                <option value="Breakfast">Breakfast</option>
+                <option value="Lunch">Lunch</option>
+                <option value="Snacks">Snacks</option>
+                <option value="Beverages">Beverages</option>
+                <option value="Desserts">Desserts</option>
+                <option value="Dinner">Dinner</option>
+              </select>
               <div className="flex justify-end gap-2">
                 <button onClick={() => setIsAddingFood(false)} className="bg-gray-400 text-white px-4 py-2 rounded">
                   Cancel
