@@ -1,25 +1,29 @@
-from flask import Flask, request
+from flask import Flask, request, make_response, jsonify
 from flask_migrate import Migrate
-from flask_restful import Api, Resource
+from flask_restful import Api, Resource,reqparse
 from flask_cors import CORS
 from models import db, Owner, Customer, Outlet, Food, Order, TableReservation
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+from flask import session
 import json
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://food_court_user:123456@localhost:5432/food_court_db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://karimi:123456@localhost:5432/food_court_db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # secure JWT secret key
-app.config["SECRET_KEY"] = "your_secret_key"  # secure secret key
-
+app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
+app.config["SECRET_KEY"] = "your_secret_key"  # Add a secure secret key
+api = Api(app)
 # Initialize Extensions
 db.init_app(app)
 migrate = Migrate(app, db)
 jwt = JWTManager(app)
 api = Api(app)
 CORS(app)
+
+# Store revoked tokens(use a database in production)
+blacklist = set()
 
 class BaseSignup(Resource):
     model = None
@@ -47,7 +51,16 @@ class BaseSignup(Resource):
         db.session.add(new_user)
         db.session.commit()
 
+        # store user data in session
+        session['user_id'] = new_user.id  # Store the user ID in session
+        session['logged_in'] = True
+
         access_token = create_access_token(identity={'email': new_user.email})
+        session['access_token'] = access_token
+
+        print("Session Data:", session)
+        
+
         return {
             'message': f'{self.model.__name__} Signup successful',
             'access_token': access_token,
@@ -60,7 +73,8 @@ class CustomerSignup(BaseSignup):
 
 class OwnerSignup(BaseSignup):
     model = Owner
-    redirect_url = "/ownerdashboard"
+    redirect_url = "/ownerdashboard"  # Redirect to Owner Dashboard
+
 
 class OwnerResource(Resource):
     def get(self, id=None):
@@ -165,7 +179,15 @@ class Login(Resource):
             "role": "owner" if is_owner else "customer",
             "message": "login successfully",
         }
-        return response_data, 200
+
+        return make_response(jsonify(response_data), 200)
+    
+class Logout(Resource):
+    def post(self):
+        session.pop('user_id', None)
+        session.pop('user', None)
+        return jsonify({'message': 'Logged out successfully'}), 200
+
 
 class OutletResource(Resource):
     def get(self, id=None):
@@ -185,16 +207,17 @@ class OutletResource(Resource):
   
     def post(self):
         data = request.get_json()
+        print("Received data:", data)
         name = data.get('name')
         owner_id = data.get('owner_id')
-
+        photo_url= data.get('photo_url')
         if not name or not owner_id:
             return {"error": "All fields are required"}, 400
 
         if Outlet.query.filter_by(name=name).first():
             return {"error": "Outlet with this name already exists"}, 409
 
-        new_outlet = Outlet(name=name, owner_id=owner_id)
+        new_outlet = Outlet(name=name, owner_id=owner_id,photo_url=photo_url)
         db.session.add(new_outlet)
         db.session.commit()
 
@@ -214,6 +237,7 @@ class FoodsResource(Resource):
         name = data.get('name')
         price = data.get('price')
         waiting_time = data.get('waiting_time')
+        category = data.get('category')
         outlet_id = data.get('outlet_id')
 
         if not name or not price or not waiting_time or not outlet_id:
@@ -222,7 +246,7 @@ class FoodsResource(Resource):
         if Food.query.filter_by(name=name).first():
             return {"error": "Food already exists"}, 409
         
-        new_food = Food(name=name, price=price, waiting_time=waiting_time, outlet_id=outlet_id)
+        new_food = Food(name=name, price=price, waiting_time=waiting_time, category = category, outlet_id=outlet_id)
         db.session.add(new_food)
         db.session.commit()
 
@@ -251,6 +275,8 @@ class FoodByNameResource(Resource):
             food.name = data['name']
         if 'price' in data:
             food.price = data['price']
+        if 'category' in data:
+            food.category = data['category']
         if 'waiting_time' in data:
             food.waiting_time = data['waiting_time']
 
@@ -265,7 +291,20 @@ class FoodByNameResource(Resource):
 
         db.session.delete(food)
         db.session.commit()
-        return {'message': 'Food deleted successfully'}, 200
+
+        return ({'message': 'Customer deleted successfully'}), 200
+    
+class FoodByOutletResource(Resource):
+    def get(self, outlet_id):
+        try:
+            food_items = Food.query.filter_by(outlet_id=outlet_id).all()
+            if food_items:
+                return [food.to_dict() for food in food_items], 200
+            return {"message": "No food found for this outlet"}, 404
+        except Exception as e:
+            return {"message": str(e)}, 500
+
+# Resource to get food by price
 
 class FoodByPriceResource(Resource):
     def get(self, price):
@@ -276,12 +315,11 @@ class FoodByPriceResource(Resource):
             return {"message": "Price not found"}, 404
         except Exception as e:
             return {"message": str(e)}, 500
-
-
 class OrdersResource(Resource):
     def post(self):
         data = request.get_json()
         print("Received order data:", data)  # Debug log
+
 
         if not data:
             return {"error": "No input data provided"}, 400
@@ -329,6 +367,21 @@ class OrdersResource(Resource):
         orders = Order.query.all()
         return [order.to_dict() for order in orders], 200
 
+
+
+#Resource to get all orders
+class OrdersResource(Resource):
+    def get(self, id =None):
+        """Retrieve a single orders by ID or all orders if no ID is provided."""
+        if id:
+            order = Order.query.get(id)
+            if not order:
+                return ({'error': 'Order not found'}), 404
+            return jsonify(order.to_dict()), 200
+        else:
+            orders = Order.query.all()
+            return jsonify([order.to_dict() for order in orders]), 200
+
     def patch(self, id):
         order = Order.query.get(id)
         if not order:
@@ -348,15 +401,27 @@ class OrdersResource(Resource):
         db.session.commit()
         return {"message": "Order deleted successfully"}, 200
 
-# Register resources with the API
+
+
+
+
+
+
+# Registering the resources with Flask-RESTful
 api.add_resource(FoodsResource, "/foods")
 api.add_resource(FoodByNameResource, "/foods/<string:name>")
-api.add_resource(FoodByPriceResource, "/foods/<int:price>")
+api.add_resource(FoodByPriceResource, "/foods/<int:price>")  
+api.add_resource(FoodByOutletResource, "/food/outlet_id/<int:outlet_id>")
+
+
+# Add the resource to the API
 api.add_resource(OutletResource, '/outlets', '/outlets/<int:id>')
-api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")
-api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")
+api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")  
+api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")  
 api.add_resource(Login, "/login")
+api.add_resource(Logout, "/logout")
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
+
 
 if __name__ == '__main__':
     app.run(debug=True)
