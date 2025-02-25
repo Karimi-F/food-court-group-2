@@ -374,7 +374,7 @@ class OrdersResource(Resource):
             order = Order.query.get(id)
             if not order:
                 return ({'error': 'Order not found'}), 404
-            return (order.to_dict()), 200
+            return jsonify(order.to_dict()), 200
         else:
             orders = Order.query.all()
             return jsonify([order.to_dict() for order in orders]), 200
@@ -399,10 +399,7 @@ class OrdersResource(Resource):
         return {"message": "Order deleted successfully"}, 200
 
 
-# Register resources with the API
-api.add_resource(FoodsResource, "/foods")
-        
-#Resource to add food
+
 
 
 
