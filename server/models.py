@@ -93,15 +93,15 @@ class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
     # Foreign key linking to Customer
-    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=True)
-    # Now table_id is defined as a foreign key referencing table_reservations.id
-    table_id = db.Column(db.Integer, db.ForeignKey('table_reservations.id'), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id', ondelete='SET NULL'), nullable=True)
+    # Foreign key linking to TableReservation
+    table_id = db.Column(db.Integer, db.ForeignKey('table_reservations.id', ondelete='CASCADE'), nullable=False)
     datetime = db.Column(db.DateTime, nullable=False)
     total = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(50), default="pending")
     
     # Relationship to TableReservation (one-to-one)
-    table_reservation = db.relationship('TableReservation', back_populates='order')
+    table_reservation = db.relationship('TableReservation', back_populates='order', passive_deletes=True)
     
     def to_dict(self):
         return {
