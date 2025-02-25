@@ -50,8 +50,9 @@ export default function OwnerDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
+      {/* Updated Header with Owner's Name */}
       <header className="bg-blue-600 text-white p-4 text-center text-2xl font-bold">
-        Owner Dashboard
+        {session?.user?.name ? `${session.user.name}'s Dashboard` : "Owner Dashboard"}
       </header>
 
       {/* Outlets Grid */}
