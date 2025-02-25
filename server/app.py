@@ -1,4 +1,4 @@
-from flask import Flask, request,jsonify
+from flask import Flask, request,jsonify,session
 from flask_migrate import Migrate
 from flask_restful import Api, Resource,reqparse
 from flask_cors import CORS
@@ -219,46 +219,62 @@ class FoodsResource(Resource):
         category=data.get('category')
         outlet_id = data.get('outlet_id')
 
-        if not name or not price or not waiting_time or not outlet_id:
+        if not name or not price or not waiting_time :
             return {"error": "All fields are required"}, 400
         
         if Food.query.filter_by(name=name).first():
             return {"error": "Food already exists"}, 409
         
-        new_food = Food(name=name, price=price, waiting_time=waiting_time, outlet_id=outlet_id,category=category)
+        new_food = Food(name=name, price=price, waiting_time=waiting_time, category=category,outlet_id=outlet_id)
         db.session.add(new_food)
         db.session.commit()
 
         return {"message": "Food created successfully"}, 200
 
 class FoodByNameResource(Resource):
-    def get(self, name):
+    def get(self, name=None, food_id=None):
         try:
-            food = Food.query.filter_by(name=name).first()
-            if food:
-                return food.to_dict(), 200
-            return {"message": "Food not found"}, 404
+            if food_id is not None:  # If food_id is provided, fetch by ID
+                food = Food.query.get(food_id)
+                if food:
+                    return food.to_dict(), 200
+                return {"message": "Food not found"}, 404
+
+            elif name is not None:  # Otherwise, fetch by name
+                food = Food.query.filter_by(name=name).first()
+                if food:
+                    return food.to_dict(), 200
+                return {"message": "Food not found"}, 404
+
+            return {"message": "Invalid request, provide food name or ID"}, 400
         except Exception as e:
             return {"message": str(e)}, 500
                
-    def patch(self, name):
-        food = Food.query.filter_by(name=name).first()
+    def patch(self, food_id):
+        # Fetch food by ID
+        food = Food.query.get(food_id)
         if not food:
             return {'error': 'Food not found'}, 404
 
+        # Get the JSON data from the request
         data = request.get_json()
         if not data:
             return {'error': 'No update data provided'}, 400
 
+        # Update the food item with the new values from the request
         if 'name' in data:
             food.name = data['name']
         if 'price' in data:
             food.price = data['price']
         if 'waiting_time' in data:
             food.waiting_time = data['waiting_time']
+        if 'category' in data:
+            food.category = data['category']  # Corrected from 'waiting_time' to 'category'
 
+        # Commit the changes to the database
         db.session.commit()
 
+        # Return the updated food item
         return {'message': 'Food updated successfully', 'food': food.to_dict()}, 200
     
     def delete(self, name):
@@ -279,7 +295,66 @@ class FoodByOutletResource(Resource):
             return {"message": "No food found for this outlet"}, 404
         except Exception as e:
             return {"message": str(e)}, 500
+class FoodByIDResource(Resource):
+    def get(self, food_id=None):
+        try:
+            if food_id is not None:  # Fetch by ID
+                food = Food.query.get(food_id)
+                if food:
+                    return food.to_dict(), 200
+                return {"message": "Food not found"}, 404
+            return {"message": "Invalid request, provide food ID"}, 400
+        except Exception as e:
+            return {"message": str(e)}, 500
 
+    def patch(self, food_id):
+        try:
+            if food_id is None:
+                return {"message": "Invalid request, provide food ID"}, 400
+
+            # Fetch the food item by ID
+            food = Food.query.get(food_id)
+            if not food:
+                return {"message": "Food not found"}, 404
+
+            # Get the JSON data from the request
+            data = request.get_json()
+            if not data:
+                return {"message": "No data provided for update"}, 400
+
+            # Update the food item with the provided data
+            if "name" in data:
+                food.name = data["name"]
+            if "waiting_time" in data:  # Correct the field name
+                food.waiting_time = data["waiting_time"]
+            if "price" in data:
+                food.price = data["price"]
+            if "category" in data:  # Correct the field name
+                food.category = data["category"]
+
+            # Save the changes to the database
+            db.session.commit()
+
+            return food.to_dict(), 200  # Return the updated food item
+
+        except Exception as e:
+            db.session.rollback()  # Rollback in case of an error
+            return {"message": str(e)}, 500
+
+    def delete(self, food_id):
+        try:
+            food = Food.query.get(food_id)
+            if not food:
+                return {"message": "Food not found"}, 404
+
+            db.session.delete(food)
+            db.session.commit()
+
+            return {"message": f"Food with ID {food_id} deleted successfully"}, 200
+        except Exception as e:
+            db.session.rollback()  # Rollback in case of an error
+            return {"message": str(e)}, 500
+            
 # Resource to get food by price
 
 class FoodByPriceResource(Resource):
@@ -380,8 +455,8 @@ class OrdersResource(Resource):
         db.session.commit()
         return {"message": "Order deleted successfully"}, 200
 
-class OwnerFoodResource(Resource):
-    def get(self, owner_id):
+class OwnerOutletResource(Resource):
+    def get(self, owner_id):  # Accept owner_id from URL
         owner = Owner.query.get(owner_id)
         if not owner:
             return {"message": "Owner not found"}, 404
@@ -391,10 +466,8 @@ class OwnerFoodResource(Resource):
         if not outlets:
             return {"message": "No outlets found for this owner"}, 404
 
-        # Get food from these outlets
-        food_items = Food.query.filter(Food.outlet_id.in_([outlet.id for outlet in outlets])).all()
+        return jsonify([outlet.to_dict() for outlet in outlets])
 
-        return [food.to_dict() for food in food_items], 200
 
 
 
@@ -402,14 +475,19 @@ class OwnerFoodResource(Resource):
 # Register resources with the API
 api.add_resource(FoodsResource, "/foods")
 api.add_resource(FoodByNameResource, "/foods/<string:name>")
-api.add_resource(FoodByOutletResource, "/food/outlet_id/<int:outlet_id>")
+api.add_resource(FoodByOutletResource, "/outlets/<int:outlet_id>/foods")
 api.add_resource(FoodByPriceResource, "/foods/<int:price>")
+api.add_resource(FoodByIDResource, "/api/food/id/<int:food_id>")
 api.add_resource(OutletResource, '/outlets', '/outlets/<int:id>')
 api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")
 api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")
 api.add_resource(Login, "/login")
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
-api.add_resource(OwnerFoodResource, "/owner/<int:owner_id>/foods")
+api.add_resource(OwnerOutletResource, "/owner/<int:owner_id>/outlets")
+
+
+
+# api.add_resource(OutletResource, "/api/outlets", "/api/outlets/<int:id>")
 
 
 if __name__ == '__main__':
