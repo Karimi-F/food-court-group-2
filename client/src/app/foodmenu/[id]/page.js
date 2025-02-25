@@ -85,7 +85,8 @@ export default function MenuPage() {
                 <div>
                   <p className="text-blue-700 font-semibold">{item.name}</p>
                   <p className="text-gray-600">Price: Ksh {item.price}</p>
-                  <p className="text-gray-600">Wait Time: {item.waitTime}</p>
+                  <p className="text-gray-600">Category: {item.category}</p>
+                  <p className="text-gray-600">Wait Time: {item.waiting_time}</p>
                 </div>
 
                 <div className="flex items-center space-x-2">

@@ -237,6 +237,7 @@ class FoodsResource(Resource):
         name = data.get('name')
         price = data.get('price')
         waiting_time = data.get('waiting_time')
+        category = data.get('category')
         outlet_id = data.get('outlet_id')
 
         if not name or not price or not waiting_time or not outlet_id:
@@ -245,7 +246,7 @@ class FoodsResource(Resource):
         if Food.query.filter_by(name=name).first():
             return {"error": "Food already exists"}, 409
         
-        new_food = Food(name=name, price=price, waiting_time=waiting_time, outlet_id=outlet_id)
+        new_food = Food(name=name, price=price, waiting_time=waiting_time, category = category, outlet_id=outlet_id)
         db.session.add(new_food)
         db.session.commit()
 
@@ -274,6 +275,8 @@ class FoodByNameResource(Resource):
             food.name = data['name']
         if 'price' in data:
             food.price = data['price']
+        if 'category' in data:
+            food.category = data['category']
         if 'waiting_time' in data:
             food.waiting_time = data['waiting_time']
 
