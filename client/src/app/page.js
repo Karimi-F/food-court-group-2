@@ -57,6 +57,11 @@ export default function Home() {
       </nav>
 
       <section className="relative min-h-screen flex items-center justify-center bg-[#E65C00] overflow-hidden">
+              {/* Grid Background */}
+      <div className="absolute inset-0 bg-black">
+        <div className="absolute inset-0 bg-grid-white/[0.2] bg-grid-pattern" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#E65C00]/90 via-[#FF8534]/80 to-[#FFB088]/70" />
+      </div>
         <div className="absolute inset-0 bg-gradient-to-br from-[#E65C00]/90 via-[#FF8534]/80 to-[#FFB088]/70" />
 
         <div className="relative z-10 container mx-auto px-6">
