@@ -15,6 +15,13 @@ class Customer(db.Model):
     # Define relationship to orders. SQLAlchemy will use the foreign key on Order.
     orders = db.relationship('Order', backref='customer', lazy=True)
 
+    def to_dict(self):
+            return {
+                "id": self.id,
+                "name": self.name,
+                "email": self.email
+            }
+
 # Owner Model
 class Owner(db.Model, SerializerMixin):
     __tablename__ = 'owners'
