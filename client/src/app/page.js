@@ -1,89 +1,102 @@
 "use client";
-
+import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { Menu, X } from "lucide-react";
 
 export default function Home() {
+  const [isOpen, setIsOpen] = useState(false); // ✅ Removed extra closing brace here
+
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-gradient-to-br from-[#E65C00] via-[#FF8534] to-[#FFB088]">
       {/* Navigation */}
-      <nav className="flex items-center justify-between p-6">
-        <div className="flex items-center">
-          <span className="text-[#E65C00] text-2xl font-bold">BiteScape</span>
-        </div>
-        <div className="hidden md:flex items-center space-x-8">
-          <Link href="/home" className="text-gray-700 hover:text-[#E65C00]">
-            Home
-          </Link>
-          <Link href="/about" className="text-gray-700 hover:text-[#E65C00]">
-            About Us
-          </Link>
-          <Link
-            href="/contact-us"
-            className="text-gray-700 hover:text-[#E65C00]"
-          >
-            Contact Us
-          </Link>
+      <nav className="shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            {/* Logo */}
+            <div className="text-2xl font-bold text-black">BiteScape</div>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-8">
+              <Link href="/home" className="text-black hover:text-[#FFB088]">
+                Home
+              </Link>
+              <Link href="/about" className="text-black hover:text-[#FFB088]">
+                About Us
+              </Link>
+              <Link href="/contact-us" className="text-black hover:text-[#FFB088]">
+                Contact Us
+              </Link>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="text-black focus:outline-none"
+              >
+                {isOpen ? <X size={28} /> : <Menu size={28} />}
+              </button>
+            </div>
+          </div>
+
+          {/* for mobile users */}
+          {isOpen && (
+            <div className="md:hidden space-y-4 px-4 pb-4 transition-all">
+              <Link href="/home" className="block text-black hover:text-[#FFB088]" onClick={() => setIsOpen(false)}>
+                Home
+              </Link>
+              <Link href="/about" className="block text-black hover:text-[#FFB088]" onClick={() => setIsOpen(false)}>
+                About Us
+              </Link>
+              <Link href="/contact-us" className="block text-black hover:text-[#FFB088]" onClick={() => setIsOpen(false)}>
+                Contact Us
+              </Link>
+            </div>
+          )}
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <div className="relative bg-[#E65C00] min-h-[600px]">
-        <div className="container mx-auto px-6 py-12">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div className="text-white space-y-6">
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-                The place where <span className="text-white">quality</span>
-                <br />
-                meets <span className="text-white">taste.</span>
-              </h1>
-              <p className="text-lg opacity-90">
-                Foods that are made by our professional chefs in the town
-              </p>
-            </div>
-            <div className="relative">
-              <div className="relative z-10">
-                <Image
-                  src="https://media.istockphoto.com/id/1829241109/photo/enjoying-a-brunch-together.webp?a=1&b=1&s=612x612&w=0&k=20&c=PDAOJZowRgcFpLORXCV5p9Yt4wuOlxpYkxOUk5M4koo="
-                  alt="Delicious pasta dish with tomatoes and basil"
-                  width={500}
-                  height={500}
-                  className="rounded-full"
-                />
-              </div>
-              {/* Decorative Elements */}
-              <div className="absolute -top-8 -left-8 w-16 h-16 bg-green-500 rounded-full opacity-20 animate-float"></div>
-              <div className="absolute -bottom-4 right-12 w-8 h-8 bg-red-500 rounded-full opacity-20 animate-float-delayed"></div>
+      <section className="relative min-h-screen flex items-center justify-center bg-[#E65C00] overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#E65C00]/90 via-[#FF8534]/80 to-[#FFB088]/70" />
+
+        <div className="relative z-10 container mx-auto px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight tracking-tight text-white mb-8">
+              Great Food, <span className="text-[#FFB088] inline-block animate-pulse">Great Vibes 🎉</span>
+              <br />
+              <span className="text-white/90">All in One Place!</span>
+              <span className="inline-block animate-bounce">🍔</span>
+            </h1>
+
+            <p className="text-lg md:text-xl text-white/80 mb-12 max-w-2xl mx-auto">
+              Experience the perfect blend of flavors and atmosphere. Your next memorable meal awaits.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button className="px-8 py-4 bg-white text-[#E65C00] rounded-full font-semibold text-lg hover:bg-[#FFB088] hover:text-white transition-colors duration-300">
+                Order Now
+              </button>
+              <button className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-full font-semibold text-lg hover:bg-white/10 transition-colors duration-300">
+                View Menu
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Our Story Section */}
       <section className="py-16 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-8">Our Story</h2>
           <p className="text-gray-700 leading-relaxed">
-            Welcome to BiteScape, the Food Court of Tomorrow 🍔🍣 At
-            BiteScape, we believe that food is more than just a meal; it's an
-            experience, a celebration of flavors, cultures, and creativity.
-            Whether you’re craving a quick bite, a leisurely lunch with friends,
-            or a late-night snack, BiteScape has something for everyone.
-            Imagine a bustling food court where every dish tells a story. From
-            sizzling street tacos to sushi rolls prepared with precision, our
-            outlets bring the world’s best cuisines to your fingertips. With our
-            easy-to-use mobile app, ordering is a breeze. Browse diverse menus,
-            filter by cuisine or price, and have your meal delivered straight to
-            your table or prepared for pickup. Want to dine with friends? Book a
-            table, track your order, and enjoy the seamless dining experience
-            that’s all about convenience, variety, and delicious food. It’s all
-            here, waiting for you. Explore, order, enjoy. Your culinary
-            adventure starts now at BiteScape.
+            Welcome to BiteScape, the Food Court of Tomorrow 🍔🍣. At BiteScape, we believe that food is more than just a meal;
+            it's an experience, a celebration of flavors, cultures, and creativity. Whether you’re craving a quick bite, a
+            leisurely lunch with friends, or a late-night snack, BiteScape has something for everyone.
           </p>
         </div>
       </section>
-      <footer className="bg-blue-100 text-black text-center py-6">
-        <p>&copy; 2025 Bite Scape. All Rights Reserved.</p>
+
+      <footer className=" text-white text-center py-6">
+        <p>&copy; 2025 BiteScape. All Rights Reserved.</p>
       </footer>
     </main>
   );
