@@ -12,6 +12,8 @@ export default function MenuPage() {
   const [error, setError] = useState(null);
   const [category, setCategory] = useState("");
   const [searchFood, setSearchFood] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -31,6 +33,7 @@ export default function MenuPage() {
   fetchData();
 }, [id]); // Re-run when `id` changes
  // ✅ Re-fetch when restaurant ID changes
+
 
   const handleAddToCart = (item) => {
     const existingItem = cart.find((cartItem) => cartItem.id === item.id);
@@ -68,7 +71,9 @@ export default function MenuPage() {
 
   const filteredMenu = menu
     .filter((item) => item.name.toLowerCase().includes(searchFood.toLowerCase()))
-    .filter((item) => (category ? item.category ===category : true));
+    .filter((item) => (category ? item.category ===category : true))
+    .filter((item) => (minPrice ? item.price >= minPrice : true))
+    .filter((item) => (maxPrice ? item.price <= maxPrice : true));
 
   return (
     <div className="flex">
@@ -77,24 +82,48 @@ export default function MenuPage() {
         <h2 className="text-2xl text-blue-700 flex justify-center items-center font-bold mb-4">
           Menu for Restaurant {id}
         </h2>
-        <div className="flex justify-between gap-60 ">
+        <div className="flex justify-between gap-20 ">
           {/* Search Bar */}
-          <div className="flex-1 p-4">
             <input
               type="text"
               placeholder="Search food..."
               className="w-full h-12 px-4 rounded-lg 
-                 text-gray-600 text-lg
+                 text-blue-700 text-lg
                  placeholder:text-gray-400
                  border border-gray-300
                  outline-none"
               value={searchFood}
               onChange={(e) => setSearchFood(e.target.value)}
             />
-          </div>
+
+          {/* Filter by price */}
+        
+            <input
+              type="number"
+              placeholder="Min Price"
+              className="w-full h-12 px-4 rounded-lg 
+                 text-blue-700 text-lg
+                 placeholder:text-gray-400
+                 border border-gray-300
+                 outline-none"
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+            />
+            <input
+              type="number"
+              placeholder="Max Price"
+              className="w-full h-12 px-4 rounded-lg 
+                 text-blue-700 text-lg
+                 placeholder:text-gray-400
+                 border border-gray-300
+                 outline-none"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+            />
+       
 
           {/* Category Dropdown */}
-          <div className="flex-1 p-4">
+         
             <select
               className="w-full h-12 px-4 border rounded-lg text-blue-700"
               value={category}
@@ -108,7 +137,7 @@ export default function MenuPage() {
               <option value="Desserts">Desserts</option>
               <option value="Dinner">Dinner</option>
             </select>
-          </div>
+         
         </div>
 
         {loading && <p className="text-gray-600">Loading menu...</p>}
