@@ -2,14 +2,15 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { fetchOutlets } from "../lib/utils";
 
 export default function CustomerDashboard() {
+  const { data: session, status } = useSession();
   const [searchOutlet, setSearchOutlet] = useState("");
   const [outlets, setOutlets] = useState([]);
   const [searchFood, setSearchFood] = useState("");
   const [category, setCategory] = useState("");
-
 
   // Fetch outlets based on search input
   const getOutlets = async () => {
@@ -36,7 +37,7 @@ export default function CustomerDashboard() {
       <header className="mb-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl text-blue-700 font-bold">
-            Customer Name, Welcome to BiteScape Outlets
+          {session?.user?.name ? `${session.user.name}'s Dashboard` : "Customer Dashboard"}, Welcome to BiteScape Outlets
           </h1>
           <button className="bg-blue-700 text-white p-3 rounded">Log out</button>
         </div>
