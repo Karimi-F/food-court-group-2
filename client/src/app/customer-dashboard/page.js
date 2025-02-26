@@ -50,7 +50,12 @@ export default function CustomerDashboard() {
           <h1 className="text-3xl text-blue-700 font-bold">
             Customer Name, Welcome to BiteScape Outlets
           </h1>
-          <button className="bg-blue-700 text-white p-3 rounded">Log out</button>
+          <button 
+            className="bg-blue-700 text-white p-3 rounded" 
+            onClick={handleLogout}
+          >
+            Log out
+          </button>
         </div>
       </header>
 
