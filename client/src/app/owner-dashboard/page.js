@@ -1,225 +1,133 @@
-"use client"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+"use client";
 
-// export default function Dashboard() {
-//     const { data: session, status } = useSession();
-//     const router = useRouter();
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { fetchOwnerOutlets, addOutlet } from "../lib/utils"; // ✅ Ensure correct path
 
-//     useEffect(() => {
-//         if (status === "unauthenticated") {
-//             router.push("/owner-login"); // Redirect to login page
-//         }
-//     }, [status, router]);
+export default function OwnerDashboard() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [outlets, setOutlets] = useState([]);
+  const [isAddingOutlet, setIsAddingOutlet] = useState(false); // State for modal visibility
+  const [newOutlet, setNewOutlet] = useState({ name: "", photo_url: "" }); // State for new outlet form
 
-//     if (status === "loading") return <p>Loading...</p>;
+  // Fetch outlets owned by the logged-in user
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login"); // Redirect if not logged in
+    }
 
-//     return (
-//         <>
-//             <h1>Hi {session?.user?.name}, <br />Welcome to your dashboard</h1>
-//         </>
-//     );
-// }
+    if (status === "authenticated" && session?.user?.id) {
+      fetchOwnerOutlets(session.user.id).then(setOutlets);
+    }
+  }, [status, session, router]);
 
-// pages/outlet-dashboard.js
-
-import { useState } from "react";
-
-export default function OutletDashboard() {
-  const [showForm, setShowForm] = useState(false);
-  const [newItem, setNewItem] = useState({
-    name: "",
-    price: "",
-    wait_time: "",
-  });
-
-  // Function to handle the form submission
-  const handleSubmit = async (e) => {
+  // Handle adding a new outlet
+  const handleAddOutletSubmit = async (e) => {
     e.preventDefault();
+    if (!newOutlet.name || !newOutlet.photo_url) return;
 
-    // For now, we'll just log the new item
-    console.log("New Item Added: ", newItem);
+    const outletData = {
+      ...newOutlet,
+      owner_id: session.user.id, // Auto-fill the owner ID
+    };
 
-    // You can replace this with an API call to add the item to the menu in your backend
-    // Example API call (replace with actual endpoint):
-    // const response = await fetch('/api/menu', { method: 'POST', body: JSON.stringify(newItem) });
-
-    setShowForm(false); // Close form after submitting
+    try {
+      const addedOutlet = await addOutlet(outletData);
+      if (addedOutlet?.id) {
+        setOutlets((prevOutlets) => [...prevOutlets, addedOutlet]);
+        setNewOutlet({ name: "", photo_url: "" });
+        setIsAddingOutlet(false);
+        alert("Outlet added successfully!");
+      }
+    } catch (error) {
+      console.error("Error adding outlet:", error);
+    }
   };
 
+  if (status === "loading") return <p>Loading...</p>;
+
   return (
-    <div className="min-h-screen bg-blue-100 p-6">
+    <div className="min-h-screen bg-gray-100 p-6">
+      {/* Updated Header with Owner's Name */}
       <header className="bg-blue-600 text-white p-4 text-center text-2xl font-bold">
-        Outlet Name Dashboard
+        {session?.user?.name ? `${session.user.name}'s Dashboard` : "Owner Dashboard"}
       </header>
 
-      <div className="max-w-4xl mx-auto mt-6">
-        {/* Orders Section */}
-        <section className="mt-6 bg-white p-4 shadow-md rounded-md">
-          <h2 className="text-xl text-blue-700 font-bold mb-4">Pending Orders</h2>
+      {/* Outlets Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        {outlets.length > 0 ? (
+          outlets.map((outlet) => (
+            <div key={outlet.id} className="bg-white p-4 shadow-md rounded-lg">
+              <img
+                src={outlet.photo_url}
+                alt={outlet.name}
+                className="w-full h-48 object-cover rounded-md"
+              />
+              <h2 className="text-lg font-semibold mt-2">{outlet.name}</h2>
+              <p className="text-gray-500">{outlet.owner?.name}</p>
 
-          {/* Placeholder Orders */}
-          {/* Replace with dynamic order data */}
-          <div className="p-4 mb-4 text-black border rounded-md bg-gray-50">
-            <h3 className="font-semibold">Order #1</h3>
-            <p>Customer: John Doe</p>
-            <ul>
-              <li>Burger</li>
-              <li>Fries</li>
-            </ul>
-            <div className="flex justify-between mt-4">
-              <button className="bg-green-500 text-white px-4 py-2 rounded-md">
-                Confirm Order
-              </button>
-              <span className="text-gray-600">Estimated Wait: 15 mins</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Menu Management Section */}
-        <section className="mt-6 bg-white p-4 shadow-md rounded-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl text-blue-700 font-bold">Manage Menu</h2>
-
-            {/* Add Item Button (Top-right) */}
-            <button
-              onClick={() => setShowForm(!showForm)} // Toggle form visibility
-              className="bg-blue-600 text-white px-4 py-2 rounded-md"
-            >
-              Add Item
-            </button>
-          </div>
-
-          {/* Form to Add New Item (only visible when showForm is true) */}
-          {showForm && (
-            <form onSubmit={handleSubmit} className="mb-6 space-y-4">
-              <div>
-                <label className="block text-blue-700 font-semibold">Food Name</label>
-                <input
-                  type="text"
-                  placeholder="Enter food name"
-                  value={newItem.name}
-                  onChange={(e) =>
-                    setNewItem({ ...newItem, name: e.target.value })
-                  }
-                  className="w-full text-blue-700 px-4 py-2 border rounded-md"
-                />
-              </div>
-
-              <div>
-  <label className="block text-blue-700 font-semibold">Food Category</label>
-  <select
-    value={newItem.name}
-    onChange={(e) =>
-      setNewItem({ ...newItem, name: e.target.value })
-    }
-    className="w-full text-blue-700 px-4 py-2 border rounded-md"
-  >
-    <option value="" disabled>Select a category</option>
-    <option value="Burger">Breakfast</option>
-    <option value="Pizza">Lunch</option>
-    <option value="Sushi">Snacks</option>
-    <option value="Dessert">Dessert</option>
-    <option value="Beverage">Beverage</option>
-  </select>
-</div>
-
-
-              <div>
-                <label className="block text-blue-700 font-semibold">Price</label>
-                <input
-                  type="number"
-                  placeholder="Enter price"
-                  value={newItem.price}
-                  onChange={(e) =>
-                    setNewItem({ ...newItem, price: e.target.value })
-                  }
-                  className="w-full text-blue-700 px-4 py-2 border rounded-md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-blue-700 font-semibold">Wait Time(in minutes)</label>
-                <textarea
-                  placeholder="Wait time"
-                  value={newItem.wait_time}
-                  onChange={(e) =>
-                    setNewItem({ ...newItem, wait_time: e.target.value })
-                  }
-                  className="w-full  text-blue-700 px-4 py-2 border rounded-md"
-                />
-              </div>
-
+              {/* View Menu Button */}
               <button
-                type="submit"
-                className="bg-blue-600 text-white px-6 py-2 rounded-md mt-4"
+                onClick={() => router.push(`/menu/${outlet.id}`)} 
+                className="mt-3 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
               >
-                Add Item
+                View Menu
               </button>
-            </form>
-          )}
-
-          {/* Existing Menu Items List */}
-          <div className="space-y-4">
-            {/* Example Menu Item */}
-            <div className="flex flex-col justify-between p-4 border rounded-md bg-gray-50">
-              <div>
-                <p className="text-black font-semibold">Smocha</p>
-                <p className="text-gray-600">Ksh.60</p>
-                <p className="text-gray-600">7 minutes</p>
-              </div>
-
-              {/* Bottom Buttons */}
-              <div className="mt-4 flex justify-between space-x-2">
-                <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md">
-                  Edit
-                </button>
-                <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md">
-                  Delete
-                </button>
-              </div>
             </div>
-            <div className="flex flex-col justify-between p-4 border rounded-md bg-gray-50">
-              <div>
-                <p className="text-black font-semibold">Chapai</p>
-                <p className="text-gray-600">Ksh.20</p>
-                <p className="text-gray-600">3 minutes</p>
-              </div>
-
-              {/* Bottom Buttons */}
-              <div className="mt-4 flex justify-between space-x-2">
-                <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md">
-                  Edit
-                </button>
-                <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md">
-                  Delete
-                </button>
-              </div>
-            </div>
-            <div className="flex flex-col justify-between p-4 border rounded-md bg-gray-50">
-              <div>
-                <p className="text-black font-semibold">Fries</p>
-                <p className="text-gray-600">Ksh.100</p>
-                <p className="text-gray-600">15 minutes</p>
-              </div>
-
-              {/* Bottom Buttons */}
-              <div className="mt-4 flex justify-between space-x-2">
-                <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md">
-                  Edit
-                </button>
-                <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md">
-                  Delete
-                </button>
-              </div>
-            </div>
-            {/* Add more menu items similarly */}
-          </div>
-        </section>
+          ))
+        ) : (
+          <p className="text-gray-600">No outlets found.</p>
+        )}
       </div>
+
+      {/* Add Outlet Button */}
+      <button
+        onClick={() => setIsAddingOutlet(true)}
+        className="mt-6 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+      >
+        + Add Outlet
+      </button>
+
+      {/* Add Outlet Modal */}
+      {isAddingOutlet && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-md w-96">
+            <h2 className="text-lg font-semibold mb-4">Add New Outlet</h2>
+            <form onSubmit={handleAddOutletSubmit} className="space-y-3">
+              <input
+                type="text"
+                placeholder="Outlet Name"
+                value={newOutlet.name}
+                onChange={(e) => setNewOutlet({ ...newOutlet, name: e.target.value })}
+                className="w-full p-2 border rounded"
+                required
+              />
+              <input
+                type="url"
+                placeholder="Photo URL"
+                value={newOutlet.photo_url}
+                onChange={(e) => setNewOutlet({ ...newOutlet, photo_url: e.target.value })}
+                className="w-full p-2 border rounded"
+                required
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddingOutlet(false)}
+                  className="bg-gray-400 text-white px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">
+                  Add
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-  

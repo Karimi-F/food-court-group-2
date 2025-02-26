@@ -102,7 +102,7 @@ export default function Login() {
 
         <p className="text-center text-gray-600 mt-4">
           Don't have an account?{" "}
-          <a href="/owner-signup" className="text-blue-500">
+          <a href="/outletCard" className="text-blue-500">
             Sign Up
           </a>
         </p>

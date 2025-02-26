@@ -29,20 +29,23 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET, // Ensure this is set in .env.local
   session: {
     strategy: "jwt", // Use JWT-based sessions
+    maxAge: 7 * 24 * 60 * 60, // 🕒 7 days (604800 seconds)
+    updateAge: 24 * 60 * 60, // 🕒 Refresh session every 24 hours
+  },
+  jwt: {
+    maxAge: 7 * 24 * 60 * 60, // 🕒 Ensure JWT expiration matches session expiration
   },
   callbacks: {
     async jwt({ token, user }) {
-      // If user exists (during login), store data in JWT
       if (user) {
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
-        token.role = user.role || "user"; // Add any other user fields
+        token.role = user.role || "user";
       }
       return token;
     },
     async session({ session, token }) {
-      // Pass token data to session
       if (token) {
         session.user.id = token.id;
         session.user.name = token.name;
