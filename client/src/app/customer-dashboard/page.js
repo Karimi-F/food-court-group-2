@@ -28,6 +28,16 @@ export default function CustomerDashboard() {
     return () => clearTimeout(delayDebounce);
   }, [searchOutlet]);
 
+  // Handle logout functionality
+  const handleLogout = () => {
+    // Show confirmation dialog
+    if (window.confirm("Are you sure you want to log out?")) {
+      // Optionally, clear authentication tokens or any other state here
+      window.alert("You have been logged out successfully!");
+      router.push("/"); // Redirect to home page
+    }
+  };
+
   return (
     <div className="bg-blue-100 min-h-screen p-6">
       <Head>
