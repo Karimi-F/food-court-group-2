@@ -7,6 +7,9 @@ import { fetchOutlets } from "../lib/utils";
 export default function CustomerDashboard() {
   const [searchOutlet, setSearchOutlet] = useState("");
   const [outlets, setOutlets] = useState([]);
+  const [searchFood, setSearchFood] = useState("");
+  const [category, setCategory] = useState("");
+
 
   // Fetch outlets based on search input
   const getOutlets = async () => {

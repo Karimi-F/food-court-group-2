@@ -110,7 +110,7 @@ export async function createOwner(name, email, password){
 }
 export async function fetchMenu(outletId) {
     try {
-      const response = await fetch(`http://127.0.0.1:5000/food/outlet_id/${outletId}`);
+      const response = await fetch(`http://127.0.0.1:5000/outlets/${outletId}/foods`);
   
       if (!response.ok) {
         throw new Error(`Server error: ${response.status}`);
@@ -253,7 +253,7 @@ export async function fetchOwnerOutlets(ownerId) {
   console.log(`Fetching outlets for owner_id: ${ownerId}`);
 
   try {
-    const response = await fetch('http://127.0.0.1:5000/owner/3/outlets');
+    const response = await fetch(`http://127.0.0.1:5000/owner/${ownerId}/outlets`);
     const data = await response.json();
     console.log("Fetched outlets:", data);
     return data;
