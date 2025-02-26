@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // Import useRouter for redirection
 import { fetchOutlets } from "../lib/utils";
 
 export default function CustomerDashboard() {
@@ -10,6 +11,7 @@ export default function CustomerDashboard() {
   const [searchFood, setSearchFood] = useState("");
   const [category, setCategory] = useState("");
 
+  const router = useRouter(); // Initialize the router
 
   // Fetch outlets based on search input
   const getOutlets = async () => {
