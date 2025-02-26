@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { fetchOwnerOutlets, addOutlet } from "../lib/utils"; // ✅ Ensure correct path
+import { useSession, signOut } from "next-auth/react";
+import { fetchOwnerOutlets, addOutlet } from "../lib/utils"; // Ensure correct path
 
 export default function OwnerDashboard() {
   const { data: session, status } = useSession();
@@ -15,7 +15,7 @@ export default function OwnerDashboard() {
   // Fetch outlets owned by the logged-in user
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/login"); // Redirect if not logged in
+      router.push("/owner-login"); // Redirect if not logged in
     }
 
     if (status === "authenticated" && session?.user?.id) {
@@ -46,13 +46,32 @@ export default function OwnerDashboard() {
     }
   };
 
+  // Handle logout with confirmation
+  const handleLogout = async () => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      // signOut without automatic redirect so we can control the flow
+      await signOut({ redirect: false });
+      alert("You have been logged out successfully");
+      router.push("/"); // Redirect to home page
+    }
+  };
+
   if (status === "loading") return <p>Loading...</p>;
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* Updated Header with Owner's Name */}
-      <header className="bg-blue-600 text-white p-4 text-center text-2xl font-bold">
-        {session?.user?.name ? `${session.user.name}'s Dashboard` : "Owner Dashboard"}
+      {/* Header with Owner's Name and Logout Button */}
+      <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold">
+          {session?.user?.name ? `${session.user.name}'s Dashboard` : "Owner Dashboard"}
+        </h1>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded"
+        >
+          Logout
+        </button>
       </header>
 
       {/* Outlets Grid */}
@@ -70,7 +89,7 @@ export default function OwnerDashboard() {
 
               {/* View Menu Button */}
               <button
-                onClick={() => router.push(`/menu/${outlet.id}`)} 
+                onClick={() => router.push(`/menu/${outlet.id}`)}
                 className="mt-3 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
               >
                 View Menu
