@@ -1,15 +1,30 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
 import { fetchOutlets } from "../lib/utils";
 
 export default function CustomerDashboard() {
+  const { data:session, status } = useSession();
+  const router = useRouter();
   const [searchOutlet, setSearchOutlet] = useState("");
   const [outlets, setOutlets] = useState([]);
   const [searchFood, setSearchFood] = useState("");
   const [category, setCategory] = useState("");
+  
 
+// Handle logout functionality
+const handleLogout = async () => {
+  const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      // signout without redirect 
+      await signOut({redirect: false});
+      alert("You have been logged out successfully");
+      router.push("/home");
+    }
+};
 
   // Fetch outlets based on search input
   const getOutlets = async () => {
@@ -36,9 +51,12 @@ export default function CustomerDashboard() {
       <header className="mb-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl text-blue-700 font-bold">
+            {/* {session?.user?.name? `${session.user.name} Welcome to BiteScape Outlets` : "Customer Dashboard"} */}
             Customer Name, Welcome to BiteScape Outlets
           </h1>
-          <button className="bg-blue-700 text-white p-3 rounded">Log out</button>
+          <button 
+          onClick={handleLogout}
+          className="bg-blue-700 text-white p-3 rounded">Log out</button>
         </div>
       </header>
 
