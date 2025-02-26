@@ -189,7 +189,9 @@ class Logout(Resource):
         session.pop('user_id', None)
         session.pop('user', None)
         return jsonify({'message': 'Logged out successfully'}), 200
-
+# -------------------------------
+# Outlet Endpoints
+# -------------------------------
 class OutletResource(Resource):
     def get(self, id=None):
         if id is None:
@@ -205,14 +207,14 @@ class OutletResource(Resource):
         if not outlet:
             return {"error": "Outlet not found"}, 404
         return outlet.to_dict(), 200
-  
+
     def post(self):
         data = request.get_json()
         name = data.get('name')
         owner_id = data.get('owner_id')
         photo_url = data.get('photo_url')
         if not name or not owner_id:
-            return {"error": "All fields are required"}, 400
+            return {"error": "Name and owner_id are required"}, 400
 
         if Outlet.query.filter_by(name=name).first():
             return {"error": "Outlet with this name already exists"}, 409
@@ -223,6 +225,9 @@ class OutletResource(Resource):
 
         return new_outlet.to_dict(), 201
 
+# -------------------------------
+# Food Endpoints (Collection)
+# -------------------------------
 class FoodsResource(Resource):
     def get(self):
         try:
@@ -231,7 +236,7 @@ class FoodsResource(Resource):
             return foods_list, 200
         except Exception as e:
             return {"message": str(e)}, 500
-        
+
     def post(self):
         data = request.get_json()
         name = data.get('name')
@@ -241,9 +246,10 @@ class FoodsResource(Resource):
         category = data.get('category')
         outlet_id = data.get('outlet_id')
 
-        if not name or not price or not waiting_time :
-            return {"error": "All fields are required"}, 400
-        
+        # Validate required fields
+        if not name or price is None or waiting_time is None or outlet_id is None:
+            return {"error": "Name, price, waiting_time, and outlet_id are required"}, 400
+
         if Food.query.filter_by(name=name).first():
             return {"error": "Food already exists"}, 409
         
@@ -251,8 +257,93 @@ class FoodsResource(Resource):
         db.session.add(new_food)
         db.session.commit()
 
-        return {"message": "Food created successfully"}, 200
+        return {"message": "Food created successfully", "food": new_food.to_dict()}, 201
 
+# -------------------------------
+# Food Endpoints (Single Item by ID)
+# -------------------------------
+class FoodResource(Resource):
+    def get(self, id):
+        food = Food.query.get(id)
+        if not food:
+            return {"error": "Food not found"}, 404
+        return food.to_dict(), 200
+
+    def put(self, id):
+        """
+        Full update of a food item.
+        All fields (name, price, waiting_time, category, outlet_id) are required.
+        """
+        food = Food.query.get(id)
+        if not food:
+            return {"error": "Food not found"}, 404
+
+        data = request.get_json()
+        name = data.get('name')
+        price = data.get('price')
+        waiting_time = data.get('waiting_time')
+        category = data.get('category')
+        outlet_id = data.get('outlet_id')
+
+        if not name or price is None or waiting_time is None or outlet_id is None:
+            return {"error": "All fields (name, price, waiting_time, outlet_id) are required"}, 400
+
+        # Check if another food with the new name exists
+        if Food.query.filter(Food.name == name, Food.id != id).first():
+            return {"error": "Food with this name already exists"}, 409
+
+        food.name = name
+        food.price = price
+        food.waiting_time = waiting_time
+        food.category = category
+        food.outlet_id = outlet_id
+
+        db.session.commit()
+        return {"message": "Food updated successfully", "food": food.to_dict()}, 200
+
+    def patch(self, id):
+        """
+        Partial update of a food item.
+        Only the provided fields will be updated.
+        """
+        food = Food.query.get(id)
+        if not food:
+            return {"error": "Food not found"}, 404
+
+        data = request.get_json()
+        if not data:
+            return {"error": "No update data provided"}, 400
+
+        if 'name' in data:
+            new_name = data['name']
+            # Check for duplicate name on a different record
+            if Food.query.filter(Food.name == new_name, Food.id != id).first():
+                return {"error": "Food with this name already exists"}, 409
+            food.name = new_name
+        if 'price' in data:
+            food.price = data['price']
+        if 'waiting_time' in data:
+            food.waiting_time = data['waiting_time']
+        if 'category' in data:
+            food.category = data['category']
+        if 'outlet_id' in data:
+            food.outlet_id = data['outlet_id']
+
+        db.session.commit()
+        return {"message": "Food partially updated successfully", "food": food.to_dict()}, 200
+
+    def delete(self, id):
+        food = Food.query.get(id)
+        if not food:
+            return {"error": "Food not found"}, 404
+
+        db.session.delete(food)
+        db.session.commit()
+        return {"message": "Food deleted successfully"}, 200
+
+# -------------------------------
+# Additional Lookup Endpoints
+# -------------------------------
 class FoodByNameResource(Resource):
     def get(self, name=None, food_id=None):
         try:
@@ -271,29 +362,64 @@ class FoodByNameResource(Resource):
             return {"message": "Invalid request, provide food name or ID"}, 400
         except Exception as e:
             return {"message": str(e)}, 500
-               
+
+    def put(self, name):
+        """
+        Full update of a food item located by name.
+        (Use with caution since names may change.)
+        """
+        food = Food.query.filter_by(name=name).first()
+        if not food:
+            return {"error": "Food not found"}, 404
+
+        data = request.get_json()
+        new_name = data.get('name')
+        price = data.get('price')
+        waiting_time = data.get('waiting_time')
+        category = data.get('category')
+        outlet_id = data.get('outlet_id')
+
+        if not new_name or price is None or waiting_time is None or outlet_id is None:
+            return {"error": "All fields (name, price, waiting_time, outlet_id) are required"}, 400
+
+        # Check if another food with the new name exists (if name is changing)
+        if new_name != name and Food.query.filter_by(name=new_name).first():
+            return {"error": "Food with this name already exists"}, 409
+
+        food.name = new_name
+        food.price = price
+        food.waiting_time = waiting_time
+        food.category = category
+        food.outlet_id = outlet_id
+
+        db.session.commit()
+        return {"message": "Food updated successfully", "food": food.to_dict()}, 200
+
     def patch(self, food_id):
         # Fetch food by ID
         food = Food.query.get(food_id)
         if not food:
-            return {'error': 'Food not found'}, 404
+            return {"error": "Food not found"}, 404
 
         # Get the JSON data from the request
         data = request.get_json()
         if not data:
-            return {'error': 'No update data provided'}, 400
+            return {"error": "No update data provided"}, 400
 
         # Update the food item with the new values from the request
         if 'name' in data:
-            food.name = data['name']
+            new_name = data['name']
+            if Food.query.filter(Food.name == new_name, Food.id != food.id).first():
+                return {"error": "Food with this name already exists"}, 409
+            food.name = new_name
         if 'price' in data:
             food.price = data['price']
-        if 'category' in data:
-            food.category = data['category']
         if 'waiting_time' in data:
             food.waiting_time = data['waiting_time']
         if 'category' in data:
-            food.category = data['category']  # Corrected from 'waiting_time' to 'category'
+            food.category = data['category']
+        if 'outlet_id' in data:
+            food.outlet_id = data['outlet_id']
 
         # Commit the changes to the database
         db.session.commit()
@@ -304,13 +430,12 @@ class FoodByNameResource(Resource):
     def delete(self, name):
         food = Food.query.filter_by(name=name).first()
         if not food:
-            return {'error': 'Food not found'}, 404
+            return {"error": "Food not found"}, 404
 
         db.session.delete(food)
         db.session.commit()
+        return {"message": "Food deleted successfully"}, 200
 
-        return {'message': 'Food deleted successfully'}, 200
-    
 class FoodByOutletResource(Resource):
     def get(self, outlet_id):
         try:
@@ -385,10 +510,12 @@ class FoodByIDResource(Resource):
 class FoodByPriceResource(Resource):
     def get(self, price):
         try:
+            # Using filter_by(price=price) returns the first matching record;
+            # adjust this as needed if multiple items can share the same price.
             food = Food.query.filter_by(price=price).first()
             if food:
                 return food.to_dict(), 200
-            return {"message": "Price not found"}, 404
+            return {"message": "Food with the specified price not found"}, 404
         except Exception as e:
             return {"message": str(e)}, 500
 
