@@ -1,9 +1,9 @@
-from flask import Flask, request,jsonify,session
+from flask import Flask, request, jsonify, session, make_response
 from flask_migrate import Migrate
-from flask_restful import Api, Resource,reqparse
+from flask_restful import Api, Resource, reqparse
 from flask_cors import CORS
 from models import db, Owner, Customer, Outlet, Food, Order, TableReservation
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import json
@@ -13,8 +13,7 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://beren:123456@localhost:5432/food_court_db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
-app.config["SECRET_KEY"] = "your_secret_key"  # Add a secure secret key
-api = Api(app)
+app.config["SECRET_KEY"] = "your_secret_key"          # Add a secure secret key
 
 # Initialize Extensions
 db.init_app(app)
@@ -22,6 +21,13 @@ migrate = Migrate(app, db)
 jwt = JWTManager(app)
 api = Api(app)
 CORS(app)
+
+# Store revoked tokens (use a database in production)
+blacklist = set()
+
+# -------------------------
+# Other Resources (Signup, Login, Owner, Customer, Outlet, Foods, etc.)
+# -------------------------
 
 class BaseSignup(Resource):
     model = None
@@ -44,12 +50,21 @@ class BaseSignup(Resource):
         if password != password2:
             return {"error": "Passwords do not match!"}, 400    
 
-        new_user = self.model(username=name_or_username, email=email) if hasattr(self.model, 'username') else self.model(name=name_or_username, email=email)
+        if hasattr(self.model, 'username'):
+            new_user = self.model(username=name_or_username, email=email)
+        else:
+            new_user = self.model(name=name_or_username, email=email)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
 
+        # Store user data in session
+        session['user_id'] = new_user.id  
+        session['logged_in'] = True
+
         access_token = create_access_token(identity={'email': new_user.email})
+        session['access_token'] = access_token
+
         return {
             'message': f'{self.model.__name__} Signup successful',
             'access_token': access_token,
@@ -62,7 +77,7 @@ class CustomerSignup(BaseSignup):
 
 class OwnerSignup(BaseSignup):
     model = Owner
-    redirect_url = "/ownerdashboard"
+    redirect_url = "/ownerdashboard"  # Redirect to Owner Dashboard
 
 class OwnerResource(Resource):
     def get(self, id=None):
@@ -166,7 +181,14 @@ class Login(Resource):
             "role": "owner" if is_owner else "customer",
             "message": "login successfully",
         }
-        return response_data, 200
+
+        return make_response(jsonify(response_data), 200)
+    
+class Logout(Resource):
+    def post(self):
+        session.pop('user_id', None)
+        session.pop('user', None)
+        return jsonify({'message': 'Logged out successfully'}), 200
 
 class OutletResource(Resource):
     def get(self, id=None):
@@ -186,17 +208,16 @@ class OutletResource(Resource):
   
     def post(self):
         data = request.get_json()
-        print("Received data:", data)
         name = data.get('name')
         owner_id = data.get('owner_id')
-        photo_url= data.get('photo_url')
+        photo_url = data.get('photo_url')
         if not name or not owner_id:
             return {"error": "All fields are required"}, 400
 
         if Outlet.query.filter_by(name=name).first():
             return {"error": "Outlet with this name already exists"}, 409
 
-        new_outlet = Outlet(name=name, owner_id=owner_id,photo_url=photo_url)
+        new_outlet = Outlet(name=name, owner_id=owner_id, photo_url=photo_url)
         db.session.add(new_outlet)
         db.session.commit()
 
@@ -217,6 +238,7 @@ class FoodsResource(Resource):
         price = data.get('price')
         waiting_time = data.get('waiting_time')
         category=data.get('category')
+        category = data.get('category')
         outlet_id = data.get('outlet_id')
 
         if not name or not price or not waiting_time :
@@ -266,6 +288,8 @@ class FoodByNameResource(Resource):
             food.name = data['name']
         if 'price' in data:
             food.price = data['price']
+        if 'category' in data:
+            food.category = data['category']
         if 'waiting_time' in data:
             food.waiting_time = data['waiting_time']
         if 'category' in data:
@@ -285,7 +309,8 @@ class FoodByNameResource(Resource):
         db.session.delete(food)
         db.session.commit()
 
-        return ({'message': 'Customer deleted successfully'}), 200
+        return {'message': 'Food deleted successfully'}, 200
+    
 class FoodByOutletResource(Resource):
     def get(self, outlet_id):
         try:
@@ -367,34 +392,24 @@ class FoodByPriceResource(Resource):
         except Exception as e:
             return {"message": str(e)}, 500
 
-
-
+# ------------------------------------------------
+# Unified OrdersResource (merged and fixed)
+# ------------------------------------------------
 class OrdersResource(Resource):
     def post(self):
         data = request.get_json()
-        print("Received order data:", data)  # Debug log
-
-
         if not data:
             return {"error": "No input data provided"}, 400
 
         try:
-            # Extract data from the request payload
             table_id = data.get('tableId')
             datetime_str = data.get('datetime')
             total = data.get('total')
-            customer_id = data.get('customerId', None)  # Optional; if not provided, remains None
-
-            print("Table ID:", table_id)
-            print("Datetime string:", datetime_str)
-            print("Total:", total)
-            print("Customer ID:", customer_id)
+            customer_id = data.get('customerId', None)
 
             # Convert the datetime string into a datetime object.
-            # Expected format: "YYYY-MM-DDTHH:MM" (e.g., "2025-02-23T10:30")
             order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
 
-            # Create a new Order. Note: table_id here is a foreign key referencing TableReservation.id.
             new_order = Order(
                 customer_id=customer_id,
                 table_id=table_id,
@@ -409,7 +424,6 @@ class OrdersResource(Resource):
 
         except Exception as e:
             db.session.rollback()
-            print("Error creating order:", e)  # Debug log
             return {"error": str(e)}, 500
 
     def get(self, id=None):
@@ -421,36 +435,32 @@ class OrdersResource(Resource):
         orders = Order.query.all()
         return [order.to_dict() for order in orders], 200
 
+    def patch(self, id=None):
+        if id is None:
+            return {"error": "Order ID is required for PATCH requests."}, 400
 
-
-#Resource to get all orders
-class OrdersResource(Resource):
-    def get(self, id =None):
-        """Retrieve a single orders by ID or all orders if no ID is provided."""
-        if id:
-            order = Order.query.get(id)
-            if not order:
-                return ({'error': 'Order not found'}), 404
-            return (order.to_dict()), 200
-        else:
-            orders = Order.query.all()
-            return jsonify([order.to_dict() for order in orders]), 200
-
-    def patch(self, id):
         order = Order.query.get(id)
         if not order:
             return {"error": "Order not found"}, 404
 
         data = request.get_json()
+        if not data:
+            return {"error": "No update data provided"}, 400
+
         if "status" in data:
             order.status = data["status"]
+
         db.session.commit()
         return order.to_dict(), 200
 
-    def delete(self, id):
+    def delete(self, id=None):
+        if id is None:
+            return {"error": "Order ID is required for DELETE requests."}, 400
+
         order = Order.query.get(id)
         if not order:
             return {"error": "Order not found"}, 404
+
         db.session.delete(order)
         db.session.commit()
         return {"message": "Order deleted successfully"}, 200
@@ -479,9 +489,10 @@ api.add_resource(FoodByOutletResource, "/outlets/<int:outlet_id>/foods")
 api.add_resource(FoodByPriceResource, "/foods/<int:price>")
 api.add_resource(FoodByIDResource, "/api/food/id/<int:food_id>")
 api.add_resource(OutletResource, '/outlets', '/outlets/<int:id>')
-api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")
-api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")
+api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")  
+api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")  
 api.add_resource(Login, "/login")
+api.add_resource(Logout, "/logout")
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 api.add_resource(OwnerOutletResource, "/owner/<int:owner_id>/outlets")
 

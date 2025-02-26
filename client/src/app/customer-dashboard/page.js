@@ -40,6 +40,7 @@ export default function CustomerDashboard() {
       </header>
 
       {/* Search Form */}
+      
       <form className="mb-4" onSubmit={(e) => e.preventDefault()}>
         <input
           type="text"
@@ -48,15 +49,36 @@ export default function CustomerDashboard() {
           value={searchOutlet}
           onChange={(e) => setSearchOutlet(e.target.value)}
         />
+        <input
+          type="text"
+          placeholder="Search food..."
+          className="p-2 text-blue-700 border rounded w-full md:w-2/3"
+          value={searchFood}
+          onChange={(e) => setSearchFood(e.target.value)}
+        />
+        <select
+          className="p-2 border rounded w-full md:w-1/3 text-blue-700"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          <option value="">Pick a category</option>
+          <option value="Breakfast">Breakfast</option>
+          <option value="Lunch">Lunch</option>
+          <option value="Snacks">Snacks</option>
+          <option value="Beverages">Beverages</option>
+          <option value="Desserts">Desserts</option>
+          <option value="Dinner">Dinner</option>
+        </select>
       </form>
 
       {/* Restaurant Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
         {outlets.length > 0 ? (
           outlets.map((outlet, index) => (
             <div key={index} className="border p-4 rounded-lg shadow bg-white">
               <img
-                src={outlet.image_url}
+                src={outlet.photo_url} // Ensure this matches your API response key
                 alt={outlet.name}
                 className="w-full h-48 object-cover rounded-lg mb-2"
               />

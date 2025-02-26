@@ -1,5 +1,4 @@
-
-"use client"
+"use client";
 import { useState, useEffect } from "react";
 import { getFood } from "../lib/utils";
 
@@ -14,7 +13,6 @@ export default function MenuPage() {
     }
     fetchMenu();
   }, []);
-
 
   const addToCart = (item) => {
     const existingItem = cart.find((cartItem) => cartItem.id === item.id);
@@ -46,13 +44,9 @@ export default function MenuPage() {
     }
   };
 
-
   const closeCart = () => {
     setCart([]);
   };
-
-
-
 
   return (
     <div className="flex">
@@ -111,7 +105,9 @@ export default function MenuPage() {
                   <p className="text-blue-700 font-semibold">{item.name}</p>
                   <p className="text-gray-600">Quantity: {item.quantity}</p>
                   <p className="text-gray-600">Price: Ksh {item.price}</p>
-                  <p className="text-gray-600">Total: Ksh {item.quantity * item.price}</p>
+                  <p className="text-gray-600">
+                    Total: Ksh {item.quantity * item.price}
+                  </p>
                 </div>
               </div>
             ))}
@@ -119,11 +115,18 @@ export default function MenuPage() {
 
           <div className="mt-6">
             <p className="text-blue-700 font-semibold">
-              Total: Ksh {cart.reduce((total, item) => total + item.quantity * item.price, 0).toFixed(2)}
+              Total: Ksh{" "}
+              {cart
+                .reduce((total, item) => total + item.quantity * item.price, 0)
+                .toFixed(2)}
             </p>
           </div>
           <button
-            onClick={() => router.push(`/cart?data=${encodeURIComponent(JSON.stringify(cart))}`)}
+            onClick={() =>
+              router.push(
+                `/cart?data=${encodeURIComponent(JSON.stringify(cart))}`
+              )
+            }
             className="bg-red-500 text-white px-4 py-2 rounded-md mb-4"
           >
             Go To Cart
