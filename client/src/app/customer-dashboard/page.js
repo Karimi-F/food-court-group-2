@@ -37,14 +37,20 @@ export default function CustomerDashboard() {
       <header className="mb-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl text-blue-700 font-bold">
-          {session?.user?.name ? `${session.user.name}'s Dashboard` : "Customer Dashboard"}, Welcome to BiteScape Outlets
+            {session?.user?.name ? `${session.user.name}'s Dashboard` : "Customer Dashboard"}, Welcome to BiteScape Outlets
           </h1>
-          <button className="bg-blue-700 text-white p-3 rounded">Log out</button>
+          <div className="flex gap-2">
+            <Link href="/">
+              <button className="bg-gray-500 text-white p-3 rounded">
+                ← Back to Home
+              </button>
+            </Link>
+            <button className="bg-blue-700 text-white p-3 rounded">Log out</button>
+          </div>
         </div>
       </header>
 
       {/* Search Form */}
-      
       <form className="mb-4" onSubmit={(e) => e.preventDefault()}>
         <input
           type="text"
@@ -77,7 +83,6 @@ export default function CustomerDashboard() {
 
       {/* Restaurant Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
         {outlets.length > 0 ? (
           outlets.map((outlet, index) => (
             <div key={index} className="border p-4 rounded-lg shadow bg-white">
