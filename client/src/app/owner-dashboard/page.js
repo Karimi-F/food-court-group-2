@@ -15,7 +15,7 @@ export default function OwnerDashboard() {
   // Fetch outlets owned by the logged-in user
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/login"); // Redirect if not logged in
+      router.push("/owner-login"); // Redirect if not logged in
     }
 
     if (status === "authenticated" && session?.user?.id) {
