@@ -164,7 +164,6 @@ export default function Home() {
                 <li className="cursor-pointer hover:text-red-500">
                   <Link href="/about">About us</Link>
                 </li>
-                <li className="cursor-pointer hover:text-red-500">Outlets</li>
                 <li className="cursor-pointer hover:text-red-500">
                   <Link href="/contact-us">Contact Us</Link>
                 </li>

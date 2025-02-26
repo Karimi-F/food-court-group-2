@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-      domains: ["images.unsplash.com"], // Allow Unsplash images
+      domains: ["images.unsplash.com"],
+      domains: ["media.istockphoto.com"] // Allow Unsplash images
     },
   };
   

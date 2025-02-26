@@ -79,6 +79,7 @@ export default function CustomerDashboard() {
           <option value="Snacks">Snacks</option>
           <option value="Beverages">Beverages</option>
           <option value="Desserts">Desserts</option>
+          <option value="Dinner">Dinner</option>
         </select>
       </div>
 
