@@ -1,18 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
-  fetchOutlets,
-  createCustomer,
-  getCustomer,
-  searchOutletByName,
-} from "../lib/utils";
-
+  Star,
+  Facebook,
+  Youtube,
+  Instagram,
+  ArrowRight,
+  Search,
+} from "lucide-react";
+import { fetchOutlets } from "../lib/utils";
 
 export default function Home() {
+   const popularDelicacies = [
+    {
+      Outlet: "Wellsy's Sweet Treat",
+      name: "Oreo Milkshake",
+      price: "Ksh. 450",
+      image:
+        "https://images.unsplash.com/photo-1586917049334-0f99406d8a6e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDQwfHx8ZW58MHx8fHx8",
+    },
+    {
+      Outlet: "Wine and Dine",
+      name: "Sauvignon Blanc & Salmon",
+      price: "Ksh. 13000",
+      image:
+        "https://images.unsplash.com/photo-1565895405227-31cffbe0cf86?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDl8fHxlbnwwfHx8fHw%3D",
+    },
+    {
+      Outlet: "Maxxie Sushi",
+      name: "Fusion Crunch Platter",
+      price: "Ksh. 2000",
+      image:
+        "https://images.unsplash.com/photo-1553621042-f6e147245754?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8c3VzaGl8ZW58MHx8MHx8fDA%3D",
+    },
+    {
+      Outlet: "Tacos and Taps",
+      name: "Boba Tea",
+      price: "Ksh. 400",
+      image:
+        "https://images.unsplash.com/photo-1529474944862-bf4949bd2f1a?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YmV2ZXJhZ2VzJTIwYm9iYXxlbnwwfHwwfHx8MA%3D%3D",
+    },
+  ];
+
   const [searchOutlet, setSearchOutlet] = useState("");
   const [searchFood, setSearchFood] = useState("");
   const [role, setRole] = useState("");
@@ -27,13 +60,13 @@ export default function Home() {
   const openModal = () => setIsOpen(true);
   const closeModal = () => setIsOpen(false);
 
-  const getOutlets = async () => {
+  const getOutlets = useCallback(async () => {
     const data = await fetchOutlets({
-      outlet: searchOutlet, // ✅ Using searchOutlet instead of searchRestaurants
+      outlet: searchOutlet,
       food: searchFood,
     });
-    setOutlets(data); // ✅ Renamed from setRestaurants
-  };
+    setOutlets(data);
+  }, [searchOutlet, searchFood]);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -41,10 +74,9 @@ export default function Home() {
     }, 500);
 
     return () => clearTimeout(delayDebounce);
-  }, [searchOutlet, searchFood]); // ✅ Updated dependencies
+  }, [searchOutlet, searchFood, getOutlets]);
 
-
-  // 🔹 Fetch Outlets Based on Search
+  // Fetch Outlets Based on Search
   const handleSearch = async () => {
     if (!query.trim()) return; // Prevent empty search
 
@@ -58,13 +90,13 @@ export default function Home() {
 
       const data = await response.json();
       console.log("Search Results:", data);
-      setOutlets(data); // 🔹 Store the outlets to display
+      setOutlets(data);
     } catch (error) {
       console.error("Error fetching outlets:", error);
     }
   };
 
-  // 🔹 Fetch Food Items When an Outlet is Clicked
+  // Fetch Food Items When an Outlet is Clicked
   const handleOutletClick = async (outletId) => {
     setSelectedOutlet(outletId);
 
@@ -78,183 +110,231 @@ export default function Home() {
 
       const data = await response.json();
       console.log("Food Items:", data);
-      setFoods(data); // 🔹 Store the food items
+      setFoods(data);
     } catch (error) {
       console.error("Error fetching food:", error);
     }
   };
 
   return (
-    <>
-      <div>
-        <button
-          className="bg-red-500 p-2 rounded-md text-white"
-          onClick={openModal}
-        >
-          Get Started
-        </button>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="bg-white shadow-md p-4 fixed top-0 w-full z-50">
+        <div className="container mx-auto flex items-center justify-between">
+          <Link href="/" className="text-2xl font-bold text-[#FF6B6B]">
+            BiteScape
+          </Link>
+          <nav className="hidden md:flex items-center gap-8">
+            <Link href="/home" className="text-[#FF6B6B]">
+              Home
+            </Link>
+            <Link href="/foodmenu">Menu</Link>
+            <Link href="/about">About us</Link>
+            <Link href="/contact-us">Contact us</Link>
+          </nav>
+          <button
+            className="px-6 py-2 rounded-full border border-[#FF6B6B] text-[#FF6B6B] hover:bg-[#FF6B6B] hover:text-white transition-colors"
+            onClick={openModal}
+          >
+            Get Started
+          </button>
+        </div>
+      </header>
 
-        {isOpen && (
-          <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
-            <div className="bg-red-500 p-6 rounded-lg shadow-md max-w-md w-full">
-              <h2 className="text-xl text-white font-bold mb-4 text-center">
-                Sign Up As:
-              </h2>
+      {/* Modal */}
+      {isOpen && (
+        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
+          <div className="bg-[#FF6B6B] p-6 rounded-lg shadow-md max-w-md w-full">
+            <h2 className="text-xl text-white font-bold mb-4 text-center">
+              Sign Up As:
+            </h2>
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  role
-                    ? router.push(`/${role}-signup`)
-                    : alert("Select an option!");
-                  closeModal();
-                }}
-                className="space-y-4 text-white"
-              >
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="owner"
-                    onChange={(e) => setRole(e.target.value)}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-lg">Owner</span>
-                </label>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                role
+                  ? router.push(`/${role}-signup`)
+                  : alert("Select an option!");
+                closeModal();
+              }}
+              className="space-y-4 text-white"
+            >
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="owner"
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-5 h-5"
+                />
+                <span className="text-lg">Owner</span>
+              </label>
 
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="customer"
-                    onChange={(e) => setRole(e.target.value)}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-lg">Customer</span>
-                </label>
-
-                <button
-                  type="submit"
-                  className="bg-yellow-500 text-white w-full p-2 rounded-md mt-4 hover:bg-red-500 transition"
-                >
-                  Continue
-                </button>
-              </form>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="customer"
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-5 h-5"
+                />
+                <span className="text-lg">Customer</span>
+              </label>
 
               <button
-                onClick={closeModal}
-                className="absolute top-2 right-2 text-xl text-gray-500"
+                type="submit"
+                className="bg-white text-[#FF6B6B] w-full p-2 rounded-md mt-4 hover:bg-gray-100 transition"
               >
-                &times;
+                Continue
               </button>
-            </div>
+            </form>
+
+            <button
+              onClick={closeModal}
+              className="absolute top-2 right-2 text-xl text-white"
+            >
+              &times;
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="bg-blue-100 min-h-screen">
-        <div className="bg-cover bg-center h-screen">
-          <nav className="bg-blue-100 shadow-md p-4 fixed top-0 w-full z-50">
-            <div className="max-w-6xl mx-auto flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-red-500">Bite Scape</h1>
-              <ul className="hidden md:flex text-black space-x-6">
-                <li className="cursor-pointer hover:text-red-500">
-                  <Link href="/home">Home</Link>{" "}
-                </li>
-                <li className="cursor-pointer hover:text-red-500">
-                  <Link href="/about">About us</Link>
-                </li>
-                <li className="cursor-pointer hover:text-red-500">
-                  <Link href="/contact-us">Contact Us</Link>
-                </li>
-                <li className="cursor-pointer hover:text-red-500">
-                  <button
-                    className="bg-red-500 p-2 rounded-md text-white"
-                    onClick={openModal}
-                  >
-                    Get Started
-                  </button>
-                </li>
-              </ul>
-            </div>
-          </nav>
+      {/* Hero Section */}
+      <section className="relative pt-20 h-[80vh] flex items-center justify-center">
+        <Image
+          src="https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjR8fGZvb2R8ZW58MHx8MHx8fDA%3D"
+          alt="Delicious Food"
+          layout="fill"
+          objectFit="cover"
+          className="opacity-70"
+          priority
+        />
+        <div className="container relative z-10 mx-auto px-4 text-center">
+          <div className="max-w-3xl mx-auto space-y-6">
+            <h1 className="text-5xl font-bold leading-tight text-black drop-shadow-lg">
+              Welcome
+              <span className="block text-[#FF6B6B]">Discover Amazing Food at Bite Scape</span>
+            </h1>
+            <p className="text-black text-lg drop-shadow-md">
+            Find your favorite meals from the best restaurants near you!
+            </p>
 
-          <section className="relative h-[80vh] flex items-center justify-center text-center">
-            <Image
-              src="/food-hero.jpg"
-              alt="Delicious Food"
-              layout="fill"
-              objectFit="cover"
-              className="opacity-70"
-            />
-            <div className="absolute text-white">
-              <h1 className="text-4xl text-white">Welcome</h1>
-              <h2 className="text-4xl md:text-6xl font-extrabold drop-shadow-lg">
-                Discover Amazing Food at Bite Scape
-              </h2>
-              <p className="mt-4 text-lg md:text-xl">
-                Find your favorite meals from the best restaurants near you!
-              </p>
-
-              {/* <input type="text" placeholder="Search for food, outlets..." className="p-2 w-72 outline-none" value={query} onChange={(e) => setQuery(e.target.value)} />
-                <button className="bg-red-500 p-3 rounded-md text-white ml-auto" onClick={handleSearch}>
-                  Search
-                </button> */}
-              <div className="flex items-center justify-center w-full">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="relative w-full max-w-xl">
                 <input
                   type="text"
                   placeholder="Search outlets..."
-                  className="w-1/2 h-12 px-6 rounded-full 
-                   bg-white text-blue-700 text-lg
-                   placeholder:text-gray-400
-                   border border-gray-300
-                   outline-none"
+                  className="w-full h-12 px-6 rounded-full 
+                  bg-white text-gray-700 text-lg
+                  placeholder:text-gray-400
+                  border border-gray-300
+                  outline-none"
                   value={searchOutlet}
                   onChange={(e) => setSearchOutlet(e.target.value)}
                 />
-                {/* <button className="bg-red-500 p-3 rounded-md text-white ml-auto" onClick={handleSearch}>
-                  Search
-                </button> */}
-              </div>
-              {/* Restaurant Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {outlets.length > 0 ? (
-          outlets.map((outlet, index) => (
-            <div key={index} className="border p-4 rounded-lg shadow bg-white">
-              {/* Outlet Image */}
-              <img
-                src={outlet.photo_url} // Ensure this matches your API response key
-                alt={outlet.name}
-                className="w-full h-48 object-cover rounded-lg mb-2"
-              />
-
-              {/* Outlet Name */}
-              <h2 className="text-xl text-blue-700 font-bold">{outlet.name}</h2>
-
-              {/* Outlet Description */}
-              <p className="text-gray-800">{outlet.description}</p>
-
-              {/* View Menu Button with Navigation */}
-              <Link href={`/foodmenu/${outlet.id}`}>
-                <button className="mt-2 bg-blue-700 text-white p-2 rounded w-full"
+                <button
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#FF6B6B] p-2 rounded-full text-white"
+                  onClick={handleSearch}
                 >
-                  View Menu
+                  <Search className="w-5 h-5" />
                 </button>
-              </Link>
+              </div>
             </div>
-          ))
-        ) : (
-          <p className="text-gray-600">No outlets found</p>
-        )}
-      </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-4">
+              <button className="px-6 py-3 bg-[#FF6B6B] text-white rounded-full hover:bg-[#FF5B5B] transition-colors">
+                Order Now
+              </button>
+              <button className="px-6 py-3 flex items-center gap-2 text-white hover:text-[#FF6B6B] transition-colors">
+                Download app <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
-          </section>
-         
+          </div>
         </div>
+      </section>
+      
+      {/* Popular Delicacies */}
+      {popularDelicacies.length > 0 && (
+        <section className="container mx-auto px-4 py-12 bg-gray-50">
+          <h2 className="text-3xl font-bold mb-8">Featured Delicacies</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {popularDelicacies.map((item, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="aspect-square relative mb-4">
+                  <img
+                    src={item.image || "/placeholder.svg"}
+                    alt={item.name}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                </div>
+                <p className="text-sm text-gray-500">{item.Outlet}</p>
+                <h3 className="font-semibold text-lg">{item.name}</h3>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-[#FF6B6B] font-bold">{item.price}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Outlets Section */}
+      {outlets.length > 0 && (
+        <section className="container mx-auto px-4 py-12">
+          <h2 className="text-3xl font-bold mb-8">Available Outlets</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {outlets.map((outlet, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="aspect-video relative mb-4">
+                  <img
+                    src={
+                      outlet.photo_url ||
+                      "/placeholder.svg?height=200&width=350"
+                    }
+                    alt={outlet.name}
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                </div>
+                <h3 className="font-semibold text-lg text-[#FF6B6B]">
+                  {outlet.name}
+                </h3>
+                <p className="text-gray-600 mt-2 line-clamp-2">
+                  {outlet.description}
+                </p>
+                <Link href={`/foodmenu/${outlet.id}`}>
+                  <button className="mt-4 w-full bg-[#FF6B6B] text-white p-2 rounded-md hover:bg-[#FF5B5B] transition-colors">
+                    View Menu
+                  </button>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Social Links */}
+      <div className="fixed left-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-10">
+        <Link href="#" className="text-gray-400 hover:text-[#FF6B6B]">
+          <Facebook className="w-6 h-6" />
+        </Link>
+        <Link href="#" className="text-gray-400 hover:text-[#FF6B6B]">
+          <Youtube className="w-6 h-6" />
+        </Link>
+        <Link href="#" className="text-gray-400 hover:text-[#FF6B6B]">
+          <Instagram className="w-6 h-6" />
+        </Link>
       </div>
-      <footer className="bg-blue-100 text-black text-center py-6">
-      <p>&copy; 2025 Bite Scape. All Rights Reserved.</p>
-   </footer>
-    </>
+
+      {/* Footer */}
+      <footer className="bg-white text-center py-6 border-t">
+        <p>&copy; 2025 BiteScape. All Rights Reserved.</p>
+      </footer>
+    </div>
   );
 }
