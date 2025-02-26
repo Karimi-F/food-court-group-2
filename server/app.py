@@ -89,6 +89,7 @@ class OwnerResource(Resource):
             return {"error": "Owner not found"}, 404
         return owner.to_dict(), 200
     
+    def post(self):
         data = request.get_json()
         name = data.get('name')
         email = data.get('email')
