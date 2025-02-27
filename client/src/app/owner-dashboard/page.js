@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { fetchOwnerOutlets, addOutlet } from "../lib/utils"; // Ensure correct path
+import { fetchOwnerOutlets, addOutlet } from "../lib/utils"; // ✅ Ensure correct path
 
 export default function OwnerDashboard() {
   const { data: session, status } = useSession();
@@ -38,10 +38,20 @@ export default function OwnerDashboard() {
     },
   ]);
 
+  const handleLogout = async() => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      // signout without redirect 
+      await signOut({redirect: false});
+      alert("You have been logged out successfully");
+      router.push("/home");
+    }
+  };  
+
   // Fetch outlets owned by the logged-in user
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/owner-login"); // Redirect if not logged in
+      router.push("/home"); // Redirect if not logged in
     }
 
     if (status === "authenticated" && session?.user?.id) {
@@ -103,9 +113,9 @@ export default function OwnerDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* Header */}
-      <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">
+      {/* Updated Header with Owner's Name */}
+      <header className="bg-blue-600 text-white p-4 text-center text-2xl font-bold">
+      <h1 className="text-2xl font-bold">      
           {session?.user?.name ? `${session.user.name}'s Dashboard` : "Owner Dashboard"}
         </h1>
         <button
@@ -114,7 +124,7 @@ export default function OwnerDashboard() {
         >
           Logout
         </button>
-      </header>
+        </header>
 
       {/* Outlets Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">

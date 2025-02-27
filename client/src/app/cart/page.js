@@ -2,8 +2,10 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 
 export default function Cart() {
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter(); // For redirection
   const cartParam = searchParams.get("data");
@@ -144,7 +146,7 @@ export default function Cart() {
     <div className="min-h-screen bg-blue-100 flex flex-col items-center p-4">
       <div className="w-full max-w-screen-lg bg-white rounded-lg shadow-lg p-6">
         <h2 className="text-3xl sm:text-4xl text-blue-700 font-bold mb-6 text-center">
-          Customer's Cart
+        {session?.user?.name ? `${session.user.name}'s Cart` : "Customer Cart"}
         </h2>
 
         {cart.length === 0 ? (

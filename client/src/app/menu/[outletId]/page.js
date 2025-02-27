@@ -7,7 +7,7 @@ import {
   updateFoodItem,
   deleteFoodItem,
   addFoodItem,
-  fetchOutletDetails, // Add this function to fetch outlet details
+  fetchOutletDetails,
 } from "../../lib/utils";
 
 export default function OutletMenu() {
@@ -123,8 +123,14 @@ export default function OutletMenu() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* Updated Header with Outlet Name */}
-      <header className="bg-blue-600 text-white p-4 text-center text-2xl font-bold">
+      {/* Updated Header with Outlet Name and Back Button */}
+      <header className="bg-blue-600 text-white p-4 text-center text-2xl font-bold relative">
+        <button
+          onClick={() => router.push("/owner-dashboard")}
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-500 text-white px-4 py-2 rounded-md"
+        >
+          ← Back to Outlets
+        </button>
         {outletName ? `${outletName}'s Menu` : "Loading..."}
       </header>
 
