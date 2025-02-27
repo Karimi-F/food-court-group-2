@@ -100,9 +100,9 @@ class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
     # Foreign key linking to Customer
-    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id', ondelete='SET NULL'), nullable=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id', ondelete='SET NULL'), nullable=False)
     # Foreign key linking to TableReservation
-    table_id = db.Column(db.Integer, db.ForeignKey('table_reservations.id', ondelete='CASCADE'), nullable=False)
+    tablereservation_id = db.Column(db.Integer, db.ForeignKey('table_reservations.id', ondelete='CASCADE'), nullable=False)
     datetime = db.Column(db.DateTime, nullable=False)
     total = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(50), default="pending")
@@ -114,7 +114,7 @@ class Order(db.Model):
         return {
             "id": self.id,
             "customer_id": self.customer_id,
-            "table_id": self.table_id,
+            "tableId": self.tablereservation_id,
             "datetime": self.datetime.isoformat(),
             "total": self.total,
             "status": self.status,
