@@ -72,6 +72,23 @@ export default function OwnerDashboard() {
     }
   };
 
+  // Handle order confirmation
+  const handleConfirmOrder = (orderId) => {
+    const orderToConfirm = orders.find((order) => order.id === orderId);
+    if (orderToConfirm && orderToConfirm.status === "pending") {
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === orderId ? { ...order, status: "confirmed" } : order
+        )
+      );
+      alert(
+        `Notification sent to customer: Your order for ${orderToConfirm.orderSummary
+          .map((item) => item.name)
+          .join(", ")} will be served at ${orderToConfirm.orderTime}.`
+      );
+    }
+  };
+
   // Handle logout with confirmation
   const handleLogout = async () => {
     const confirmLogout = window.confirm("Are you sure you want to log out?");
