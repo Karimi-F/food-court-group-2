@@ -1,16 +1,31 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { fetchOutlets } from "../lib/utils";
 
 export default function CustomerDashboard() {
-  const { data: session, status } = useSession();
+  const { data:session, status } = useSession();
+  const router = useRouter();
   const [searchOutlet, setSearchOutlet] = useState("");
   const [outlets, setOutlets] = useState([]);
   const [searchFood, setSearchFood] = useState("");
   const [category, setCategory] = useState("");
+  
+
+// Handle logout functionality
+const handleLogout = async () => {
+  const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      // signout without redirect 
+      await signOut({redirect: false});
+      alert("You have been logged out successfully");
+      router.push("/home");
+    }
+};
 
   // Fetch outlets based on search input
   const getOutlets = async () => {
@@ -45,7 +60,9 @@ export default function CustomerDashboard() {
                 ← Back to Home
               </button>
             </Link>
-            <button className="bg-blue-700 text-white p-3 rounded">Log out</button>
+            <button 
+          onClick={handleLogout}
+          className="bg-blue-700 text-white p-3 rounded">Log out</button>
           </div>
         </div>
       </header>

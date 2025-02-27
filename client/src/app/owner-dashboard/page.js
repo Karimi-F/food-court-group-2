@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { fetchOwnerOutlets, addOutlet } from "../lib/utils"; // ✅ Ensure correct path
 
 export default function OwnerDashboard() {
@@ -12,10 +12,20 @@ export default function OwnerDashboard() {
   const [isAddingOutlet, setIsAddingOutlet] = useState(false); // State for modal visibility
   const [newOutlet, setNewOutlet] = useState({ name: "", photo_url: "" }); // State for new outlet form
 
+  const handleLogout = async() => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      // signout without redirect 
+      await signOut({redirect: false});
+      alert("You have been logged out successfully");
+      router.push("/home");
+    }
+  };  
+
   // Fetch outlets owned by the logged-in user
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/owner-login"); // Redirect if not logged in
+      router.push("/home"); // Redirect if not logged in
     }
 
     if (status === "authenticated" && session?.user?.id) {
@@ -52,8 +62,16 @@ export default function OwnerDashboard() {
     <div className="min-h-screen bg-gray-100 p-6">
       {/* Updated Header with Owner's Name */}
       <header className="bg-blue-600 text-white p-4 text-center text-2xl font-bold">
-        {session?.user?.name ? `${session.user.name}'s Dashboard` : "Owner Dashboard"}
-      </header>
+      <h1 className="text-2xl font-bold">      
+          {session?.user?.name ? `${session.user.name}'s Dashboard` : "Owner Dashboard"}
+        </h1>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded"
+        >
+          Logout
+        </button>
+        </header>
 
       {/* Outlets Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
@@ -131,3 +149,71 @@ export default function OwnerDashboard() {
     </div>
   );
 }
+
+
+
+// OWNER DASHBOARD 
+
+// import { useSession, signOut } from "next-auth/react";
+
+//   // Handle logout with confirmation
+//   const handleLogout = async () => {
+//     const confirmLogout = window.confirm("Are you sure you want to log out?");
+//     if (confirmLogout) {
+//       // signOut without automatic redirect so we can control the flow
+//       await signOut({ redirect: false });
+//       alert("You have been logged out successfully");
+//       router.push("/"); // Redirect to home page
+//     }
+//   };
+
+//   if (status === "loading") return <p>Loading...</p>;
+
+//   return (
+//     <div className="min-h-screen bg-gray-100 p-6">
+//       {/* Header with Owner's Name and Logout Button */}
+//       <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
+//         <h1 className="text-2xl font-bold">
+//           {session?.user?.name ? `${session.user.name}'s Dashboard` : "Owner Dashboard"}
+//         </h1>
+//         <button
+//           onClick={handleLogout}
+//           className="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded"
+//         >
+//           Logout
+//         </button>
+//       </header>
+
+// CUSTOMER DASHBOARD
+// import { useRouter } from "next/navigation"; 
+// // Import useRouter for redirection
+//  // Handle logout functionality
+//   const handleLogout = () => {
+//     // Show confirmation dialog
+//     if (window.confirm("Are you sure you want to log out?")) {
+//       // Optionally, clear authentication tokens or any other state here
+//       window.alert("You have been logged out successfully!");
+//       router.push("/"); // Redirect to home page
+//     }
+//   };
+
+//   return (
+//     <div className="bg-blue-100 min-h-screen p-6">
+//       <Head>
+//         <title>Customer Dashboard</title>
+//       </Head>
+
+//       {/* Header */}
+//       <header className="mb-6">
+//         <div className="flex justify-between items-center">
+//           <h1 className="text-3xl text-blue-700 font-bold">
+//             Customer Name, Welcome to BiteScape Outlets
+//           </h1>
+//           <button 
+//             className="bg-blue-700 text-white p-3 rounded" 
+//             onClick={handleLogout}
+//           >
+//             Log out
+//           </button>
+//         </div>
+//       </header>
