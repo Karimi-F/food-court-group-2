@@ -10,7 +10,33 @@ export default function OwnerDashboard() {
   const router = useRouter();
   const [outlets, setOutlets] = useState([]);
   const [isAddingOutlet, setIsAddingOutlet] = useState(false); // State for modal visibility
-  const [newOutlet, setNewOutlet] = useState({ name: "", photo_url: "" }); // State for new outlet form
+  const [newOutlet, setNewOutlet] = useState({ name: "", photo_url: "" });
+  
+  // Dummy orders data with order summary, table and serving time
+  const [orders, setOrders] = useState([
+    {
+      id: 1,
+      outletId: 1,
+      table: "Table 1",
+      orderSummary: [
+        { name: "Burger", quantity: 2 },
+        { name: "Fries", quantity: 1 },
+      ],
+      orderTime: "2025-02-23T10:30",
+      status: "pending",
+    },
+    {
+      id: 2,
+      outletId: 2,
+      table: "Table 3",
+      orderSummary: [
+        { name: "Pizza", quantity: 1 },
+        { name: "Coke", quantity: 2 },
+      ],
+      orderTime: "2025-02-23T11:00",
+      status: "pending",
+    },
+  ]);
 
   // Fetch outlets owned by the logged-in user
   useEffect(() => {
