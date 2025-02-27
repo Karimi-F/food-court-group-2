@@ -10,6 +10,7 @@ export default function CustomerDashboard() {
   const [outlets, setOutlets] = useState([]);
   const [searchFood, setSearchFood] = useState("");
   const [category, setCategory] = useState("");
+  const [recentOrder, setRecentOrder] = useState(null);
 
   const router = useRouter(); // Initialize the router
 
@@ -59,20 +60,40 @@ export default function CustomerDashboard() {
         </div>
       </header>
 
+      {/* Recent Order Summary (if any) */}
+      {recentOrder && (
+        <div className="bg-green-50 border border-green-300 p-4 rounded-lg shadow mb-6">
+          <h2 className="text-xl font-bold text-green-700 mb-2">
+            Recent Order Summary
+          </h2>
+          <ul className="list-disc list-inside">
+            {recentOrder.foodItems.map((food, index) => (
+              <li key={index} className="text-green-800">
+                {food.name}
+                {food.quantity > 1 ? ` x${food.quantity}` : ""}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-green-800">
+            Time to be served: {recentOrder.orderTime}
+          </p>
+        </div>
+      )}
+
       {/* Search Form */}
       
       <form className="mb-4" onSubmit={(e) => e.preventDefault()}>
         <input
           type="text"
           placeholder="Search restaurants..."
-          className="p-2 text-blue-700 border rounded w-full"
+          className="p-2 text-blue-700 border rounded w-full mb-2"
           value={searchOutlet}
           onChange={(e) => setSearchOutlet(e.target.value)}
         />
         <input
           type="text"
           placeholder="Search food..."
-          className="p-2 text-blue-700 border rounded w-full md:w-2/3"
+          className="p-2 text-blue-700 border rounded w-full md:w-2/3 mb-2"
           value={searchFood}
           onChange={(e) => setSearchFood(e.target.value)}
         />
