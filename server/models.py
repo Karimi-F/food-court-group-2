@@ -99,8 +99,9 @@ class Food(db.Model, SerializerMixin):
 class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
-    # Enforce that each order must have a customer; if a customer is deleted, its orders are also removed.
-    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id', ondelete='CASCADE'), nullable=False)
+    # Foreign key linking to Customer
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id', ondelete='SET NULL'), nullable=True)
+    # Foreign key linking to TableReservation
     table_id = db.Column(db.Integer, db.ForeignKey('table_reservations.id', ondelete='CASCADE'), nullable=False)
     datetime = db.Column(db.DateTime, nullable=False)
     total = db.Column(db.Float, nullable=False)
