@@ -29,6 +29,15 @@ export default function CustomerDashboard() {
     return () => clearTimeout(delayDebounce);
   }, [searchOutlet]);
 
+  // Retrieve recent order from localStorage (if available) on component mount
+  useEffect(() => {
+    const order = localStorage.getItem("recentOrder");
+    if (order) {
+      setRecentOrder(JSON.parse(order));
+      localStorage.removeItem("recentOrder"); // Clear after showing
+    }
+  }, []);
+
   // Handle logout functionality
   const handleLogout = () => {
     // Show confirmation dialog
@@ -117,7 +126,10 @@ export default function CustomerDashboard() {
 
         {outlets.length > 0 ? (
           outlets.map((outlet, index) => (
-            <div key={index} className="border p-4 rounded-lg shadow bg-white">
+            <div
+              key={index}
+              className="border p-4 rounded-lg shadow bg-white hover:shadow-lg transition"
+            >
               <img
                 src={outlet.photo_url} // Ensure this matches your API response key
                 alt={outlet.name}
