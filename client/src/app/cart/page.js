@@ -11,6 +11,9 @@ export default function Cart() {
   const cartParam = searchParams.get("data");
   const [cart, setCart] = useState([]);
 
+  // New state for checking if the client is present at the restaurant
+  const [isClientPresent, setIsClientPresent] = useState(null);
+
   // State for the date and time selected by the customer
   const [selectedDateTime, setSelectedDateTime] = useState("");
 
@@ -112,6 +115,19 @@ export default function Cart() {
       const result = await res.json();
       if (res.ok) {
         setOrderStatus("Your order has been confirmed!");
+
+        // Save the order summary in localStorage to display on the dashboard
+        localStorage.setItem(
+          "recentOrder",
+          JSON.stringify({
+            foodItems: cart.map((item) => ({
+              name: item.name,
+              quantity: item.quantity,
+            })),
+            orderTime: selectedDateTime,
+          })
+        );
+
         // Redirect the customer to their dashboard after order confirmation
         setTimeout(() => {
           router.push("/customer-dashboard");
@@ -181,22 +197,94 @@ export default function Cart() {
               ))}
             </div>
 
-            {/* Date and Time Picker */}
+            {/* Order Summary Card */}
+            <div className="mt-6">
+              <div className="bg-green-50 border border-green-300 p-4 rounded-lg shadow">
+                <h3 className="text-xl font-bold text-green-700 mb-2">
+                  Order Summary
+                </h3>
+                <ul className="list-disc list-inside text-green-800">
+                  {cart.map((item) => (
+                    <li key={item.id}>
+                      {item.name}
+                      {item.quantity > 1 ? ` x${item.quantity}` : ""}
+                    </li>
+                  ))}
+                </ul>
+                {selectedDateTime && (
+                  <p className="mt-2 text-green-800">
+                    Time to be served: {selectedDateTime}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Client Presence Selection */}
             <div className="mt-6">
               <label className="block text-gray-700 font-semibold mb-2">
-                Select Date & Time:
+                Are you at the restaurant now?
               </label>
-              <input
-                type="datetime-local"
-                value={selectedDateTime}
-                onChange={(e) => {
-                  setSelectedDateTime(e.target.value);
-                  // Reset table selection when datetime changes
-                  setSelectedTable(null);
-                }}
-                className="w-full p-3 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50 text-gray-800"
-              />
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="clientPresent"
+                    value="yes"
+                    checked={isClientPresent === true}
+                    onChange={() => {
+                      setIsClientPresent(true);
+                      // Auto set current date & time for immediate booking
+                      const now = new Date().toISOString().slice(0, 16);
+                      setSelectedDateTime(now);
+                    }}
+                    className="mr-2"
+                  />
+                  Yes
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="clientPresent"
+                    value="no"
+                    checked={isClientPresent === false}
+                    onChange={() => {
+                      setIsClientPresent(false);
+                      setSelectedDateTime(""); // Allow selection for future booking
+                    }}
+                    className="mr-2"
+                  />
+                  No
+                </label>
+              </div>
             </div>
+
+            {/* Date and Time Picker (only shown if client is not yet there) */}
+            {isClientPresent === false && (
+              <div className="mt-6">
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Select Date & Time:
+                </label>
+                <input
+                  type="datetime-local"
+                  value={selectedDateTime}
+                  onChange={(e) => {
+                    setSelectedDateTime(e.target.value);
+                    // Reset table selection when datetime changes
+                    setSelectedTable(null);
+                  }}
+                  className="w-full p-3 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50 text-gray-800"
+                />
+              </div>
+            )}
+
+            {/* If client is present, display the auto-set date and time */}
+            {isClientPresent === true && (
+              <div className="mt-6">
+                <p className="text-gray-700 font-semibold">
+                  Booking for immediate seating at: {selectedDateTime}
+                </p>
+              </div>
+            )}
 
             {/* Dropdown for booking a table */}
             <div className="mt-6">
