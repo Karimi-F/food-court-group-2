@@ -93,10 +93,9 @@ export default function OwnerDashboard() {
   const handleLogout = async () => {
     const confirmLogout = window.confirm("Are you sure you want to log out?");
     if (confirmLogout) {
-      // signOut without automatic redirect so we can control the flow
       await signOut({ redirect: false });
       alert("You have been logged out successfully");
-      router.push("/"); // Redirect to home page
+      router.push("/");
     }
   };
 
@@ -104,7 +103,7 @@ export default function OwnerDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* Header with Owner's Name and Logout Button */}
+      {/* Header */}
       <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold">
           {session?.user?.name ? `${session.user.name}'s Dashboard` : "Owner Dashboard"}
@@ -141,6 +140,75 @@ export default function OwnerDashboard() {
           ))
         ) : (
           <p className="text-gray-600">No outlets found.</p>
+        )}
+      </div>
+
+      {/* Order Notifications Section */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold text-blue-700 mb-4">
+          Order Notifications
+        </h2>
+        {orders.length === 0 ? (
+          <p className="text-gray-600">No orders available.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border">
+              <thead>
+                <tr>
+                  <th className="py-2 px-4 border">Outlet</th>
+                  <th className="py-2 px-4 border">Table</th>
+                  <th className="py-2 px-4 border">Order Summary</th>
+                  <th className="py-2 px-4 border">Time</th>
+                  <th className="py-2 px-4 border">Status</th>
+                  <th className="py-2 px-4 border">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => {
+                  // Lookup outlet name based on order.outletId
+                  const outletArray = Array.isArray(outlets) ? outlets : [];
+                  const outlet = outletArray.find((o) => o.id === order.outletId) || {};
+                  return (
+                    <tr
+                      key={order.id}
+                      className={`text-center ${
+                        order.status === "pending"
+                          ? "bg-yellow-50"
+                          : "bg-green-50"
+                      }`}
+                    >
+                      <td className="py-2 px-4 border">
+                        {outlet ? outlet.name : "N/A"}
+                      </td>
+                      <td className="py-2 px-4 border">{order.table}</td>
+                      <td className="py-2 px-4 border">
+                        {order.orderSummary.map((item, idx) => (
+                          <div key={idx}>
+                            {item.name}
+                            {item.quantity > 1 ? ` x${item.quantity}` : ""}
+                          </div>
+                        ))}
+                      </td>
+                      <td className="py-2 px-4 border">{order.orderTime}</td>
+                      <td className="py-2 px-4 border capitalize">
+                        {order.status}
+                      </td>
+                      <td className="py-2 px-4 border">
+                        {order.status === "pending" && (
+                          <button
+                            onClick={() => handleConfirmOrder(order.id)}
+                            className="bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded"
+                          >
+                            Confirm
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
