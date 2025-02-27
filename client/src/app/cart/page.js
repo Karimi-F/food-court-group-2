@@ -195,6 +195,28 @@ export default function Cart() {
               ))}
             </div>
 
+            {/* Order Summary Card */}
+            <div className="mt-6">
+              <div className="bg-green-50 border border-green-300 p-4 rounded-lg shadow">
+                <h3 className="text-xl font-bold text-green-700 mb-2">
+                  Order Summary
+                </h3>
+                <ul className="list-disc list-inside text-green-800">
+                  {cart.map((item) => (
+                    <li key={item.id}>
+                      {item.name}
+                      {item.quantity > 1 ? ` x${item.quantity}` : ""}
+                    </li>
+                  ))}
+                </ul>
+                {selectedDateTime && (
+                  <p className="mt-2 text-green-800">
+                    Time to be served: {selectedDateTime}
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* Client Presence Selection */}
             <div className="mt-6">
               <label className="block text-gray-700 font-semibold mb-2">
