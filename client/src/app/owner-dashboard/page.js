@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { fetchOwnerOutlets, addOutlet } from "../lib/utils"; // ✅ Ensure correct path
 
 export default function OwnerDashboard() {
@@ -10,12 +10,48 @@ export default function OwnerDashboard() {
   const router = useRouter();
   const [outlets, setOutlets] = useState([]);
   const [isAddingOutlet, setIsAddingOutlet] = useState(false); // State for modal visibility
-  const [newOutlet, setNewOutlet] = useState({ name: "", photo_url: "" }); // State for new outlet form
+  const [newOutlet, setNewOutlet] = useState({ name: "", photo_url: "" });
+  
+  // Dummy orders data with order summary, table and serving time
+  const [orders, setOrders] = useState([
+    {
+      id: 1,
+      outletId: 1,
+      table: "Table 1",
+      orderSummary: [
+        { name: "Burger", quantity: 2 },
+        { name: "Fries", quantity: 1 },
+      ],
+      orderTime: "2025-02-23T10:30",
+      status: "pending",
+    },
+    {
+      id: 2,
+      outletId: 2,
+      table: "Table 3",
+      orderSummary: [
+        { name: "Pizza", quantity: 1 },
+        { name: "Coke", quantity: 2 },
+      ],
+      orderTime: "2025-02-23T11:00",
+      status: "pending",
+    },
+  ]);
+
+  const handleLogout = async() => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      // signout without redirect 
+      await signOut({redirect: false});
+      alert("You have been logged out successfully");
+      router.push("/home");
+    }
+  };  
 
   // Fetch outlets owned by the logged-in user
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/owner-login"); // Redirect if not logged in
+      router.push("/home"); // Redirect if not logged in
     }
 
     if (status === "authenticated" && session?.user?.id) {
@@ -46,14 +82,49 @@ export default function OwnerDashboard() {
     }
   };
 
+  // Handle order confirmation
+  const handleConfirmOrder = (orderId) => {
+    const orderToConfirm = orders.find((order) => order.id === orderId);
+    if (orderToConfirm && orderToConfirm.status === "pending") {
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === orderId ? { ...order, status: "confirmed" } : order
+        )
+      );
+      alert(
+        `Notification sent to customer: Your order for ${orderToConfirm.orderSummary
+          .map((item) => item.name)
+          .join(", ")} will be served at ${orderToConfirm.orderTime}.`
+      );
+    }
+  };
+
+  // Handle logout with confirmation
+  const handleLogout = async () => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      await signOut({ redirect: false });
+      alert("You have been logged out successfully");
+      router.push("/");
+    }
+  };
+
   if (status === "loading") return <p>Loading...</p>;
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       {/* Updated Header with Owner's Name */}
       <header className="bg-blue-600 text-white p-4 text-center text-2xl font-bold">
-        {session?.user?.name ? `${session.user.name}'s Dashboard` : "Owner Dashboard"}
-      </header>
+      <h1 className="text-2xl font-bold">      
+          {session?.user?.name ? `${session.user.name}'s Dashboard` : "Owner Dashboard"}
+        </h1>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded"
+        >
+          Logout
+        </button>
+        </header>
 
       {/* Outlets Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
@@ -70,7 +141,7 @@ export default function OwnerDashboard() {
 
               {/* View Menu Button */}
               <button
-                onClick={() => router.push(`/menu/${outlet.id}`)} 
+                onClick={() => router.push(`/menu/${outlet.id}`)}
                 className="mt-3 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
               >
                 View Menu
@@ -79,6 +150,75 @@ export default function OwnerDashboard() {
           ))
         ) : (
           <p className="text-gray-600">No outlets found.</p>
+        )}
+      </div>
+
+      {/* Order Notifications Section */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold text-blue-700 mb-4">
+          Order Notifications
+        </h2>
+        {orders.length === 0 ? (
+          <p className="text-gray-600">No orders available.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border">
+              <thead>
+                <tr>
+                  <th className="py-2 px-4 border">Outlet</th>
+                  <th className="py-2 px-4 border">Table</th>
+                  <th className="py-2 px-4 border">Order Summary</th>
+                  <th className="py-2 px-4 border">Time</th>
+                  <th className="py-2 px-4 border">Status</th>
+                  <th className="py-2 px-4 border">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => {
+                  // Lookup outlet name based on order.outletId
+                  const outletArray = Array.isArray(outlets) ? outlets : [];
+                  const outlet = outletArray.find((o) => o.id === order.outletId) || {};
+                  return (
+                    <tr
+                      key={order.id}
+                      className={`text-center ${
+                        order.status === "pending"
+                          ? "bg-yellow-50"
+                          : "bg-green-50"
+                      }`}
+                    >
+                      <td className="py-2 px-4 border">
+                        {outlet ? outlet.name : "N/A"}
+                      </td>
+                      <td className="py-2 px-4 border">{order.table}</td>
+                      <td className="py-2 px-4 border">
+                        {order.orderSummary.map((item, idx) => (
+                          <div key={idx}>
+                            {item.name}
+                            {item.quantity > 1 ? ` x${item.quantity}` : ""}
+                          </div>
+                        ))}
+                      </td>
+                      <td className="py-2 px-4 border">{order.orderTime}</td>
+                      <td className="py-2 px-4 border capitalize">
+                        {order.status}
+                      </td>
+                      <td className="py-2 px-4 border">
+                        {order.status === "pending" && (
+                          <button
+                            onClick={() => handleConfirmOrder(order.id)}
+                            className="bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded"
+                          >
+                            Confirm
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
