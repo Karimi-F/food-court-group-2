@@ -113,6 +113,19 @@ export default function Cart() {
       const result = await res.json();
       if (res.ok) {
         setOrderStatus("Your order has been confirmed!");
+
+        // Save the order summary in localStorage to display on the dashboard
+        localStorage.setItem(
+          "recentOrder",
+          JSON.stringify({
+            foodItems: cart.map((item) => ({
+              name: item.name,
+              quantity: item.quantity,
+            })),
+            orderTime: selectedDateTime,
+          })
+        );
+
         // Redirect the customer to their dashboard after order confirmation
         setTimeout(() => {
           router.push("/customer-dashboard");
