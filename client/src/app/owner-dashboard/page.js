@@ -99,15 +99,6 @@ export default function OwnerDashboard() {
     }
   };
 
-  // Handle logout with confirmation
-  const handleLogout = async () => {
-    const confirmLogout = window.confirm("Are you sure you want to log out?");
-    if (confirmLogout) {
-      await signOut({ redirect: false });
-      alert("You have been logged out successfully");
-      router.push("/");
-    }
-  };
 
   if (status === "loading") return <p>Loading...</p>;
 
