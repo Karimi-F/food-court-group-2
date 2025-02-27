@@ -533,14 +533,17 @@ class OrdersResource(Resource):
             table_id = data.get('tableId')
             datetime_str = data.get('datetime')
             total = data.get('total')
-            customer_id = data.get('customerId', None)
+            customer_id = data.get('customer_id', None)
+
+            if not customer_id:
+                return {"error":"customer_id is required"}, 400
 
             # Convert the datetime string into a datetime object.
             order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
 
             new_order = Order(
                 customer_id=customer_id,
-                table_id=table_id,
+                tablereservation_id=table_id,
                 datetime=order_datetime,
                 total=total,
                 status="pending"
