@@ -4,11 +4,6 @@ import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
-<<<<<<< HEAD
-import { useRouter } from "next/navigation"; // Import useRouter for redirection
-=======
-import { useSession } from "next-auth/react";
->>>>>>> dev
 import { fetchOutlets } from "../lib/utils";
 
 export default function CustomerDashboard() {
@@ -18,11 +13,7 @@ export default function CustomerDashboard() {
   const [outlets, setOutlets] = useState([]);
   const [searchFood, setSearchFood] = useState("");
   const [category, setCategory] = useState("");
-<<<<<<< HEAD
   const [recentOrder, setRecentOrder] = useState(null);
-
-  const router = useRouter(); // Initialize the router
-=======
   
 
 // Handle logout functionality
@@ -35,7 +26,6 @@ const handleLogout = async () => {
       router.push("/home");
     }
 };
->>>>>>> dev
 
   // Fetch outlets based on search input
   const getOutlets = async () => {
@@ -61,16 +51,6 @@ const handleLogout = async () => {
     }
   }, []);
 
-  // Handle logout functionality
-  const handleLogout = () => {
-    // Show confirmation dialog
-    if (window.confirm("Are you sure you want to log out?")) {
-      // Optionally, clear authentication tokens or any other state here
-      window.alert("You have been logged out successfully!");
-      router.push("/"); // Redirect to home page
-    }
-  };
-
   return (
     <div className="bg-blue-100 min-h-screen p-6">
       <Head>
@@ -83,14 +63,6 @@ const handleLogout = async () => {
           <h1 className="text-3xl text-blue-700 font-bold">
             {session?.user?.name ? `${session.user.name}'s Dashboard` : "Customer Dashboard"}, Welcome to BiteScape Outlets
           </h1>
-<<<<<<< HEAD
-          <button 
-            className="bg-blue-700 text-white p-3 rounded" 
-            onClick={handleLogout}
-          >
-            Log out
-          </button>
-=======
           <div className="flex gap-2">
             <Link href="/">
               <button className="bg-gray-500 text-white p-3 rounded">
@@ -101,7 +73,6 @@ const handleLogout = async () => {
           onClick={handleLogout}
           className="bg-blue-700 text-white p-3 rounded">Log out</button>
           </div>
->>>>>>> dev
         </div>
       </header>
 
