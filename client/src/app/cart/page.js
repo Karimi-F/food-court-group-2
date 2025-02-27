@@ -91,9 +91,19 @@ export default function Cart() {
       alert("Please select a table before placing your order.");
       return;
     }
+
+    const customer_id = session?.user?.id
+
+    if (!customer_id){
+      alert("Please log in to place an order.");
+    }
+
+    console.log("Customer ID: ",session?.user?.id);
+
     setOrderStatus("Please wait as your order is being confirmed...");
 
     const orderData = {
+      customer_id: session?.user?.id,
       cart,
       tableId: selectedTable,
       datetime: selectedDateTime,
@@ -117,7 +127,6 @@ export default function Cart() {
           router.push("/customer-dashboard");
         }, 2000);
       } else {
-        console.error("Server error:", result);
         setOrderStatus(`Failed to place order: ${result.error}`);
       }
     } catch (error) {
