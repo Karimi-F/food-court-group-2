@@ -99,7 +99,6 @@ export default function OutletMenu() {
 
   // Handle adding a food item
   const handleAddFoodSubmit = async (e) => {
-    e.preventDefault();
     if (!newFood.name || !newFood.price || !newFood.waiting_time || !newFood.category) return;
 
     const foodData = {
@@ -182,7 +181,7 @@ export default function OutletMenu() {
                   <>
                     <div>
                       <h3 className="font-semibold">{food.name}</h3>
-                      <p className="text-gray-500">${food.price}</p>
+                      <p className="text-gray-500">Ksh. {food.price}</p>
                       <p className="text-gray-500">Waiting time: {food.waiting_time} min</p>
                     </div>
                     <div>
