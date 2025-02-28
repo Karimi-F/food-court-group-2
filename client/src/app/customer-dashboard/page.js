@@ -105,26 +105,6 @@ const handleLogout = async () => {
           value={searchOutlet}
           onChange={(e) => setSearchOutlet(e.target.value)}
         />
-        <input
-          type="text"
-          placeholder="Search food..."
-          className="p-2 text-blue-700 border rounded w-full md:w-2/3 mb-2"
-          value={searchFood}
-          onChange={(e) => setSearchFood(e.target.value)}
-        />
-        <select
-          className="p-2 border rounded w-full md:w-1/3 text-blue-700"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
-          <option value="">Pick a category</option>
-          <option value="Breakfast">Breakfast</option>
-          <option value="Lunch">Lunch</option>
-          <option value="Snacks">Snacks</option>
-          <option value="Beverages">Beverages</option>
-          <option value="Desserts">Desserts</option>
-          <option value="Dinner">Dinner</option>
-        </select>
       </form>
 
       {/* Restaurant Cards Grid */}
