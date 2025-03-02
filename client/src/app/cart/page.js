@@ -159,7 +159,10 @@ export default function Cart() {
         </h2>
 
         {cart.length === 0 ? (
-          <p className="text-center text-gray-500">Your cart is empty.</p>
+          <div className="text-center mt-6">
+            <p className="text-center text-gray-500">Your cart is empty.</p>
+          </div>
+          
         ) : (
           <>
             <div className="space-y-4">
