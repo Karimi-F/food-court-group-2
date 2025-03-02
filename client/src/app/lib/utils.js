@@ -1,11 +1,3 @@
-// export async function getCustomer(email){
-//     const customer = await fetch(`http://127.0.0.1:5000/customers?email=${email}`)
-//     .then(response => response.json())
-//     .then(data => data)
-//     .catch(error => console.error('Error:', error));
-//     return customer
-// }
-
 export async function createCustomer(name, email, password){
     const response = await fetch("http://127.0.0.1:5000/customers",{
         method : "POST",
@@ -347,7 +339,7 @@ export async function deleteFoodItem(foodId) {  // Change to use 'foodId'
 
 
 export async function addFoodItem(foodData) {
-  if (!foodData.name || !foodData.price || !foodData.waiting_time || !foodData.outlet_id) {
+  if (!foodData.name || !foodData.price || !foodData.waiting_time || !foodData.photo_url || !foodData.outlet_id) {
     console.error("All fields are required to add food");
     return null;
   }
