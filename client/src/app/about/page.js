@@ -7,23 +7,23 @@ import { Separator } from "@/components/ui/separator"
 
 export default function About() {
   return (
-    <div className="min-h-screen bg-white text-gray-800">
+    <div className="min-h-screen bg-[#FFB3B5] text-[#5A3E36]">
       {/* Header */}
-      <header className="bg-white shadow-md p-4 fixed top-0 w-full z-50">
+      <header className="bg-[#FFB3B5] shadow-md p-4 fixed top-0 w-full z-50">
         <div className="container mx-auto flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold text-[#FF6B6B]">
+          <Link href="/" className="text-2xl font-bold text-[#D83F45]">
             BiteScape
           </Link>
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="/home" className="text-[#FF6B6B] hover:text-red-500 transition-colors">
+            <Link href="/home" className="text-[#D83F45] hover:text-[#B32E33] transition-colors">
               Home
             </Link>
-            <Link href="/foodmenu" className="hover:text-red-500 transition-colors">Menu</Link>
-            <Link href="/about" className="hover:text-red-500 transition-colors">About us</Link>
-            <Link href="/contact-us" className="hover:text-red-500 transition-colors">Contact us</Link>
+            <Link href="/foodmenu" className="hover:text-[#B32E33] transition-colors">Menu</Link>
+            <Link href="/about" className="hover:text-[#B32E33] transition-colors">About us</Link>
+            <Link href="/contact-us" className="hover:text-[#B32E33] transition-colors">Contact us</Link>
           </nav>
           <Link href="/get-started">
-            <button className="px-6 py-2 rounded-full border border-[#FF6B6B] text-[#FF6B6B] hover:bg-[#FF6B6B] hover:text-white transition-colors">
+            <button className="px-6 py-2 rounded-full border border-[#D83F45] text-[#D83F45] hover:bg-[#D83F45] hover:text-white transition-colors">
               Get Started
             </button>
           </Link>
@@ -33,18 +33,18 @@ export default function About() {
       {/* Main Content */}
       <div className="pt-24 pb-8 px-6 md:px-10 lg:px-20 max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[#FF6B6B]">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[#D83F45]">
             About BiteScape
           </h1>
-          <div className="w-20 h-1 bg-[#FF6B6B] mx-auto mb-6"></div>
-          <p className="text-xl text-gray-700 max-w-3xl mx-auto">
-            Welcome to <span className="font-semibold text-[#FF6B6B]">BiteScape</span>, where every bite tells a story and every flavor takes you on a journey.
+          <div className="w-20 h-1 bg-[#D83F45] mx-auto mb-6"></div>
+          <p className="text-xl max-w-3xl mx-auto">
+            Welcome to <span className="font-semibold text-[#D83F45]">BiteScape</span>, where every bite tells a story and every flavor takes you on a journey.
           </p>
         </div>
 
         {/* What Makes Us Unique */}
         <div>
-          <h2 className="text-3xl font-bold mb-4 text-[#FF6B6B]">What Makes Us Unique</h2>
+          <h2 className="text-3xl font-bold mb-4 text-[#D83F45]">What Makes Us Unique</h2>
           <Separator className="mb-6" />
           <div className="grid md:grid-cols-2 gap-6">
             {[
@@ -56,10 +56,10 @@ export default function About() {
               <Card key={index} className="overflow-hidden hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
-                    <div className="h-8 w-8 mt-1 text-[#FF6B6B]">{item.icon}</div>
+                    <div className="h-8 w-8 mt-1 text-[#D83F45]">{item.icon}</div>
                     <div>
-                      <h3 className="text-xl font-semibold mb-2 text-[#FF6B6B]">{item.title}</h3>
-                      <p className="text-gray-700">{item.text}</p>
+                      <h3 className="text-xl font-semibold mb-2 text-[#D83F45]">{item.title}</h3>
+                      <p>{item.text}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -69,12 +69,12 @@ export default function About() {
         </div>
 
         {/* Call to Action */}
-        <div className="mt-10 bg-gray-50 p-8 rounded-lg text-center">
-          <h2 className="text-2xl font-bold mb-4 text-[#FF6B6B]">
+        <div className="mt-10 bg-[#FFC7C9] p-8 rounded-lg text-center">
+          <h2 className="text-2xl font-bold mb-4 text-[#D83F45]">
             Welcome to BiteScape—your passport to the future of food.
           </h2>
           <Link href="/get-started">
-            <button className="mt-4 bg-[#FF6B6B] text-white px-6 py-3 rounded-md flex items-center mx-auto hover:bg-[#e64c52] transition-colors">
+            <button className="mt-4 bg-[#D83F45] text-white px-6 py-3 rounded-md flex items-center mx-auto hover:bg-[#B32E33] transition-colors">
               Start Your Culinary Journey <ChevronRight className="ml-2 h-5 w-5" />
             </button>
           </Link>
@@ -82,11 +82,11 @@ export default function About() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-100 py-6 text-center text-gray-600 mt-12">
+      <footer className="bg-[#FFC7C9] py-6 text-center text-[#5A3E36] mt-12">
         <div className="max-w-6xl mx-auto px-4">
           <p>© {new Date().getFullYear()} BiteScape. All rights reserved.</p>
         </div>
       </footer>
     </div>
   )
-}
+}  

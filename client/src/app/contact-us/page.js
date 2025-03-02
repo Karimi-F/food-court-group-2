@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 
 export default function ContactUs() {
   return (
-    <div className="min-h-screen bg-blue-100 text-gray-800">
+    <div className="min-h-screen bg-[#FFB3B5] text-gray-800">
       {/* Navigation */}
       <nav className="p-4 bg-white shadow-sm fixed top-0 w-full z-50">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
