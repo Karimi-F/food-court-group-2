@@ -83,6 +83,7 @@ class Food(db.Model, SerializerMixin):
     price = db.Column(db.Float, nullable=False)
     waiting_time = db.Column(db.String, nullable=False)
     category = db.Column(db.String, nullable=True)
+    photo_url = db.Column(db.String, nullable=False)
     # Foreign key linking to Outlet
     outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id'), nullable=False)
     
