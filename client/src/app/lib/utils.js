@@ -229,6 +229,7 @@ export async function getFood() {
         const foods = await response.json();
 
         const formattedFoods = foods.map(food => ({
+            photo_url: food.photo_url,
             category: food.category,
             name: food.name,
             price: food.price,
