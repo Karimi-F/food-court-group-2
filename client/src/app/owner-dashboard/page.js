@@ -103,15 +103,15 @@ export default function OwnerDashboard() {
   if (status === "loading") return <p>Loading...</p>;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-[#ffeeee] p-6">
       {/* Updated Header with Owner's Name */}
-      <header className="bg-blue-600 text-white p-4 text-center text-2xl font-bold">
+      <header className="flex justify-between items-center text-[#ff575a] p-4 text-center text-2xl font-bold">
       <h1 className="text-2xl font-bold">      
           {session?.user?.name ? `${session.user.name}'s Dashboard` : "Owner Dashboard"}
         </h1>
         <button
           onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded"
+          className="bg-[#ff575a] text-white px-4 py-2 rounded-xl hover:bg-hover:bg-[#e04e50] transition"
         >
           Logout
         </button>
@@ -121,19 +121,19 @@ export default function OwnerDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
         {outlets.length > 0 ? (
           outlets.map((outlet) => (
-            <div key={outlet.id} className="bg-white p-4 shadow-md rounded-lg">
+            <div key={outlet.id} className="border p-4 rounded-2xl shadow bg-[#e6d6d6] hover:shadow-xl hover:scale-105 transition-transform duration-300">
               <img
                 src={outlet.photo_url}
                 alt={outlet.name}
-                className="w-full h-48 object-cover rounded-md"
+                className="w-full h-48 object-cover rounded-2xl mb-2"
               />
-              <h2 className="text-lg font-semibold mt-2">{outlet.name}</h2>
+              <h2 className="text-[#ff575a] font-semibold mt-2">{outlet.name}</h2>
               <p className="text-gray-500">{outlet.owner?.name}</p>
 
               {/* View Menu Button */}
               <button
                 onClick={() => router.push(`/menu/${outlet.id}`)}
-                className="mt-3 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+                className="mt-3 bg-[#ff575a] text-white w-full px-4 py-2 rounded-xl hover:bg-hover:bg-[#e04e50] transition"
               >
                 View Menu
               </button>
@@ -146,7 +146,7 @@ export default function OwnerDashboard() {
 
       {/* Order Notifications Section */}
       <div className="mt-8">
-        <h2 className="text-2xl font-bold text-blue-700 mb-4">
+        <h2 className="text-2xl font-bold text-[#ff575a] mb-4">
           Order Notifications
         </h2>
         {orders.length === 0 ? (
@@ -216,7 +216,7 @@ export default function OwnerDashboard() {
       {/* Add Outlet Button */}
       <button
         onClick={() => setIsAddingOutlet(true)}
-        className="mt-6 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+        className="mt-6 bg-[#ff575a] text-white px-4 py-2 rounded-xl hover:bg-green-700 transition"
       >
         + Add Outlet
       </button>
