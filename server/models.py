@@ -43,6 +43,7 @@ class Outlet(db.Model, SerializerMixin):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
+    description = db.Column(db.String, nullable=False)
     photo_url = db.Column(db.String, nullable=False)
     # Foreign key linking to Owner
     owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'), nullable=False)
