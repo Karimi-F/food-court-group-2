@@ -1,3 +1,11 @@
+// export async function getCustomer(email){
+//     const customer = await fetch(`http://127.0.0.1:5000/customers?email=${email}`)
+//     .then(response => response.json())
+//     .then(data => data)
+//     .catch(error => console.error('Error:', error));
+//     return customer
+// }
+
 export async function createCustomer(name, email, password){
     const response = await fetch("http://127.0.0.1:5000/customers",{
         method : "POST",
@@ -231,6 +239,26 @@ export async function getFood() {
         return formattedFoods;
     } catch (error) {
         console.error("Error fetching food data:", error);
+        return [];
+    }
+}
+
+export async function getOutlets() {
+    try {
+        const response = await fetch("http://127.0.0.1:5000/outlets");
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const outlets = await response.json();
+
+        const formattedOutlets = outlets.map(outlet => ({
+            photo_url: outlet.photo_url,
+            name: outlet.name
+        }));
+
+        return formattedOutlets;
+    } catch (error) {
+        console.error("Error fetching outlet data:", error);
         return [];
     }
 }
