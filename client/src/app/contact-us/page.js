@@ -19,9 +19,9 @@ export default function ContactUs() {
             <li className="cursor-pointer hover:text-red-500">
               <Link href="/about">About</Link>
             </li>
-            <li className="cursor-pointer hover:text-red-500">
+            {/* <li className="cursor-pointer hover:text-red-500">
               <Link href="/outlets">Outlets</Link>
-            </li>
+            </li> */}
             <li className="cursor-pointer text-red-500 font-medium">
               <Link href="/contact-us">Contact Us</Link>
             </li>
