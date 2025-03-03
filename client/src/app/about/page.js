@@ -18,15 +18,15 @@ export default function About() {
             <Link href="/home" className="text-[#D83F45] hover:text-[#B32E33] transition-colors">
               Home
             </Link>
-            <Link href="/foodmenu" className="hover:text-[#B32E33] transition-colors">Menu</Link>
-            <Link href="/about" className="hover:text-[#B32E33] transition-colors">About us</Link>
+            {/* <Link href="/foodmenu" className="hover:text-[#B32E33] transition-colors">Menu</Link> */}
+            <Link href="/about" className="hover:text-[#B32E33] transition-colors">About</Link>
             <Link href="/contact-us" className="hover:text-[#B32E33] transition-colors">Contact us</Link>
           </nav>
-          <Link href="/get-started">
+          {/* <Link href="/get-started">
             <button className="px-6 py-2 rounded-full border border-[#D83F45] text-[#D83F45] hover:bg-[#D83F45] hover:text-white transition-colors">
               Get Started
             </button>
-          </Link>
+          </Link> */}
         </div>
       </header>
 
