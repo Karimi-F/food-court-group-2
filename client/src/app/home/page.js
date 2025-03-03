@@ -1,161 +1,445 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import {
-  Star,
-  Facebook,
-  Youtube,
-  Instagram,
-  ArrowRight,
-  Search,
-} from "lucide-react";
-import { fetchOutlets } from "../lib/utils";
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import Image from "next/image"
+import { Search, Facebook, Youtube, Instagram, Menu, X, ChevronDown, ArrowRight } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export default function Home() {
-   const popularDelicacies = [
-    {
-      Outlet: "Wellsy's Sweet Treat",
-      name: "Oreo Milkshake",
-      price: "Ksh. 450",
-      image:
-        "https://images.unsplash.com/photo-1586917049334-0f99406d8a6e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDQwfHx8ZW58MHx8fHx8",
-    },
-    {
-      Outlet: "Wine and Dine",
-      name: "Sauvignon Blanc & Salmon",
-      price: "Ksh. 13000",
-      image:
-        "https://images.unsplash.com/photo-1565895405227-31cffbe0cf86?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDl8fHxlbnwwfHx8fHw%3D",
-    },
-    {
-      Outlet: "Maxxie Sushi",
-      name: "Fusion Crunch Platter",
-      price: "Ksh. 2000",
-      image:
-        "https://images.unsplash.com/photo-1553621042-f6e147245754?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8c3VzaGl8ZW58MHx8MHx8fDA%3D",
-    },
-    {
-      Outlet: "Tacos and Taps",
-      name: "Boba Tea",
-      price: "Ksh. 400",
-      image:
-        "https://images.unsplash.com/photo-1529474944862-bf4949bd2f1a?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YmV2ZXJhZ2VzJTIwYm9iYXxlbnwwfHwwfHx8MA%3D%3D",
-    },
-  ];
-
-  const [searchOutlet, setSearchOutlet] = useState("");
-  const [searchFood, setSearchFood] = useState("");
-  const [role, setRole] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [outlets, setOutlets] = useState([]); // Stores searched outlets
-  const [selectedOutlet, setSelectedOutlet] = useState(null); // Stores clicked outlet
-  const [foods, setFoods] = useState([]); // Stores food items for selected outlet
-
-  const router = useRouter();
-
-  const openModal = () => setIsOpen(true);
-  const closeModal = () => setIsOpen(false);
-
-  const getOutlets = useCallback(async () => {
-    const data = await fetchOutlets({
-      outlet: searchOutlet,
-      food: searchFood,
-    });
-    setOutlets(data);
-  }, [searchOutlet, searchFood]);
+  const [isOpen, setIsOpen] = useState(false)
+  const [role, setRole] = useState("")
+  const [searchOutlet, setSearchOutlet] = useState("")
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      getOutlets();
-    }, 500);
-
-    return () => clearTimeout(delayDebounce);
-  }, [searchOutlet, searchFood, getOutlets]);
-
-  // Fetch Outlets Based on Search
-  const handleSearch = async () => {
-    if (!query.trim()) return; // Prevent empty search
-
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:5000/outlets?name=${encodeURIComponent(query)}`
-      );
-      if (!response.ok) {
-        throw new Error("Outlet not found");
-      }
-
-      const data = await response.json();
-      console.log("Search Results:", data);
-      setOutlets(data);
-    } catch (error) {
-      console.error("Error fetching outlets:", error);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50)
     }
-  };
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
-  // Fetch Food Items When an Outlet is Clicked
-  const handleOutletClick = async (outletId) => {
-    setSelectedOutlet(outletId);
+  // Sample data
+  const popularDelicacies = [
+    {
+      name: "Spicy Chicken Burger",
+      Outlet: "Burger Haven",
+      price: "$12.99",
+      image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop",
+    },
+    {
+      name: "Margherita Pizza",
+      Outlet: "Pizza Palace",
+      price: "$14.99",
+      image: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=500&auto=format&fit=crop",
+    },
+    {
+      name: "Chocolate Brownie",
+      Outlet: "Sweet Treats",
+      price: "$6.99",
+      image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500&auto=format&fit=crop",
+    },
+    {
+      name: "Veggie Bowl",
+      Outlet: "Green Eats",
+      price: "$10.99",
+      image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop",
+    },
+  ]
 
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:5000/outlets/${outletId}/foods`
-      );
-      if (!response.ok) {
-        throw new Error("No food found for this outlet");
-      }
+  const outlets = [
+    {
+      id: 1,
+      name: "Burger Haven",
+      description: "Best burgers in town with a variety of options including vegetarian and vegan choices.",
+      photo_url: "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=500&auto=format&fit=crop",
+    },
+    {
+      id: 2,
+      name: "Pizza Palace",
+      description: "Authentic Italian pizzas made with fresh ingredients and traditional recipes.",
+      photo_url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&auto=format&fit=crop",
+    },
+    {
+      id: 3,
+      name: "Sweet Treats",
+      description: "Delicious desserts and pastries that will satisfy your sweet tooth.",
+      photo_url: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=500&auto=format&fit=crop",
+    },
+  ]
 
-      const data = await response.json();
-      console.log("Food Items:", data);
-      setFoods(data);
-    } catch (error) {
-      console.error("Error fetching food:", error);
+  const openModal = () => setIsOpen(true)
+  const closeModal = () => setIsOpen(false)
+
+  const handleSearch = () => {
+    if (searchOutlet.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchOutlet)}`)
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white shadow-md p-4 fixed top-0 w-full z-50">
-        <div className="container mx-auto flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold text-[#FF6B6B]">
-            BiteScape
-          </Link>
-          <nav className="hidden md:flex items-center gap-8">
-            <Link href="/home" className="text-[#FF6B6B]">
-              Home
+    <div className="min-h-screen bg-gradient-to-br from-[#ffeeee] to-[#ffe0e0]">
+      {/* Modern Header */}
+      <header
+        className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+          isScrolled ? "bg-white/80 backdrop-blur-md shadow-lg" : "bg-transparent"
+        }`}
+      >
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-20">
+            <Link href="/" className="relative z-10">
+              <div className="text-2xl font-bold text-[#ff575a] flex items-center gap-2">
+                <div className="relative w-10 h-10">
+                  <div className="absolute inset-0 bg-[#ff575a] rounded-lg rotate-3 opacity-20"></div>
+                  <div className="absolute inset-0 bg-[#ff575a] rounded-lg -rotate-3 opacity-20"></div>
+                  <span className="relative z-10 flex items-center justify-center h-full text-[#ff575a]">B</span>
+                </div>
+                BiteScape
+              </div>
             </Link>
-            <Link href="/foodmenu">Menu</Link>
-            <Link href="/about">About us</Link>
-            <Link href="/contact-us">Contact us</Link>
+
+            <nav className="hidden md:flex items-center gap-8">
+              {["Home", "Menu", "About", "Contact us"].map((item) => (
+                <div key={item}>
+                  <Link
+                    href={`/${item.toLowerCase().replace(" ", "-")}`}
+                    className={`relative text-lg font-medium transition-colors
+                      ${isScrolled ? "text-gray-800" : "text-white"}
+                      hover:text-[#ff575a] group`}
+                  >
+                    {item}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#ff575a] transition-all group-hover:w-full"></span>
+                  </Link>
+                </div>
+              ))}
+            </nav>
+
+            <div className="flex items-center gap-4">
+              <button
+                className="hidden md:flex px-6 py-2.5 rounded-full bg-[#ff575a] text-white font-medium shadow-lg shadow-[#ff575a]/20 hover:shadow-xl hover:shadow-[#ff575a]/30 transition-all"
+                onClick={openModal}
+              >
+                Get Started
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </button>
+
+              <button
+                className="md:hidden p-2 text-[#ff575a] hover:bg-[#ff575a]/10 rounded-lg transition-colors"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Modern Mobile Menu */}
+        <div className={`md:hidden absolute w-full bg-white/90 backdrop-blur-lg shadow-lg ${
+          isMobileMenuOpen ? "block" : "hidden"
+        }`}>
+          <nav className="container mx-auto px-4 py-6 space-y-4">
+            {["Home", "Menu", "About us", "Contact us"].map((item) => (
+              <div key={item} className="border-b border-gray-100 last:border-0">
+                <Link
+                  href={`/${item.toLowerCase().replace(" ", "-")}`}
+                  className="flex items-center justify-between py-3 text-gray-800 hover:text-[#ff575a] transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {item}
+                  <ChevronDown className="w-4 h-4" />
+                </Link>
+              </div>
+            ))}
+            <button
+              className="w-full px-6 py-3 rounded-full bg-[#ff575a] text-white font-medium shadow-lg shadow-[#ff575a]/20"
+              onClick={() => {
+                openModal()
+                setIsMobileMenuOpen(false)
+              }}
+            >
+              Get Started
+            </button>
           </nav>
-          <button
-            className="px-6 py-2 rounded-full border border-[#FF6B6B] text-[#FF6B6B] hover:bg-[#FF6B6B] hover:text-white transition-colors"
-            onClick={openModal}
-          >
-            Get Started
-          </button>
         </div>
       </header>
+
+      {/* Hero Section */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=1920&q=80"
+            alt="Delicious Food"
+            layout="fill"
+            objectFit="cover"
+            priority
+            className="transform scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/50 to-black/60"></div>
+          <div className="absolute inset-0 bg-[#ff575a]/20"></div>
+        </div>
+
+        <div className="relative z-10 container mx-auto px-4 pt-20">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="space-y-6">
+              <h1 className="text-6xl md:text-7xl font-bold text-white leading-tight">
+                Discover
+                <span className="block text-[#ff575a] mt-2">Amazing Food</span>
+                <span className="block">Experience</span>
+              </h1>
+              <p className="text-xl text-gray-200 max-w-2xl mx-auto">
+                Find your favorite meals from the best restaurants near you. Experience the taste of excellence.
+              </p>
+
+              <div className="relative max-w-2xl mx-auto mt-12">
+                <div className="absolute inset-0 bg-white/20 backdrop-blur-xl rounded-2xl transform rotate-3"></div>
+                <div className="absolute inset-0 bg-white/20 backdrop-blur-xl rounded-2xl transform -rotate-3"></div>
+                <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl p-2 shadow-2xl">
+                  <input
+                    type="text"
+                    placeholder="Search for restaurants or dishes..."
+                    className="w-full h-14 px-6 rounded-xl bg-transparent text-gray-800 text-lg placeholder:text-gray-400 focus:outline-none"
+                    value={searchOutlet}
+                    onChange={(e) => setSearchOutlet(e.target.value)}
+                  />
+                  <button
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-[#ff575a] p-3 rounded-xl text-white hover:bg-[#ff575a]/90 transition-colors shadow-lg shadow-[#ff575a]/20"
+                    onClick={handleSearch}
+                  >
+                    <Search className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-8 mt-16 max-w-3xl mx-auto">
+                {[
+                  { number: "500+", label: "Restaurants" },
+                  { number: "1M+", label: "Happy Customers" },
+                  { number: "4.8", label: "Average Rating" },
+                ].map((stat, index) => (
+                  <div key={index} className="text-center">
+                    <h3 className="text-4xl font-bold text-white mb-2">{stat.number}</h3>
+                    <p className="text-gray-300">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2">
+          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex items-start justify-center p-2">
+            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Categories */}
+      <section className="relative py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900">Popular Categories</h2>
+            <p className="text-gray-600 mt-4">Explore our most loved food categories</p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {[
+              { name: "Pizza", icon: "🍕", count: "86 places" },
+              { name: "Burger", icon: "🍔", count: "54 places" },
+              { name: "Sushi", icon: "🍱", count: "32 places" },
+              { name: "Dessert", icon: "🍰", count: "48 places" },
+            ].map((category, index) => (
+              <div key={index} className="group cursor-pointer">
+                <div className="bg-gray-50 rounded-2xl p-6 text-center transition-all group-hover:bg-[#ff575a]/5">
+                  <div className="text-4xl mb-4">{category.icon}</div>
+                  <h3 className="text-xl font-semibold text-gray-900">{category.name}</h3>
+                  <p className="text-gray-500 mt-2">{category.count}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Restaurants */}
+      <section className="relative py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-end mb-16">
+            <div>
+              <h2 className="text-4xl font-bold text-gray-900">Featured Restaurants</h2>
+              <p className="text-gray-600 mt-4">Discover the best food in your area</p>
+            </div>
+            <button className="text-[#ff575a] font-medium flex items-center gap-2 hover:gap-3 transition-all">
+              View All <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {outlets.map((outlet, index) => (
+              <div key={index} className="group">
+                <div className="bg-white rounded-2xl overflow-hidden shadow-lg transition-all hover:shadow-xl">
+                  <div className="relative h-48 overflow-hidden">
+                    <Image
+                      src={outlet.photo_url || "/placeholder.svg"}
+                      alt={outlet.name}
+                      layout="fill"
+                      objectFit="cover"
+                      className="group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h3 className="text-xl font-semibold text-white">{outlet.name}</h3>
+                      <div className="flex items-center gap-2 text-white/80 text-sm mt-2">
+                        <span>⭐ 4.8</span>
+                        <span>20-30 min</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-gray-600 line-clamp-2">{outlet.description}</p>
+                    <Link href={`/foodmenu/${outlet.id}`}>
+                      <button className="mt-6 w-full bg-[#ff575a] text-white py-3 rounded-xl font-medium hover:bg-[#ff575a]/90 transition-colors">
+                        View Menu
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Download App Section */}
+      <section className="relative py-20 bg-[#ff575a]">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="text-white">
+              <h2 className="text-4xl font-bold leading-tight">Get the BiteScape App</h2>
+              <p className="text-white/80 mt-6 text-lg">
+                Download our mobile app and never miss the best food deals. Order food and track your delivery in
+                real-time.
+              </p>
+              <div className="flex gap-4 mt-8">
+                <button className="bg-black px-6 py-3 rounded-xl flex items-center gap-3 hover:bg-black/80 transition-colors">
+                  <span className="text-2xl">🍎</span>
+                  <div className="text-left">
+                    <div className="text-xs">Download on the</div>
+                    <div className="text-lg font-medium">App Store</div>
+                  </div>
+                </button>
+                <button className="bg-black px-6 py-3 rounded-xl flex items-center gap-3 hover:bg-black/80 transition-colors">
+                  <span className="text-2xl">🤖</span>
+                  <div className="text-left">
+                    <div className="text-xs">Get it on</div>
+                    <div className="text-lg font-medium">Google Play</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="relative h-[600px]">
+                <Image
+                  src="/images/pizza.webp"
+                  alt="BiteScape App"
+                  layout="fill"
+                  objectFit="contain"
+                  className="rounded-3xl"
+                />
+              </div>
+              {/* <div className="absolute top-1/4 -left-8 bg-white p-4 rounded-2xl shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full">
+                  </div>
+                  <div>
+                    <div className="h-3 w-20 bg-gray-100 rounded"></div>
+                    <div className="h-3 w-16 bg-gray-100 rounded mt-2"></div>
+                  </div>
+                </div>
+              </div> */}
+              {/* <div className="absolute bottom-1/4 -right-8 bg-white p-4 rounded-2xl shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full">
+                  </div>
+                  <div>
+                    <div className="h-3 w-20 bg-gray-100 rounded"></div>
+                    <div className="h-3 w-16 bg-gray-100 rounded mt-2"></div>
+                  </div>
+                </div>
+              </div> */}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-20">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-4 gap-12">
+            <div>
+              <h3 className="text-2xl font-bold mb-6">BiteScape</h3>
+              <p className="text-gray-400">
+                Discover the best food from over 1,000 restaurants and fast delivery to your doorstep
+              </p>
+              <div className="flex gap-4 mt-6">
+                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Facebook className="w-6 h-6" />
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Youtube className="w-6 h-6" />
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Instagram className="w-6 h-6" />
+                </Link>
+              </div>
+            </div>
+            {[
+              {
+                title: "About",
+                links: ["Company", "Team", "Careers", "Blog"],
+              },
+              {
+                title: "Legal",
+                links: ["Terms & Conditions", "Privacy Policy", "Cookie Policy"],
+              },
+              {
+                title: "Contact",
+                links: ["Help Center", "Partner with us", "Ride with us"],
+              },
+            ].map((column, index) => (
+              <div key={index}>
+                <h3 className="text-lg font-semibold mb-6">{column.title}</h3>
+                <ul className="space-y-4">
+                  {column.links.map((link, linkIndex) => (
+                    <li key={linkIndex}>
+                      <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                        {link}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-gray-800 mt-16 pt-8 text-center text-gray-400">
+            <p>&copy; 2025 BiteScape. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
 
       {/* Modal */}
       {isOpen && (
         <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
-          <div className="bg-[#FF6B6B] p-6 rounded-lg shadow-md max-w-md w-full">
-            <h2 className="text-xl text-white font-bold mb-4 text-center">
-              Sign Up As:
-            </h2>
+          <div className="bg-[#ff575a] p-6 rounded-lg shadow-md max-w-md w-full">
+            <h2 className="text-xl text-white font-bold mb-4 text-center">Sign Up As:</h2>
 
             <form
               onSubmit={(e) => {
-                e.preventDefault();
-                role
-                  ? router.push(`/${role}-signup`)
-                  : alert("Select an option!");
-                closeModal();
+                e.preventDefault()
+                role ? router.push(`/${role}-signup`) : alert("Select an option!")
+                closeModal()
               }}
               className="space-y-4 text-white"
             >
@@ -183,7 +467,7 @@ export default function Home() {
 
               <button
                 type="submit"
-                className="bg-white text-[#FF6B6B] w-full p-2 rounded-md mt-4 hover:bg-gray-100 transition"
+                className="bg-white text-[#ff575a] w-full p-2 rounded-md mt-4 hover:bg-gray-100 transition-all duration-300"
               >
                 Continue
               </button>
@@ -191,150 +475,13 @@ export default function Home() {
 
             <button
               onClick={closeModal}
-              className="absolute top-2 right-2 text-xl text-white"
+              className="absolute top-2 right-2 text-xl text-white hover:text-gray-200 transition-colors"
             >
               &times;
             </button>
           </div>
         </div>
       )}
-
-      {/* Hero Section */}
-      <section className="relative pt-20 h-[80vh] flex items-center justify-center">
-        <Image
-          src="https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjR8fGZvb2R8ZW58MHx8MHx8fDA%3D"
-          alt="Delicious Food"
-          layout="fill"
-          objectFit="cover"
-          className="opacity-70"
-          priority
-        />
-        <div className="container relative z-10 mx-auto px-4 text-center">
-          <div className="max-w-3xl mx-auto space-y-6">
-            <h1 className="text-5xl font-bold leading-tight text-black drop-shadow-lg">
-              Welcome
-              <span className="block text-[#FF6B6B]">Discover Amazing Food at Bite Scape</span>
-            </h1>
-            <p className="text-black text-lg drop-shadow-md">
-            Find your favorite meals from the best restaurants near you!
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <div className="relative w-full max-w-xl">
-                <input
-                  type="text"
-                  placeholder="Search outlets..."
-                  className="w-full h-12 px-6 rounded-full 
-                  bg-white text-gray-700 text-lg
-                  placeholder:text-gray-400
-                  border border-gray-300
-                  outline-none"
-                  value={searchOutlet}
-                  onChange={(e) => setSearchOutlet(e.target.value)}
-                />
-                <button
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#FF6B6B] p-2 rounded-full text-white"
-                  onClick={handleSearch}
-                >
-                  <Search className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-4">
-              <button className="px-6 py-3 bg-[#FF6B6B] text-white rounded-full hover:bg-[#FF5B5B] transition-colors">
-                Order Now
-              </button>
-              <button className="px-6 py-3 flex items-center gap-2 text-white hover:text-[#FF6B6B] transition-colors">
-                Download app <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Popular Delicacies */}
-      {popularDelicacies.length > 0 && (
-        <section className="container mx-auto px-4 py-12 bg-gray-50">
-          <h2 className="text-3xl font-bold mb-8">Featured Delicacies</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {popularDelicacies.map((item, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div className="aspect-square relative mb-4">
-                  <img
-                    src={item.image || "/placeholder.svg"}
-                    alt={item.name}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                </div>
-                <p className="text-sm text-gray-500">{item.Outlet}</p>
-                <h3 className="font-semibold text-lg">{item.name}</h3>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-[#FF6B6B] font-bold">{item.price}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Outlets Section */}
-      {outlets.length > 0 && (
-        <section className="container mx-auto px-4 py-12">
-          <h2 className="text-3xl font-bold mb-8">Available Outlets</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {outlets.map((outlet, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div className="aspect-video relative mb-4">
-                  <img
-                    src={
-                      outlet.photo_url ||
-                      "/placeholder.svg?height=200&width=350"
-                    }
-                    alt={outlet.name}
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                </div>
-                <h3 className="font-semibold text-lg text-[#FF6B6B]">
-                  {outlet.name}
-                </h3>
-                <p className="text-gray-600 mt-2 line-clamp-2">
-                  {outlet.description}
-                </p>
-                <Link href={`/foodmenu/${outlet.id}`}>
-                  <button className="mt-4 w-full bg-[#FF6B6B] text-white p-2 rounded-md hover:bg-[#FF5B5B] transition-colors">
-                    View Menu
-                  </button>
-                </Link>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Social Links */}
-      <div className="fixed left-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-10">
-        <Link href="#" className="text-gray-400 hover:text-[#FF6B6B]">
-          <Facebook className="w-6 h-6" />
-        </Link>
-        <Link href="#" className="text-gray-400 hover:text-[#FF6B6B]">
-          <Youtube className="w-6 h-6" />
-        </Link>
-        <Link href="#" className="text-gray-400 hover:text-[#FF6B6B]">
-          <Instagram className="w-6 h-6" />
-        </Link>
-      </div>
-
-      {/* Footer */}
-      <footer className="bg-white text-center py-6 border-t">
-        <p>&copy; 2025 BiteScape. All Rights Reserved.</p>
-      </footer>
     </div>
-  );
+  )
 }
