@@ -12,7 +12,7 @@ export default function Cart() {
   const [cart, setCart] = useState([]);
 
   // New state for checking if the client is present at the restaurant
-  const [isClientPresent, setIsClientPresent] = useState(null);
+  const [isClientPresent, setIsClientPresent] = useState(true);
 
   // State for the date and time selected by the customer
   const [selectedDateTime, setSelectedDateTime] = useState("");
