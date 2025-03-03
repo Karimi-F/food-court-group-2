@@ -24,48 +24,48 @@ export default function HomePage() {
   }, [])
 
   // Sample data
-  const popularDelicacies = [
-    {
-      name: "Spicy Chicken Burger",
-      Outlet: "Burger Haven",
-      price: "$12.99",
-      image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop",
-    },
-    {
-      name: "Margherita Pizza",
-      Outlet: "Pizza Palace",
-      price: "$14.99",
-      image: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=500&auto=format&fit=crop",
-    },
-    {
-      name: "Chocolate Brownie",
-      Outlet: "Sweet Treats",
-      price: "$6.99",
-      image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500&auto=format&fit=crop",
-    },
-    {
-      name: "Veggie Bowl",
-      Outlet: "Green Eats",
-      price: "$10.99",
-      image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop",
-    },
-  ]
+  // const popularDelicacies = [
+  //   {
+  //     name: "Spicy Chicken Burger",
+  //     Outlet: "Burger Haven",
+  //     price: "$12.99",
+  //     image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop",
+  //   },
+  //   {
+  //     name: "Margherita Pizza",
+  //     Outlet: "Pizza Palace",
+  //     price: "$14.99",
+  //     image: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=500&auto=format&fit=crop",
+  //   },
+  //   {
+  //     name: "Chocolate Brownie",
+  //     Outlet: "Sweet Treats",
+  //     price: "$6.99",
+  //     image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500&auto=format&fit=crop",
+  //   },
+  //   {
+  //     name: "Veggie Bowl",
+  //     Outlet: "Green Eats",
+  //     price: "$10.99",
+  //     image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop",
+  //   },
+  // ]
 
   const outlets = [
     {
-      id: 1,
+      id: 15,
       name: "Burger Haven",
       description: "Best burgers in town with a variety of options including vegetarian and vegan choices.",
       photo_url: "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=500&auto=format&fit=crop",
     },
     {
-      id: 2,
+      id: 13,
       name: "Pizza Palace",
       description: "Authentic Italian pizzas made with fresh ingredients and traditional recipes.",
       photo_url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&auto=format&fit=crop",
     },
     {
-      id: 3,
+      id: 14,
       name: "Sweet Treats",
       description: "Delicious desserts and pastries that will satisfy your sweet tooth.",
       photo_url: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=500&auto=format&fit=crop",
@@ -107,7 +107,7 @@ export default function HomePage() {
             </Link>
 
             <nav className="hidden md:flex items-center gap-8">
-              {["Home", "Menu", "About us", "Contact us"].map((item, index) => (
+              {["Home", "About", "Contact us"].map((item, index) => (
                 <motion.div
                   key={item}
                   initial={{ opacity: 0, y: -10 }}
@@ -159,7 +159,7 @@ export default function HomePage() {
           }`}
         >
           <nav className="container mx-auto px-4 py-6 space-y-4">
-            {["Home", "Menu", "About us", "Contact us"].map((item) => (
+            {["Home", "About", "Contact us"].map((item) => (
               <motion.div key={item} whileHover={{ x: 10 }} className="border-b border-gray-100 last:border-0">
                 <Link
                   href={`/${item.toLowerCase().replace(" ", "-")}`}
@@ -332,7 +332,8 @@ export default function HomePage() {
               <h2 className="text-4xl font-bold text-gray-900">Featured Restaurants</h2>
               <p className="text-gray-600 mt-4">Discover the best food in your area</p>
             </div>
-            <button className="text-[#ff575a] font-medium flex items-center gap-2 hover:gap-3 transition-all">
+            <button className="text-[#ff575a] font-medium flex items-center gap-2 hover:gap-3 transition-all"
+            onClick={() => router.push("/outlets")}>
               View All <ArrowRight className="w-5 h-5" />
             </button>
           </motion.div>
