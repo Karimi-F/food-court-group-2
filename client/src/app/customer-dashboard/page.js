@@ -52,7 +52,7 @@ const handleLogout = async () => {
   }, []);
 
   return (
-    <div className="bg-blue-100 min-h-screen p-6">
+    <div className="bg-[#ffeeee] min-h-screen p-6">
       <Head>
         <title>Customer Dashboard</title>
       </Head>
@@ -60,18 +60,18 @@ const handleLogout = async () => {
       {/* Header */}
       <header className="mb-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl text-blue-700 font-bold">
+          <h1 className="text-3xl text-[#ff575a] font-bold">
             {session?.user?.name ? `${session.user.name}'s Dashboard` : "Customer Dashboard"}, Welcome to BiteScape Outlets
           </h1>
           <div className="flex gap-2">
-            <Link href="/">
-              <button className="bg-gray-500 text-white p-3 rounded">
+            <Link href="/home">
+              <button className="bg-white text-[#ff575a] p-3 rounded">
                 ← Back to Home
               </button>
             </Link>
             <button 
           onClick={handleLogout}
-          className="bg-blue-700 text-white p-3 rounded">Log out</button>
+          className="bg-[#ff575a] text-white p-3 rounded hover:bg-[#e04e50] transition">Log out</button>
           </div>
         </div>
       </header>
@@ -101,7 +101,7 @@ const handleLogout = async () => {
         <input
           type="text"
           placeholder="Search restaurants..."
-          className="p-2 text-blue-700 border rounded w-full mb-2"
+          className="p-2 text-[#ff575a] border rounded w-full mb-2"
           value={searchOutlet}
           onChange={(e) => setSearchOutlet(e.target.value)}
         />
@@ -113,17 +113,17 @@ const handleLogout = async () => {
           outlets.map((outlet, index) => (
             <div
               key={index}
-              className="border p-4 rounded-lg shadow bg-white hover:shadow-lg transition"
+              className="border p-4 rounded-2xl shadow bg-[#e6d6d6] hover:shadow-xl hover:scale-105 transition-transform duration-300"
             >
               <img
                 src={outlet.photo_url} // Ensure this matches your API response key
                 alt={outlet.name}
-                className="w-full h-48 object-cover rounded-lg mb-2"
+                className="w-full h-48 object-cover rounded-2xl mb-2"
               />
-              <h2 className="text-xl text-blue-700 font-bold">{outlet.name}</h2>
+              <h2 className="text-xl text-[#ff575a] font-bold">{outlet.name}</h2>
               <p className="text-gray-800">{outlet.description}</p>
               <Link href={`/foodmenu/${outlet.id}`}>
-                <button className="mt-2 bg-blue-700 text-white p-2 rounded w-full">
+                <button className="mt-2 bg-[#ff575a] text-white p-2 rounded-xl w-full hover:bg-[#e04e50] transition">
                   View Menu
                 </button>
               </Link>

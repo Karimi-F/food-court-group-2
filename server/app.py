@@ -244,17 +244,17 @@ class FoodsResource(Resource):
         price = data.get('price')
         waiting_time = data.get('waiting_time')
         category=data.get('category')
-        category = data.get('category')
+        photo_url = data.get('photo_url')
         outlet_id = data.get('outlet_id')
 
         # Validate required fields
-        if not name or price is None or waiting_time is None or outlet_id is None:
-            return {"error": "Name, price, waiting_time, and outlet_id are required"}, 400
+        if not name or price is None or waiting_time is None or outlet_id is None or photo_url is None:
+            return {"error": "Name, price, waiting_time, outlet_id, and photo_url are required"}, 400
 
         if Food.query.filter_by(name=name).first():
             return {"error": "Food already exists"}, 409
         
-        new_food = Food(name=name, price=price, waiting_time=waiting_time, category=category,outlet_id=outlet_id)
+        new_food = Food(name=name, price=price, waiting_time=waiting_time, category=category,photo_url = photo_url, outlet_id=outlet_id)
         db.session.add(new_food)
         db.session.commit()
 
@@ -284,10 +284,11 @@ class FoodResource(Resource):
         price = data.get('price')
         waiting_time = data.get('waiting_time')
         category = data.get('category')
+        photo_url = data.get('photo_url')
         outlet_id = data.get('outlet_id')
 
-        if not name or price is None or waiting_time is None or outlet_id is None:
-            return {"error": "All fields (name, price, waiting_time, outlet_id) are required"}, 400
+        if not name or price is None or waiting_time is None or outlet_id is None or photo_url is None:
+            return {"error": "All fields (name, price, waiting_time, outlet_id, photo_url) are required"}, 400
 
         # Check if another food with the new name exists
         if Food.query.filter(Food.name == name, Food.id != id).first():
@@ -297,6 +298,7 @@ class FoodResource(Resource):
         food.price = price
         food.waiting_time = waiting_time
         food.category = category
+        food.photo_url = photo_url
         food.outlet_id = outlet_id
 
         db.session.commit()
@@ -327,6 +329,8 @@ class FoodResource(Resource):
             food.waiting_time = data['waiting_time']
         if 'category' in data:
             food.category = data['category']
+        if 'photo_url' in data:
+            food.photo_url = data['photo_url']
         if 'outlet_id' in data:
             food.outlet_id = data['outlet_id']
 
@@ -378,9 +382,10 @@ class FoodByNameResource(Resource):
         price = data.get('price')
         waiting_time = data.get('waiting_time')
         category = data.get('category')
+        photo_url = data.get('photo_url')
         outlet_id = data.get('outlet_id')
 
-        if not new_name or price is None or waiting_time is None or outlet_id is None:
+        if not new_name or price is None or waiting_time is None or outlet_id is None or photo_url is None:
             return {"error": "All fields (name, price, waiting_time, outlet_id) are required"}, 400
 
         # Check if another food with the new name exists (if name is changing)
@@ -391,6 +396,7 @@ class FoodByNameResource(Resource):
         food.price = price
         food.waiting_time = waiting_time
         food.category = category
+        food.photo_url = photo_url
         food.outlet_id = outlet_id
 
         db.session.commit()
@@ -419,6 +425,8 @@ class FoodByNameResource(Resource):
             food.waiting_time = data['waiting_time']
         if 'category' in data:
             food.category = data['category']
+        if 'photo_url' in data:
+            food.photo_url = data['photo_url']
         if 'outlet_id' in data:
             food.outlet_id = data['outlet_id']
 
@@ -482,6 +490,8 @@ class FoodByIDResource(Resource):
                 food.price = data["price"]
             if "category" in data:  # Correct the field name
                 food.category = data["category"]
+            if "photo_url" in data:  # Correct the field name
+                food.photo_url = data["photo_url"]
 
             # Save the changes to the database
             db.session.commit()
