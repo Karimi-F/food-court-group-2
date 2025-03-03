@@ -68,10 +68,10 @@ export default function Login() {
 />
       <div className="absolute inset-0 bg-black opacity-50"></div>
       <div className="relative bg-white p-8 rounded-lg shadow-lg max-w-md w-full m-4">
-        <h1 className="text-4xl font-bold text-red-500 mb-2">Welcome Back!</h1>
+        <h1 className="text-4xl font-bold text-[#ff575a] mb-2">Welcome Back!</h1>
         <p className="text-gray-500 mb-8">
           Don't have an account?{" "}
-          <Link href="/owner-signup" className="text-red-500 font-medium">
+          <Link href="/owner-signup" className="text-[#ff575a] font-medium">
             Sign Up
           </Link>
         </p>
@@ -92,7 +92,7 @@ export default function Login() {
               value={formData.email}
               onChange={handleChange}
               placeholder="email@example.com"
-              className="w-full px-4 py-3 rounded-lg bg-pink-100 border-transparent focus:border-pink-500 focus:bg-white focus:ring-0"
+              className="w-full px-4 py-3 rounded-lg bg-[#ffeeee] border-transparent focus:border-[#ff575a] focus:bg-white focus:ring-0"
             />
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           </div>
@@ -106,7 +106,7 @@ export default function Login() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg bg-pink-100 border-transparent focus:border-pink-500 focus:bg-white focus:ring-0"
+                className="w-full px-4 py-3 rounded-lg bg-[#ffeeee] border-transparent focus:border-pink-500 focus:bg-white focus:ring-0"
               />
               <button
                 type="button"
@@ -120,7 +120,7 @@ export default function Login() {
           </div>
 
           <div className="flex justify-between items-center">
-            <a href="/forgot-password" className="text-sm text-pink-500 hover:text-pink-700">
+            <a href="/forgot-password" className="text-sm text-[#ff575a] hover:text-red-500">
               Forgot your password?
             </a>
           </div>
@@ -155,7 +155,7 @@ export default function Login() {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-pink-500 text-white py-3 rounded-lg hover:bg-pink-600 transition duration-300 mt-4"
+            className="w-full bg-[#ff575a] text-white py-3 rounded-lg hover:bg-red-500 transition duration-300 mt-4"
           >
             Sign In
           </button>
