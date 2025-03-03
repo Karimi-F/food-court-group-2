@@ -133,7 +133,7 @@ export default function Cart() {
 
         // Redirect the customer to their dashboard after order confirmation
         setTimeout(() => {
-          router.push("/home")
+          router.push("/customer-dashboard")
         }, 2000)
       } else {
         setOrderStatus(`Failed to place order: ${result.error}`)
