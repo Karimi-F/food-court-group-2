@@ -7,19 +7,19 @@ import Link from "next/link";
 import { fetchOutlets } from "../lib/utils";
 
 export default function CustomerDashboard() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
   const [searchOutlet, setSearchOutlet] = useState("");
   const [outlets, setOutlets] = useState([]);
   const [searchFood, setSearchFood] = useState("");
   const [category, setCategory] = useState("");
   const [recentOrder, setRecentOrder] = useState(null);
+  const [pastOrders, setPastOrders] = useState([]);
 
   // Handle logout functionality
   const handleLogout = async () => {
     const confirmLogout = window.confirm("Are you sure you want to log out?");
     if (confirmLogout) {
-      // Sign out without redirect
       await signOut({ redirect: false });
       alert("You have been logged out successfully");
       router.push("/home");
@@ -37,18 +37,39 @@ export default function CustomerDashboard() {
     const delayDebounce = setTimeout(() => {
       getOutlets();
     }, 500);
-
     return () => clearTimeout(delayDebounce);
   }, [searchOutlet]);
 
-  // Retrieve recent order from localStorage (if available) on component mount
+  // Poll localStorage for recent order updates every 5 seconds
   useEffect(() => {
-    const order = localStorage.getItem("recentOrder");
-    if (order) {
-      setRecentOrder(JSON.parse(order));
-      localStorage.removeItem("recentOrder"); // Clear after showing
-    }
+    const interval = setInterval(() => {
+      const order = localStorage.getItem("recentOrder");
+      if (order) {
+        setRecentOrder(JSON.parse(order));
+      }
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
+
+  // Fetch past orders for the logged-in customer
+  useEffect(() => {
+    const fetchPastOrders = async () => {
+      if (session?.user?.id) {
+        try {
+          const res = await fetch(`http://localhost:5000/orders?customer_id=${session.user.id}`);
+          const data = await res.json();
+          if (res.ok) {
+            setPastOrders(data.orders || []);
+          } else {
+            console.error("Error fetching orders:", data.error);
+          }
+        } catch (error) {
+          console.error("Error fetching past orders:", error);
+        }
+      }
+    };
+    fetchPastOrders();
+  }, [session]);
 
   return (
     <div className="bg-blue-100 min-h-screen p-6">
@@ -98,8 +119,52 @@ export default function CustomerDashboard() {
           <p className="mt-2 text-green-800">
             Time to be served: {recentOrder.orderTime}
           </p>
+          {recentOrder.status && (
+            <p className="mt-2 text-green-800">Current Status: {recentOrder.status}</p>
+          )}
         </div>
       )}
+
+      {/* Past Orders Table */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-blue-700 mb-4">Past Orders</h2>
+        {pastOrders.length === 0 ? (
+          <p className="text-gray-600">No past orders found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border rounded-lg">
+              <thead className="bg-blue-700 text-white">
+                <tr>
+                  <th className="py-2 px-4 border">Order ID</th>
+                  <th className="py-2 px-4 border">Order Time</th>
+                  <th className="py-2 px-4 border">Total (Ksh)</th>
+                  <th className="py-2 px-4 border">Status</th>
+                  <th className="py-2 px-4 border">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pastOrders.map((order) => (
+                  <tr key={order.id} className="text-center border-b">
+                    <td className="py-2 px-4 border">{order.id}</td>
+                    <td className="py-2 px-4 border">{order.datetime}</td>
+                    <td className="py-2 px-4 border">{order.total}</td>
+                    <td className="py-2 px-4 border">{order.status}</td>
+                    <td className="py-2 px-4 border">
+                      <ul className="list-disc list-inside text-left">
+                        {order.cart.map((item, idx) => (
+                          <li key={idx}>
+                            {item.name} {item.quantity > 1 ? `x${item.quantity}` : ""}
+                          </li>
+                        ))}
+                      </ul>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Search Form */}
       <form className="mb-4" onSubmit={(e) => e.preventDefault()}>

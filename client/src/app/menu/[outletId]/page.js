@@ -14,6 +14,7 @@ export default function OutletMenu() {
   const router = useRouter();
   const { outletId } = useParams();
   const [foods, setFoods] = useState([]);
+  const [orders, setOrders] = useState([]); // State for orders
   const [editingFood, setEditingFood] = useState(null);
   const [isAddingFood, setIsAddingFood] = useState(false);
   const [newFood, setNewFood] = useState({ name: "", price: "", waiting_time: "", category: "" });
@@ -65,6 +66,52 @@ export default function OutletMenu() {
 
     fetchOutlet();
   }, [outletId]);
+
+  // Fetch orders for this outlet
+  useEffect(() => {
+    if (!outletId) return;
+
+    const fetchOrders = async () => {
+      try {
+        // Update this URL to your orders endpoint and pass outletId as needed.
+        const res = await fetch(`/api/orders?outletId=${outletId}`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setOrders(data);
+        }
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+    };
+
+    fetchOrders();
+
+    // Optionally, you might poll the orders endpoint every few seconds:
+    const interval = setInterval(fetchOrders, 5000);
+    return () => clearInterval(interval);
+  }, [outletId]);
+
+  // Function to update order status (e.g., Confirm, Serve, Complete)
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setOrders((prevOrders) =>
+          prevOrders.map((order) =>
+            order.id === orderId ? { ...order, status: newStatus } : order
+          )
+        );
+      } else {
+        console.error("Failed to update order status");
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+    }
+  };
 
   // Handle deleting a food item
   const handleDelete = async (foodId) => {
@@ -123,90 +170,150 @@ export default function OutletMenu() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      {/* Updated Header with Outlet Name and Back Button */}
+      {/* Header with Outlet Name and Back Button */}
       <header className="bg-blue-600 text-white p-4 text-center text-2xl font-bold relative">
         <button
           onClick={() => router.push("/owner-dashboard")}
           className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-500 text-white px-4 py-2 rounded-md"
         >
-          ← Back to Outlets
+          &#8592; Back to Outlets
         </button>
-        {outletName ? `${outletName}'s Menu` : "Loading..."}
+        {outletName ? `${outletName}'s Menu & Orders` : "Loading..."}
       </header>
 
       <div className="max-w-4xl mx-auto mt-6 bg-white p-6 shadow-md rounded-lg">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold mb-4">Food Items</h2>
-          <button
-            onClick={() => setIsAddingFood(true)}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md"
-          >
-            + Add Food
-          </button>
+        {/* Food Items Section */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold mb-4">Food Items</h2>
+            <button
+              onClick={() => setIsAddingFood(true)}
+              className="bg-blue-500 text-white px-4 py-2 rounded-md"
+            >
+              + Add Food
+            </button>
+          </div>
+
+          {foods.length > 0 ? (
+            <ul className="space-y-4">
+              {foods.map((food) => (
+                <li key={food.id} className="flex justify-between items-center p-3 border rounded-md">
+                  {editingFood?.id === food.id ? (
+                    <form onSubmit={handleEditSubmit} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editingFood.name}
+                        onChange={(e) => setEditingFood({ ...editingFood, name: e.target.value })}
+                        className="p-2 border rounded-md"
+                        required
+                      />
+                      <input
+                        type="number"
+                        value={editingFood.waiting_time}
+                        onChange={(e) =>
+                          setEditingFood({ ...editingFood, waiting_time: parseInt(e.target.value, 10) })
+                        }
+                        className="p-2 border rounded-md w-20"
+                        required
+                      />
+                      <button type="submit" className="bg-green-500 text-white px-3 py-1 rounded-md">
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingFood(null)}
+                        className="bg-gray-400 text-white px-3 py-1 rounded-md"
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  ) : (
+                    <>
+                      <div>
+                        <h3 className="font-semibold">{food.name}</h3>
+                        <p className="text-gray-500">${food.price}</p>
+                        <p className="text-gray-500">Waiting time: {food.waiting_time} min</p>
+                      </div>
+                      <div>
+                        <button
+                          onClick={() => setEditingFood(food)}
+                          className="bg-yellow-500 text-white px-3 py-1 rounded-md mr-2"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(food.id)}
+                          className="bg-red-500 text-white px-3 py-1 rounded-md"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-600">No food items found.</p>
+          )}
         </div>
 
-        {foods.length > 0 ? (
-          <ul className="space-y-4">
-            {foods.map((food) => (
-              <li key={food.id} className="flex justify-between items-center p-3 border rounded-md">
-                {editingFood?.id === food.id ? (
-                  <form onSubmit={handleEditSubmit} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={editingFood.name}
-                      onChange={(e) => setEditingFood({ ...editingFood, name: e.target.value })}
-                      className="p-2 border rounded-md"
-                      required
-                    />
-                    <input
-                      type="number"
-                      value={editingFood.waiting_time}
-                      onChange={(e) =>
-                        setEditingFood({ ...editingFood, waiting_time: parseInt(e.target.value, 10) })
-                      }
-                      className="p-2 border rounded-md w-20"
-                      required
-                    />
-                    <button type="submit" className="bg-green-500 text-white px-3 py-1 rounded-md">
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditingFood(null)}
-                      className="bg-gray-400 text-white px-3 py-1 rounded-md"
-                    >
-                      Cancel
-                    </button>
-                  </form>
-                ) : (
-                  <>
-                    <div>
-                      <h3 className="font-semibold">{food.name}</h3>
-                      <p className="text-gray-500">${food.price}</p>
-                      <p className="text-gray-500">Waiting time: {food.waiting_time} min</p>
-                    </div>
-                    <div>
+        {/* Orders Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">Orders</h2>
+          {orders.length > 0 ? (
+            <ul className="space-y-4">
+              {orders.map((order) => (
+                <li key={order.id} className="p-4 border rounded-md">
+                  <div className="mb-2">
+                    <p className="font-semibold">Order ID: {order.id}</p>
+                    <p className="text-gray-600">Order Time: {order.orderTime}</p>
+                    <p className="text-gray-600">Total: ${order.total}</p>
+                    <p className="text-gray-600">Status: {order.status}</p>
+                  </div>
+                  <div className="mb-2">
+                    <h3 className="font-semibold">Items:</h3>
+                    <ul className="list-disc list-inside">
+                      {order.foodItems.map((item, index) => (
+                        <li key={index}>
+                          {item.name} {item.quantity > 1 && ` x${item.quantity}`}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="flex gap-2">
+                    {order.status === "Pending" && (
                       <button
-                        onClick={() => setEditingFood(food)}
-                        className="bg-yellow-500 text-white px-3 py-1 rounded-md mr-2"
+                        onClick={() => updateOrderStatus(order.id, "Confirmed")}
+                        className="bg-blue-500 text-white px-3 py-1 rounded-md"
                       >
-                        Edit
+                        Confirm
                       </button>
+                    )}
+                    {order.status === "Confirmed" && (
                       <button
-                        onClick={() => handleDelete(food.id)}
-                        className="bg-red-500 text-white px-3 py-1 rounded-md"
+                        onClick={() => updateOrderStatus(order.id, "Served")}
+                        className="bg-orange-500 text-white px-3 py-1 rounded-md"
                       >
-                        Delete
+                        Serve
                       </button>
-                    </div>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-gray-600">No food items found.</p>
-        )}
+                    )}
+                    {order.status === "Served" && (
+                      <button
+                        onClick={() => updateOrderStatus(order.id, "Completed")}
+                        className="bg-green-500 text-white px-3 py-1 rounded-md"
+                      >
+                        Complete
+                      </button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-600">No orders yet.</p>
+          )}
+        </div>
       </div>
 
       {/* Add Food Modal */}
