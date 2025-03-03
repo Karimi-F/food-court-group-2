@@ -8,27 +8,13 @@ import { Minus, Plus, Trash2, ShoppingCart, Calendar, MapPin } from "lucide-reac
 export default function Cart() {
   const { data: session, status } = useSession()
   const searchParams = useSearchParams()
-  const router = useRouter() // For redirection
+  const router = useRouter()
   const cartParam = searchParams.get("data")
   const [cart, setCart] = useState([])
-
-  // New state for checking if the client is present at the restaurant
-  const [isClientPresent, setIsClientPresent] = useState(true);
-
-  // State for the date and time selected by the customer
+  const [isClientPresent, setIsClientPresent] = useState(true)
   const [selectedDateTime, setSelectedDateTime] = useState("")
-
-  // Dummy confirmed bookings (simulate tables already booked)
-  const [confirmedBookings, setConfirmedBookings] = useState([{ tableId: 3, datetime: "2025-02-23T10:30" }])
-
-  // Sample tables data
-  const [tables, setTables] = useState([
-    { id: 1, name: "Table 1" },
-    { id: 2, name: "Table 2" },
-    { id: 3, name: "Table 3" },
-    { id: 4, name: "Table 4" },
-  ])
-
+  const [tables, setTables] = useState([])
+  const [confirmedBookings, setConfirmedBookings] = useState([])
   const [selectedTable, setSelectedTable] = useState(null)
   const [orderStatus, setOrderStatus] = useState("")
 
@@ -41,15 +27,35 @@ export default function Cart() {
         console.error("Failed to parse cart data", error)
       }
     }
+
+    // Fetch tables and bookings from backend
+    fetch("http://localhost:5000/reservations")
+      .then((response) => response.json())
+      .then((data) => {
+        // Transform reservations data to match expected format
+        const transformedTables = data.map((table) => ({
+          id: table.id,
+          name: table.table_name, // Map table_name to name
+        }))
+        console.log("Transformed tables:", transformedTables) // Debugging
+        setTables(transformedTables)
+      })
+      .catch((error) => console.error("Error fetching tables:", error))
+
+    fetch("http://localhost:5000/orders")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Fetched bookings:", data) // Debugging
+        setConfirmedBookings(data)
+      })
+      .catch((error) => console.error("Error fetching bookings:", error))
   }, [cartParam])
 
-  // Update the quantity of an item
   const updateItemQuantity = (id, newQuantity) => {
     const updatedCart = cart.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item))
     setCart(updatedCart)
   }
 
-  // Increase item quantity by 1
   const handleIncrement = (id) => {
     const item = cart.find((item) => item.id === id)
     if (item) {
@@ -57,7 +63,6 @@ export default function Cart() {
     }
   }
 
-  // Decrease item quantity by 1 (if above 1)
   const handleDecrement = (id) => {
     const item = cart.find((item) => item.id === id)
     if (item && item.quantity > 1) {
@@ -65,22 +70,40 @@ export default function Cart() {
     }
   }
 
-  // Remove the item from the cart
   const handleDelete = (id) => {
     const updatedCart = cart.filter((item) => item.id !== id)
     setCart(updatedCart)
   }
 
-  // Determine the table's status based on the selected date/time
   const getTableStatus = (table) => {
     if (!selectedDateTime) return "N/A"
+
+    // Normalize the datetime format (remove milliseconds)
+    const normalizedSelectedDateTime = new Date(selectedDateTime).toISOString().slice(0, 16)
+
     const isBooked = confirmedBookings.some(
-      (booking) => booking.tableId === table.id && booking.datetime === selectedDateTime,
+      (booking) =>
+        booking.tableId === table.id &&
+        new Date(booking.datetime).toISOString().slice(0, 16) === normalizedSelectedDateTime,
     )
+
     return isBooked ? "booked" : "available"
   }
 
-  // Send the order data to the Flask API endpoint and redirect customer
+  const checkTableAvailability = async (tableId, datetime) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/tables/${tableId}/availability?datetime=${datetime}`
+      );
+      
+      const data = await response.json()
+      return data.available
+    } catch (error) {
+      console.error("Error checking table availability:", error)
+      return false
+    }
+  }
+
   const placeOrder = async () => {
     if (!selectedDateTime) {
       alert("Please select a date and time before placing your order.")
@@ -91,13 +114,18 @@ export default function Cart() {
       return
     }
 
+    // Check if the table is available
+    const isAvailable = await checkTableAvailability(selectedTable, selectedDateTime)
+    if (!isAvailable) {
+      alert("The selected table is not available at the chosen date and time.")
+      return
+    }
+
     const customer_id = session?.user?.id
 
     if (!customer_id) {
       alert("Please log in to place an order.")
     }
-
-    console.log("Customer ID: ", session?.user?.id)
 
     setOrderStatus("Please wait as your order is being confirmed...")
 
@@ -119,7 +147,16 @@ export default function Cart() {
       if (res.ok) {
         setOrderStatus("Your order has been confirmed!")
 
-        // Save the order summary in localStorage to display on the dashboard
+        // Add the new booking to confirmedBookings
+        setConfirmedBookings((prevBookings) => [
+          ...prevBookings,
+          {
+            tableId: selectedTable,
+            datetime: selectedDateTime,
+          },
+        ])
+
+        // Save the order summary in localStorage
         localStorage.setItem(
           "recentOrder",
           JSON.stringify({
@@ -204,7 +241,6 @@ export default function Cart() {
               ))}
             </div>
 
-            {/* Order Summary Card */}
             <div className="mt-8">
               <div className="bg-[#ffeeee] border border-[#ff575a]/20 p-5 rounded-xl shadow-sm">
                 <h3 className="text-xl font-bold text-[#ff575a] mb-3 flex items-center">
@@ -233,7 +269,6 @@ export default function Cart() {
               </div>
             </div>
 
-            {/* Client Presence Selection */}
             <div className="mt-8 p-5 border border-[#ff575a]/20 rounded-xl bg-white">
               <label className="block text-gray-700 font-semibold mb-3 flex items-center">
                 <MapPin className="h-5 w-5 mr-2 text-[#ff575a]" />
@@ -248,7 +283,6 @@ export default function Cart() {
                     checked={isClientPresent === true}
                     onChange={() => {
                       setIsClientPresent(true)
-                      // Auto set current date & time for immediate booking
                       const now = new Date().toISOString().slice(0, 16)
                       setSelectedDateTime(now)
                     }}
@@ -264,7 +298,7 @@ export default function Cart() {
                     checked={isClientPresent === false}
                     onChange={() => {
                       setIsClientPresent(false)
-                      setSelectedDateTime("") // Allow selection for future booking
+                      setSelectedDateTime("")
                     }}
                     className="mr-2 accent-[#ff575a]"
                   />
@@ -273,7 +307,6 @@ export default function Cart() {
               </div>
             </div>
 
-            {/* Date and Time Picker (only shown if client is not yet there) */}
             {isClientPresent === false && (
               <div className="mt-6 p-5 border border-[#ff575a]/20 rounded-xl bg-white">
                 <label className="block text-gray-700 font-semibold mb-3 flex items-center">
@@ -285,7 +318,6 @@ export default function Cart() {
                   value={selectedDateTime}
                   onChange={(e) => {
                     setSelectedDateTime(e.target.value)
-                    // Reset table selection when datetime changes
                     setSelectedTable(null)
                   }}
                   className="w-full p-3 border border-[#ff575a]/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff575a] bg-[#ffeeee] text-gray-800"
@@ -293,7 +325,6 @@ export default function Cart() {
               </div>
             )}
 
-            {/* If client is present, display the auto-set date and time */}
             {isClientPresent === true && (
               <div className="mt-6 p-4 bg-[#ffeeee] rounded-lg border border-[#ff575a]/20">
                 <p className="text-gray-700 font-medium flex items-center">
@@ -303,7 +334,6 @@ export default function Cart() {
               </div>
             )}
 
-            {/* Dropdown for booking a table */}
             <div className="mt-6 p-5 border border-[#ff575a]/20 rounded-xl bg-white">
               <label className="block text-gray-700 font-semibold mb-3 flex items-center">
                 <MapPin className="h-5 w-5 mr-2 text-[#ff575a]" />
@@ -332,7 +362,6 @@ export default function Cart() {
               </select>
             </div>
 
-            {/* Notification Message */}
             {orderStatus && (
               <div className="mt-6 p-4 bg-[#ffeeee] border border-[#ff575a]/30 text-gray-700 rounded-lg">
                 {orderStatus}
@@ -359,4 +388,3 @@ export default function Cart() {
     </div>
   )
 }
-
