@@ -7,22 +7,19 @@ import { useSession } from "next-auth/react";
 export default function Cart() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
-  const router = useRouter(); // For redirection
+  const router = useRouter();
   const cartParam = searchParams.get("data");
   const [cart, setCart] = useState([]);
-
-  // New state for checking if the client is present at the restaurant
+  
+  // New states for client presence, date/time, and table selection
   const [isClientPresent, setIsClientPresent] = useState(null);
-
-  // State for the date and time selected by the customer
   const [selectedDateTime, setSelectedDateTime] = useState("");
+  const [selectedTable, setSelectedTable] = useState(null);
 
-  // Dummy confirmed bookings (simulate tables already booked)
+  // States for bookings and table data
   const [confirmedBookings, setConfirmedBookings] = useState([
     { tableId: 3, datetime: "2025-02-23T10:30" },
   ]);
-
-  // Sample tables data
   const [tables, setTables] = useState([
     { id: 1, name: "Table 1" },
     { id: 2, name: "Table 2" },
@@ -30,8 +27,9 @@ export default function Cart() {
     { id: 4, name: "Table 4" },
   ]);
 
-  const [selectedTable, setSelectedTable] = useState(null);
+  // Order status and countdown timer states
   const [orderStatus, setOrderStatus] = useState("");
+  const [countdown, setCountdown] = useState(null);
 
   useEffect(() => {
     if (cartParam) {
@@ -43,6 +41,23 @@ export default function Cart() {
       }
     }
   }, [cartParam]);
+
+  // Timer useEffect: counts down every second if countdown is active
+  useEffect(() => {
+    let timer;
+    if (countdown !== null && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else if (countdown === 0) {
+      // When timer reaches 0, update order status to Served then Completed after a delay
+      setOrderStatus("Served!");
+      setTimeout(() => {
+        setOrderStatus("Completed!");
+      }, 2000);
+    }
+    return () => clearInterval(timer);
+  }, [countdown]);
 
   // Update the quantity of an item
   const updateItemQuantity = (id, newQuantity) => {
@@ -84,7 +99,7 @@ export default function Cart() {
     return isBooked ? "booked" : "available";
   };
 
-  // Send the order data to the Flask API endpoint and redirect customer
+  // Send the order data to the Flask API endpoint and simulate order lifecycle
   const placeOrder = async () => {
     if (!selectedDateTime) {
       alert("Please select a date and time before placing your order.");
@@ -94,9 +109,19 @@ export default function Cart() {
       alert("Please select a table before placing your order.");
       return;
     }
-    setOrderStatus("Please wait as your order is being confirmed...");
+    const customer_id = session?.user?.id;
+    if (!customer_id) {
+      alert("Please log in to place an order.");
+      return;
+    }
+
+    console.log("Customer ID: ", customer_id);
+
+    // Initially set status as pending
+    setOrderStatus("Pending...");
 
     const orderData = {
+      customer_id,
       cart,
       tableId: selectedTable,
       datetime: selectedDateTime,
@@ -114,9 +139,7 @@ export default function Cart() {
       });
       const result = await res.json();
       if (res.ok) {
-        setOrderStatus("Your order has been confirmed!");
-
-        // Save the order summary in localStorage to display on the dashboard
+        // Save the order summary in localStorage for the dashboard
         localStorage.setItem(
           "recentOrder",
           JSON.stringify({
@@ -128,10 +151,17 @@ export default function Cart() {
           })
         );
 
-        // Redirect the customer to their dashboard after order confirmation
+        // Simulate status change from pending to confirmed and start the countdown timer.
+        setTimeout(() => {
+          setOrderStatus("Confirmed!");
+          // Set countdown timer (e.g., 5 minutes = 300 seconds)
+          setCountdown(300);
+        }, 2000);
+
+        // Redirect the customer to their dashboard after a delay (simulate dashboard update)
         setTimeout(() => {
           router.push("/customer-dashboard");
-        }, 2000);
+        }, 4000);
       } else {
         console.error("Server error:", result);
         setOrderStatus(`Failed to place order: ${result.error}`);
@@ -142,11 +172,20 @@ export default function Cart() {
     }
   };
 
+  // Helper to format countdown timer (MM:SS)
+  const formatCountdown = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
   return (
     <div className="min-h-screen bg-blue-100 flex flex-col items-center p-4">
       <div className="w-full max-w-screen-lg bg-white rounded-lg shadow-lg p-6">
         <h2 className="text-3xl sm:text-4xl text-blue-700 font-bold mb-6 text-center">
-        {session?.user?.name ? `${session.user.name}'s Cart` : "Customer Cart"}
+          {session?.user?.name ? `${session.user.name}'s Cart` : "Customer Cart"}
         </h2>
 
         {cart.length === 0 ? (
@@ -233,7 +272,6 @@ export default function Cart() {
                     checked={isClientPresent === true}
                     onChange={() => {
                       setIsClientPresent(true);
-                      // Auto set current date & time for immediate booking
                       const now = new Date().toISOString().slice(0, 16);
                       setSelectedDateTime(now);
                     }}
@@ -249,7 +287,7 @@ export default function Cart() {
                     checked={isClientPresent === false}
                     onChange={() => {
                       setIsClientPresent(false);
-                      setSelectedDateTime(""); // Allow selection for future booking
+                      setSelectedDateTime("");
                     }}
                     className="mr-2"
                   />
@@ -258,7 +296,7 @@ export default function Cart() {
               </div>
             </div>
 
-            {/* Date and Time Picker (only shown if client is not yet there) */}
+            {/* Date and Time Picker */}
             {isClientPresent === false && (
               <div className="mt-6">
                 <label className="block text-gray-700 font-semibold mb-2">
@@ -269,7 +307,6 @@ export default function Cart() {
                   value={selectedDateTime}
                   onChange={(e) => {
                     setSelectedDateTime(e.target.value);
-                    // Reset table selection when datetime changes
                     setSelectedTable(null);
                   }}
                   className="w-full p-3 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50 text-gray-800"
@@ -277,7 +314,6 @@ export default function Cart() {
               </div>
             )}
 
-            {/* If client is present, display the auto-set date and time */}
             {isClientPresent === true && (
               <div className="mt-6">
                 <p className="text-gray-700 font-semibold">
@@ -321,10 +357,15 @@ export default function Cart() {
               </select>
             </div>
 
-            {/* Notification Message */}
+            {/* Notification and Countdown Timer */}
             {orderStatus && (
               <div className="mt-4 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded">
-                {orderStatus}
+                <p>{orderStatus}</p>
+                {orderStatus === "Confirmed!" && countdown !== null && (
+                  <p>
+                    Estimated time until served: {formatCountdown(countdown)}
+                  </p>
+                )}
               </div>
             )}
 

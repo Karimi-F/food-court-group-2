@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { fetchOwnerOutlets, addOutlet } from "../lib/utils"; // ✅ Ensure correct path
+import { fetchOwnerOutlets, addOutlet } from "../lib/utils"; // Ensure correct path
 
 export default function OwnerDashboard() {
   const { data: session, status } = useSession();
@@ -38,15 +38,16 @@ export default function OwnerDashboard() {
     },
   ]);
 
-  const handleLogout = async() => {
+  // Handle logout with confirmation
+  const handleLogout = async () => {
     const confirmLogout = window.confirm("Are you sure you want to log out?");
     if (confirmLogout) {
-      // signout without redirect 
-      await signOut({redirect: false});
+      // signOut without redirect 
+      await signOut({ redirect: false });
       alert("You have been logged out successfully");
-      router.push("/home");
+      router.push("/"); // Redirect to home or desired page
     }
-  };  
+  };
 
   // Fetch outlets owned by the logged-in user
   useEffect(() => {
@@ -99,23 +100,13 @@ export default function OwnerDashboard() {
     }
   };
 
-  // Handle logout with confirmation
-  const handleLogout = async () => {
-    const confirmLogout = window.confirm("Are you sure you want to log out?");
-    if (confirmLogout) {
-      await signOut({ redirect: false });
-      alert("You have been logged out successfully");
-      router.push("/");
-    }
-  };
-
   if (status === "loading") return <p>Loading...</p>;
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       {/* Updated Header with Owner's Name */}
       <header className="bg-blue-600 text-white p-4 text-center text-2xl font-bold">
-      <h1 className="text-2xl font-bold">      
+        <h1 className="text-2xl font-bold">
           {session?.user?.name ? `${session.user.name}'s Dashboard` : "Owner Dashboard"}
         </h1>
         <button
@@ -124,7 +115,7 @@ export default function OwnerDashboard() {
         >
           Logout
         </button>
-        </header>
+      </header>
 
       {/* Outlets Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
@@ -138,7 +129,6 @@ export default function OwnerDashboard() {
               />
               <h2 className="text-lg font-semibold mt-2">{outlet.name}</h2>
               <p className="text-gray-500">{outlet.owner?.name}</p>
-
               {/* View Menu Button */}
               <button
                 onClick={() => router.push(`/menu/${outlet.id}`)}
@@ -182,9 +172,7 @@ export default function OwnerDashboard() {
                     <tr
                       key={order.id}
                       className={`text-center ${
-                        order.status === "pending"
-                          ? "bg-yellow-50"
-                          : "bg-green-50"
+                        order.status === "pending" ? "bg-yellow-50" : "bg-green-50"
                       }`}
                     >
                       <td className="py-2 px-4 border">
