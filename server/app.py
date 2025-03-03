@@ -10,7 +10,7 @@ import json
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://food_court_user:098765@localhost:5432/food_court_db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://beren:123456@localhost:5432/food_court_db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
 app.config["SECRET_KEY"] = "your_secret_key"          # Add a secure secret key
@@ -619,6 +619,55 @@ class OwnerOutletResource(Resource):
 
         return jsonify([outlet.to_dict() for outlet in outlets])
 
+class TableReservationResource(Resource):
+    def get(self, id=None):
+        if id is None:
+            table_name = request.args.get('table_name')
+            if table_name:
+                reservations = TableReservation.query.filter(TableReservation.table_name.ilike(f"%{table_name}%")).all()
+                if not reservations:
+                    return {"error": "Reservation not found"}, 404
+                return [res.to_dict() for res in reservations], 200
+            reservations = TableReservation.query.all()
+            return [reservation.to_dict() for reservation in reservations], 200
+        
+        reservation = TableReservation.query.get(id)
+        if not reservation:
+            return {"error": "Reservation not found"}, 404
+        return reservation.to_dict(), 200
+
+    def post(self):
+        data = request.get_json()
+        table_name = data.get('table_name')
+        
+        if not table_name:
+            return {"error": "Table name is required"}, 400
+
+        new_reservation = TableReservation(table_name=table_name)
+        db.session.add(new_reservation)
+        db.session.commit()
+
+        return new_reservation.to_dict(), 201
+
+    def put(self, id):
+        reservation = TableReservation.query.get(id)
+        if not reservation:
+            return {"error": "Reservation not found"}, 404
+        
+        data = request.get_json()
+        reservation.table_name = data.get('table_name', reservation.table_name)
+        
+        db.session.commit()
+        return reservation.to_dict(), 200
+
+    def delete(self, id):
+        reservation = TableReservation.query.get(id)
+        if not reservation:
+            return {"error": "Reservation not found"}, 404
+        
+        db.session.delete(reservation)
+        db.session.commit()
+        return {"message": "Reservation deleted successfully"}, 200
 
 
 
@@ -636,6 +685,7 @@ api.add_resource(Login, "/login")
 api.add_resource(Logout, "/logout")
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 api.add_resource(OwnerOutletResource, "/owner/<int:owner_id>/outlets")
+api.add_resource(TableReservationResource, "/reservations", "/reservations/<int:id>")
 
 
 
