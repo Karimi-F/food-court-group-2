@@ -5,12 +5,14 @@ from flask_cors import CORS
 from models import db, Owner, Customer, Outlet, Food, Order, TableReservation
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta
+# from datetime import datetime, timedelta
+from datetime import datetime, timezone
+
 import json
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://beren:123456@localhost:5432/food_court_db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://beren:123456@localhost:5432/food_court"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
 app.config["SECRET_KEY"] = "your_secret_key"          # Add a secure secret key
@@ -669,7 +671,25 @@ class TableReservationResource(Resource):
         db.session.commit()
         return {"message": "Reservation deleted successfully"}, 200
 
+class TableAvailability(Resource):
+    def get(self, table_id):  # Ensure table_id is included as a parameter
+        datetime_str = request.args.get("datetime")
 
+        if not datetime_str:
+            return {"error": "Missing datetime parameter"}, 400
+
+        try:
+            # Normalize the datetime format
+            normalized_datetime = datetime.fromisoformat(datetime_str).strftime("%Y-%m-%dT%H:%M")
+
+            # Query the database for any orders matching the table_id and datetime
+            is_booked = Order.query.filter_by(tablereservation_id=table_id, datetime=normalized_datetime).first() is not None
+
+
+            return {"table_id": table_id, "available": not is_booked}, 200
+
+        except ValueError:
+            return {"error": "Invalid datetime format. Use ISO format (YYYY-MM-DDTHH:MM)"}, 400
 
 
 # Register resources with the API
@@ -686,6 +706,8 @@ api.add_resource(Logout, "/logout")
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 api.add_resource(OwnerOutletResource, "/owner/<int:owner_id>/outlets")
 api.add_resource(TableReservationResource, "/reservations", "/reservations/<int:id>")
+api.add_resource(TableAvailability, "/tables/<int:table_id>/availability")
+
 
 
 
