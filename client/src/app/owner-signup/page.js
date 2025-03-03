@@ -5,11 +5,11 @@ import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
 // Utility function
-// const createOwner = async (fullName, email, password) => {
-//   // Replace with your actual owner creation logic
-//   console.log("Creating owner:", fullName, email, password)
-//   return Promise.resolve()
-// }
+const createOwner = async (fullName, email, password) => {
+  // Replace with your actual owner creation logic
+  console.log("Creating owner:", fullName, email, password)
+  return Promise.resolve()
+}
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -56,17 +56,19 @@ export default function SignupPage() {
         await createOwner(formData.fullName, formData.email, formData.password1)
         setSuccessMessage("Outlet Owner Signup successful! 🎉")
 
-        const signInResult = await signIn("credentials", {
+        setTimeout(async() => {
+          const signInResult = await signIn("credentials", {
           redirect: false,
           email: formData.email,
           password: formData.password1,
-        })
+        });
 
-        if (!signInResult?.error) {
-          router.push("/owner-dashboard")
+        if (signInResult?.ok) {
+          router.push("/owner-dashboard");
         } else {
-          setErrors({ general: "Login failed. Please try again." })
+          setErrors({ general: signInResult?.error || "Login failed. Try again." });
         }
+      },1000)
       } catch (error) {
         setErrors({ general: error.message })
       }
