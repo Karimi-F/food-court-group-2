@@ -93,6 +93,7 @@ export async function createOwner(name, email, password){
         method : "POST",
         headers:{
             "Content-Type": "application/json",
+            "Accept": "application/json"
         },
         body: JSON.stringify({
           name,
@@ -105,8 +106,7 @@ export async function createOwner(name, email, password){
         throw new Error(data.message || "Failed to create owner");
     }
 
-    return data;
-    
+    return data;   
 }
 export async function fetchMenu(outletId) {
     try {

@@ -10,7 +10,7 @@ import json
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://food_court_user:098765@localhost:5432/food_court_db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://karimi:123456@localhost:5432/food_court_db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
 app.config["SECRET_KEY"] = "your_secret_key"          # Add a secure secret key
@@ -73,11 +73,11 @@ class BaseSignup(Resource):
 
 class CustomerSignup(BaseSignup):
     model = Customer
-    redirect_url = "/customerdashboard"
+    redirect_url = "/customer-dashboard"
 
 class OwnerSignup(BaseSignup):
     model = Owner
-    redirect_url = "/ownerdashboard"  # Redirect to Owner Dashboard
+    redirect_url = "/owner-dashboard"  # Redirect to Owner Dashboard
 
 class OwnerResource(Resource):
     def get(self, id=None):
@@ -212,6 +212,7 @@ class OutletResource(Resource):
     def post(self):
         data = request.get_json()
         name = data.get('name')
+        description = data.get('description')
         owner_id = data.get('owner_id')
         photo_url = data.get('photo_url')
         if not name or not owner_id:
@@ -220,11 +221,35 @@ class OutletResource(Resource):
         if Outlet.query.filter_by(name=name).first():
             return {"error": "Outlet with this name already exists"}, 409
 
-        new_outlet = Outlet(name=name, owner_id=owner_id, photo_url=photo_url)
+        new_outlet = Outlet(name=name, owner_id=owner_id, photo_url=photo_url, description=description)
         db.session.add(new_outlet)
         db.session.commit()
 
         return new_outlet.to_dict(), 201
+
+
+    def patch(self, id):
+        outlet = Outlet.query.get(id)
+        if not outlet:
+            return {"error": "Outlet not found"}, 404
+
+        data = request.get_json()
+        
+        # Update only the fields that are provided
+        if 'name' in data:
+            if Outlet.query.filter(Outlet.name == data['name']).first():
+                return {"error": "Outlet with this name already exists"}, 409
+            outlet.name = data['name']
+        
+        if 'description' in data:
+            outlet.description = data['description']
+        
+        if 'photo_url' in data:
+            outlet.photo_url = data['photo_url']
+        
+        db.session.commit()
+
+        return outlet.to_dict(), 200    
 
 # -------------------------------
 # Food Endpoints (Collection)
