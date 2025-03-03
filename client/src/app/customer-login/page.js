@@ -62,6 +62,8 @@ export default function Login() {
           priority
         />
         <div className="absolute inset-0 bg-black/40"></div>
+        <div className="absolute inset-0 bg-[#ff575a]/20"></div>
+
       </div>
 
       {/* Login Form */}
