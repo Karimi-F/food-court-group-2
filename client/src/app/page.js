@@ -2,12 +2,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false); // ✅ Removed extra closing brace here
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#E65C00] via-[#FF8534] to-[#FFB088]">
+    <main className="min-h-screen bg-gradient-to-br from-[#c84346] via-[#ff575a] to-[#ff8a8c]
+">
       {/* Navigation */}
       <nav className="shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -17,13 +20,13 @@ export default function Home() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link href="/home" className="text-black hover:text-[#FFB088]">
+              <Link href="/home" className="text-black hover:text-[#ff8a8c]">
                 Home
               </Link>
-              <Link href="/about" className="text-black hover:text-[#FFB088]">
-                About Us
+              <Link href="/about" className="text-black hover:text-[#ff8a8c]">
+                About
               </Link>
-              <Link href="/contact-us" className="text-black hover:text-[#FFB088]">
+              <Link href="/contact-us" className="text-black hover:text-[#ff8a8c]">
                 Contact Us
               </Link>
             </div>
@@ -42,13 +45,13 @@ export default function Home() {
           {/* for mobile users */}
           {isOpen && (
             <div className="md:hidden space-y-4 px-4 pb-4 transition-all">
-              <Link href="/home" className="block text-black hover:text-[#FFB088]" onClick={() => setIsOpen(false)}>
+              <Link href="/home" className="block text-black hover:text-[#ff8a8c]" onClick={() => setIsOpen(false)}>
                 Home
               </Link>
-              <Link href="/about" className="block text-black hover:text-[#FFB088]" onClick={() => setIsOpen(false)}>
-                About Us
+              <Link href="/about" className="block text-black hover:text-[#ff8a8c]" onClick={() => setIsOpen(false)}>
+                About
               </Link>
-              <Link href="/contact-us" className="block text-black hover:text-[#FFB088]" onClick={() => setIsOpen(false)}>
+              <Link href="/contact-us" className="block text-black hover:text-[#ff8a8c]" onClick={() => setIsOpen(false)}>
                 Contact Us
               </Link>
             </div>
@@ -60,14 +63,14 @@ export default function Home() {
               {/* Grid Background */}
       <div className="absolute inset-0 bg-black">
         <div className="absolute inset-0 bg-grid-white/[0.2] bg-grid-pattern" />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#E65C00]/90 via-[#FF8534]/80 to-[#FFB088]/70" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#c84346] via-[#ff575a] to-[#ff8a8c]/70" />
       </div>
-        <div className="absolute inset-0 bg-gradient-to-br from-[#E65C00]/90 via-[#FF8534]/80 to-[#FFB088]/70" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#c84346] via-[#ff575a] to-[#ff8a8c]/70" />
 
         <div className="relative z-10 container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight tracking-tight text-white mb-8">
-              Great Food, <span className="text-[#FFB088] inline-block animate-pulse">Great Vibes 🎉</span>
+              Great Food, <span className="text-[#ff8a8c] inline-block animate-pulse">Great Vibes 🎉</span>
               <br />
               <span className="text-white/90">All in One Place!</span>
               <span className="inline-block animate-bounce">🍔</span>
@@ -81,8 +84,9 @@ export default function Home() {
               <button className="px-8 py-4 bg-white text-[#E65C00] rounded-full font-semibold text-lg hover:bg-[#FFB088] hover:text-white transition-colors duration-300">
                 Order Now
               </button>
-              <button className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-full font-semibold text-lg hover:bg-white/10 transition-colors duration-300">
-                View Menu
+              <button className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-full font-semibold text-lg hover:bg-white/10 transition-colors duration-300"
+              onClick = {() => router.push("/outlets")}>
+                See Outlets
               </button>
             </div>
           </div>
