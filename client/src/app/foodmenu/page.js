@@ -69,43 +69,43 @@ export default function MenuPage() {
     <div className="flex">
       {/* Menu Section */}
       <div className="w-3/4 p-6 bg-gray-100">
-        <h2 className="text-2xl text-blue-700 flex justify-center items-center font-bold mb-4">
+        <h2 className="text-2xl text-[#ff575a] flex justify-center items-center font-bold mb-4">
           All Outlets Delicacies
         </h2>
 
         {/* Back to Outlets Button */}
         <button
           onClick={() => router.push("/customer-dashboard")}
-          className="bg-gray-600 text-white px-4 py-2 rounded-md mb-4"
+          className="bg-[#ff575a] text-white px-4 py-2 rounded-md mb-4"
         >
           Back to Outlets
         </button>
 
         {/* Search and Filters */}
-        <div className="flex justify-between gap-20">
+        <div className="flex justify-between gap-20 p-4">
           <input
             type="text"
             placeholder="Search food..."
-            className="w-full h-12 px-4 rounded-lg text-blue-700 text-lg placeholder:text-gray-400 border border-gray-300 outline-none"
+            className="w-full h-12 px-4 rounded-lg text-[#ff575a] text-lg placeholder:text-gray-400 border border-gray-300 outline-none"
             value={searchFood}
             onChange={(e) => setSearchFood(e.target.value)}
           />
           <input
             type="number"
             placeholder="Min Price"
-            className="w-full h-12 px-4 rounded-lg text-blue-700 text-lg placeholder:text-gray-400 border border-gray-300 outline-none"
+            className="w-full h-12 px-4 rounded-lg text-[#ff575a] text-lg placeholder:text-gray-400 border border-gray-300 outline-none"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
           />
           <input
             type="number"
             placeholder="Max Price"
-            className="w-full h-12 px-4 rounded-lg text-blue-700 text-lg placeholder:text-gray-400 border border-gray-300 outline-none"
+            className="w-full h-12 px-4 rounded-lg text-[#ff575a] text-lg placeholder:text-gray-400 border border-gray-300 outline-none"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
           />
           <select
-            className="w-full h-12 px-4 border rounded-lg text-blue-700"
+            className="w-full h-12 px-4 border rounded-lg text-[#ff575a]"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
@@ -145,7 +145,7 @@ export default function MenuPage() {
                   />
                 </div>
                 <div>
-                  <p className="text-blue-700 font-semibold">{item.name}</p>
+                  <p className="text-[#ff575a] font-semibold">{item.name}</p>
                   {/* <p className="text-gray-600">Price: Ksh {item.price}</p> */}
                   <p className="text-gray-600">Category: {item.category}</p>
                   <p className="text-gray-600">
