@@ -1,12 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation"; // ✅ Import useParams
+import { useParams, useRouter } from "next/navigation"; // Get restaurant ID from URL
 import { fetchMenu } from "../../lib/utils";
 import Image from "next/image";
 import { PhoneOutgoing } from "lucide-react";
 
 export default function MenuPage() {
-  const { id } = useParams(); // ✅ Get restaurant ID from URL
+  const { id } = useParams(); // Get restaurant ID from URL
   const router = useRouter();
   const [cart, setCart] = useState([]);
   const [menu, setMenu] = useState([]);
@@ -23,7 +23,7 @@ export default function MenuPage() {
     async function fetchData() {
       try {
         setLoading(true);
-        let foodData = await fetchMenu(id);
+        const foodData = await fetchMenu(id);
         setMenu(foodData);
       } catch (error) {
         setError(error.message);
@@ -33,9 +33,10 @@ export default function MenuPage() {
     }
 
     fetchData();
-  }, [id]); // Re-run when `id` changes
+  }, [id]);
 
   const handleAddToCart = (item) => {
+    // Check if the food already exists in the cart
     const existingItem = cart.find((cartItem) => cartItem.id === item.id);
     if (existingItem) {
       setCart(
@@ -46,6 +47,7 @@ export default function MenuPage() {
         )
       );
     } else {
+      // Include the entire food object (including nested outlet details) in the cart
       setCart([...cart, { ...item, quantity: 1 }]);
     }
   };
@@ -128,8 +130,8 @@ export default function MenuPage() {
               item.name.toLowerCase().includes(searchFood.toLowerCase())
             )
             .filter((item) => (category ? item.category === category : true))
-            .filter((item) => (minPrice ? item.price >= minPrice : true))
-            .filter((item) => (maxPrice ? item.price <= maxPrice : true))
+            .filter((item) => (minPrice ? item.price >= Number(minPrice) : true))
+            .filter((item) => (maxPrice ? item.price <= Number(maxPrice) : true))
             .map((item) => (
               <div
                 key={item.id}
@@ -149,8 +151,23 @@ export default function MenuPage() {
                   {/* <p className="text-gray-600">Price: Ksh {item.price}</p> */}
                   <p className="text-gray-600">Category: {item.category}</p>
                   <p className="text-gray-600">
-                    Wait Time: {item.waiting_time}
+                    Wait Time: {item.waiting_time} mins
                   </p>
+                  {/* Display nested outlet details if available */}
+                  {item.outlet && (
+                    <div className="mt-2">
+                      <p className="text-gray-700 font-medium">
+                        Outlet: {item.outlet.name}
+                      </p>
+                      {item.outlet.photo_url && (
+                        <img
+                          src={item.outlet.photo_url}
+                          alt={item.outlet.name}
+                          className="w-16 h-16 object-cover rounded mt-1"
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-2">

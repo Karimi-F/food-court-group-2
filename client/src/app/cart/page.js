@@ -6,25 +6,60 @@ import { useSession } from "next-auth/react"
 import { Minus, Plus, Trash2, ShoppingCart, Calendar, MapPin } from "lucide-react"
 
 export default function Cart() {
-  const { data: session, status } = useSession()
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const cartParam = searchParams.get("data")
-  const [cart, setCart] = useState([])
-  const [isClientPresent, setIsClientPresent] = useState(true)
-  const [selectedDateTime, setSelectedDateTime] = useState("")
-  const [reservations, setReservations] = useState([])
-  const [confirmedBookings, setConfirmedBookings] = useState([])
-  const [selectedTable, setSelectedTable] = useState(null)
-  const [orderStatus, setOrderStatus] = useState("")
+  const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const cartParam = searchParams.get("data");
+  const [cart, setCart] = useState([]);
+  
+  // States for client presence, date/time, table selection, and order lifecycle
+  const [isClientPresent, setIsClientPresent] = useState(null);
+  const [selectedDateTime, setSelectedDateTime] = useState("");
+  const [selectedTable, setSelectedTable] = useState(null);
 
+  // Dummy booking data and tables list
+  const [confirmedBookings] = useState([
+    { tableId: 3, datetime: "2025-02-23T10:30" },
+  ]);
+  const [tables] = useState([
+    { id: 1, name: "Table 1" },
+    { id: 2, name: "Table 2" },
+    { id: 3, name: "Table 3" },
+    { id: 4, name: "Table 4" },
+  ]);
+
+  // Order status and countdown timer states
+  const [orderStatus, setOrderStatus] = useState("");
+  const [countdown, setCountdown] = useState(null);
+
+  // Parse and normalize the cart data
   useEffect(() => {
     if (cartParam) {
       try {
-        const parsedCart = JSON.parse(decodeURIComponent(cartParam))
-        setCart(parsedCart)
+        const decoded = decodeURIComponent(cartParam);
+        const parsed = JSON.parse(decoded);
+        console.log("Parsed cart data:", parsed);
+        // Ensure parsed data is an array
+        if (!Array.isArray(parsed)) {
+          console.error("Cart data is not an array:", parsed);
+          setCart([]);
+          return;
+        }
+        // Normalize each item
+        const normalized = parsed.map((item) => ({
+          id: item.id || Math.random().toString(36).substr(2, 9),
+          name: item.name || (item.outlet && item.outlet.name) || "Unnamed Food",
+          price: Number(item.price) || 0,
+          waiting_time: item.waiting_time || "",
+          quantity: item.quantity ? Number(item.quantity) : 1,
+          outlet: item.outlet || null,
+          category: item.category || "",
+        }));
+        console.log("Normalized cart data:", normalized);
+        setCart(normalized);
       } catch (error) {
-        console.error("Failed to parse cart data", error)
+        console.error("Failed to parse cart data:", error);
+        setCart([]);
       }
     }
 
@@ -47,10 +82,13 @@ export default function Cart() {
   }, [cartParam])
 
   const updateItemQuantity = (id, newQuantity) => {
-    const updatedCart = cart.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item))
-    setCart(updatedCart)
-  }
+    const updatedCart = cart.map((item) =>
+      item.id === id ? { ...item, quantity: newQuantity } : item
+    );
+    setCart(updatedCart);
+  };
 
+  // Increase item quantity by 1
   const handleIncrement = (id) => {
     const item = cart.find((item) => item.id === id)
     if (item) {
@@ -66,82 +104,41 @@ export default function Cart() {
   }
 
   const handleDelete = (id) => {
-    const updatedCart = cart.filter((item) => item.id !== id)
-    setCart(updatedCart)
-  }
-
-  const getTableStatus = (reservation) => {
-    if (!selectedDateTime) return "N/A";
-
-    try {
-      
-      const selectedDate = new Date(selectedDateTime).toISOString().slice(0, 10);
-
-      
-      const isBooked = confirmedBookings.some((booking) => {
-        if (!booking.datetime) return false;
-
-        
-        const bookingDate = new Date(booking.datetime).toISOString().slice(0, 10);
-
-        
-        return booking.tableId === reservation.id && bookingDate === selectedDate;
-      });
-
-      return isBooked ? "booked" : "available";
-    } catch (error) {
-      console.error("Error checking table status:", error);
-      return "N/A";
-    }
+    const updatedCart = cart.filter((item) => item.id !== id);
+    setCart(updatedCart);
   };
 
-  const checkTableAvailability = async (tableId, datetime) => {
-    try {
-      const response = await fetch(
-        `http://localhost:5000/tables/${tableId}/availability?datetime=${datetime}`
-      )
-      const data = await response.json()
-      return data.available
-    } catch (error) {
-      console.error("Error checking table availability:", error)
-      return false
-    }
-  }
+  // Determine the table's status based on the selected date/time
+  const getTableStatus = (table) => {
+    if (!selectedDateTime) return "N/A";
+    const isBooked = confirmedBookings.some(
+      (booking) =>
+        booking.tableId === table.id && booking.datetime === selectedDateTime
+    );
+    return isBooked ? "booked" : "available";
+  };
 
+  // Send the order data to the Flask API endpoint and redirect customer
   const placeOrder = async () => {
+    if (!selectedDateTime) {
+      alert("Please select a date and time before placing your order.");
+      return;
+    }
     if (!selectedTable) {
       alert("Please select a table before placing your order.")
       return
     }
-
-    
-    if (isClientPresent) {
-      const now = new Date().toISOString().slice(0, 16)
-      setSelectedDateTime(now)
-    }
-
-    // Check if the table is available
-    const isAvailable = await checkTableAvailability(selectedTable, selectedDateTime)
-    if (!isAvailable) {
-      alert("The selected table is not available at the chosen date and time.")
-      return
-    }
-
-    const customer_id = session?.user?.id
-
-    if (!customer_id) {
-      alert("Please log in to place an order.")
-    }
-
-    setOrderStatus("Please wait as your order is being confirmed...")
+    setOrderStatus("Please wait as your order is being confirmed...");
 
     const orderData = {
-      customer_id: session?.user?.id,
       cart,
       tableId: selectedTable,
       datetime: selectedDateTime,
-      total: cart.reduce((total, item) => total + item.quantity * item.price, 0),
-    }
+      total: cart.reduce(
+        (total, item) => total + item.quantity * item.price,
+        0
+      ),
+    };
 
     try {
       const res = await fetch("http://localhost:5000/orders", {
@@ -151,33 +148,32 @@ export default function Cart() {
       })
       const result = await res.json()
       if (res.ok) {
-        setOrderStatus("Your order has been confirmed!")
+        setOrderStatus("Your order has been confirmed!");
 
-        
-        setConfirmedBookings((prevBookings) => [
-          ...prevBookings,
-          {
-            tableId: selectedTable,
-            datetime: selectedDateTime,
-          },
-        ])
-
-        
+        // Save the order summary in localStorage to display on the dashboard
         localStorage.setItem(
           "recentOrder",
           JSON.stringify({
-            foodItems: cart.map((item) => ({
-              name: item.name,
+            id: result.id, // assuming backend returns order id
+            order_items: cart.map((item) => ({
+              food: {
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                waiting_time: item.waiting_time,
+                category: item.category,
+                outlet: item.outlet,
+              },
               quantity: item.quantity,
             })),
             orderTime: selectedDateTime,
-          }),
-        )
+          })
+        );
 
-        
+        // Redirect the customer to their dashboard after order confirmation
         setTimeout(() => {
-          router.push("/customer-dashboard")
-        }, 2000)
+          router.push("/customer-dashboard");
+        }, 2000);
       } else {
         setOrderStatus(`Failed to place order: ${result.error}`)
       }
@@ -185,17 +181,14 @@ export default function Cart() {
       console.error("Error placing order:", error)
       setOrderStatus("Error placing order. Please try again.")
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-[#ff575a] flex flex-col items-center p-4">
-      <div className="w-full max-w-screen-lg bg-white rounded-2xl shadow-xl p-6 border border-[#ff575a]/10">
-        <div className="flex items-center justify-center mb-6">
-          <ShoppingCart className="text-[#ff575a] mr-3 h-8 w-8" />
-          <h2 className="text-3xl sm:text-4xl text-[#ff575a] font-bold text-center">
-            {session?.user?.name ? `${session.user.name}'s Cart` : "Your Cart"}
-          </h2>
-        </div>
+    <div className="min-h-screen bg-blue-100 flex flex-col items-center p-4">
+      <div className="w-full max-w-screen-lg bg-white rounded-lg shadow-lg p-6">
+        <h2 className="text-3xl sm:text-4xl text-blue-700 font-bold mb-6 text-center">
+        {session?.user?.name ? `${session.user.name}'s Cart` : "Customer Cart"}
+        </h2>
 
         {cart.length === 0 ? (
           <div className="text-center py-12">
@@ -211,8 +204,10 @@ export default function Cart() {
                   className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 border rounded-xl bg-white shadow-sm transition transform hover:shadow-md hover:border-[#ff575a]/30"
                 >
                   <div className="w-full">
-                    <p className="text-[#ff575a] font-semibold text-lg">{item.name}</p>
-                    <div className="flex items-center mt-2 space-x-2">
+                    <p className="text-blue-700 font-semibold text-lg">
+                      {item.name}
+                    </p>
+                    <div className="flex items-center mt-1 space-x-2">
                       <button
                         onClick={() => handleDecrement(item.id)}
                         className="bg-[#ffeeee] text-[#ff575a] p-2 rounded-full hover:bg-[#ff575a]/10 transition-colors"
@@ -247,10 +242,11 @@ export default function Cart() {
               ))}
             </div>
 
-            <div className="mt-8">
-              <div className="bg-[#ffeeee] border border-[#ff575a]/20 p-5 rounded-xl shadow-sm">
-                <h3 className="text-xl font-bold text-[#ff575a] mb-3 flex items-center">
-                  <ShoppingCart className="h-5 w-5 mr-2" /> Order Summary
+            {/* Order Summary Card */}
+            <div className="mt-6">
+              <div className="bg-green-50 border border-green-300 p-4 rounded-lg shadow">
+                <h3 className="text-xl font-bold text-green-700 mb-2">
+                  Order Summary
                 </h3>
                 <ul className="space-y-2 text-gray-700">
                   {cart.map((item) => (
@@ -288,9 +284,10 @@ export default function Cart() {
                     value="yes"
                     checked={isClientPresent === true}
                     onChange={() => {
-                      setIsClientPresent(true)
-                      const now = new Date().toISOString().slice(0, 16)
-                      setSelectedDateTime(now)
+                      setIsClientPresent(true);
+                      // Auto set current date & time for immediate booking
+                      const now = new Date().toISOString().slice(0, 16);
+                      setSelectedDateTime(now);
                     }}
                     className="mr-2 accent-[#ff575a]"
                   />
@@ -303,8 +300,8 @@ export default function Cart() {
                     value="no"
                     checked={isClientPresent === false}
                     onChange={() => {
-                      setIsClientPresent(false)
-                      setSelectedDateTime("")
+                      setIsClientPresent(false);
+                      setSelectedDateTime(""); // Allow selection for future booking
                     }}
                     className="mr-2 accent-[#ff575a]"
                   />
@@ -313,6 +310,7 @@ export default function Cart() {
               </div>
             </div>
 
+            {/* Date and Time Picker (only shown if client is not yet there) */}
             {isClientPresent === false && (
               <div className="mt-6 p-5 border border-[#ff575a]/20 rounded-xl bg-white">
                 <label className="block text-gray-700 font-semibold mb-3 flex items-center">
@@ -323,8 +321,9 @@ export default function Cart() {
                   type="datetime-local"
                   value={selectedDateTime}
                   onChange={(e) => {
-                    setSelectedDateTime(e.target.value)
-                    setSelectedTable(null)
+                    setSelectedDateTime(e.target.value);
+                    // Reset table selection when datetime changes
+                    setSelectedTable(null);
                   }}
                   className="w-full p-3 border border-[#ff575a]/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff575a] bg-[#ffeeee] text-gray-800"
                 />
@@ -340,9 +339,9 @@ export default function Cart() {
               </div>
             )}
 
-            <div className="mt-6 p-5 border border-[#ff575a]/20 rounded-xl bg-white">
-              <label className="block text-gray-700 font-semibold mb-3 flex items-center">
-                <MapPin className="h-5 w-5 mr-2 text-[#ff575a]" />
+            {/* Dropdown for booking a table */}
+            <div className="mt-6">
+              <label className="block text-gray-700 font-semibold mb-2">
                 Book a Table:
               </label>
               <select
@@ -351,38 +350,53 @@ export default function Cart() {
                 disabled={!selectedDateTime}
                 className="w-full p-3 border border-[#ff575a]/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff575a] bg-[#ffeeee] text-gray-800 disabled:opacity-60"
               >
-                <option value="">{selectedDateTime ? "Select a table" : "Select date & time first"}</option>
-                {reservations.map((reservation) => {
-                  const status = getTableStatus(reservation)
+                <option value="">
+                  {selectedDateTime
+                    ? "Select a table"
+                    : "Select date & time first"}
+                </option>
+                {tables.map((table) => {
+                  const status = getTableStatus(table);
                   return (
                     <option
                       key={reservation.id} 
                       value={reservation.id} 
                       disabled={status !== "available"}
-                      className={status === "available" ? "text-green-600" : "text-red-500"}
+                      style={{
+                        color: status === "available" ? "green" : "red",
+                      }}
                     >
-                      {reservation.table_name} - {status.charAt(0).toUpperCase() + status.slice(1)}
+                      {table.name} -{" "}
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
                     </option>
                   )
                 })}
               </select>
             </div>
 
+            {/* Notification Message */}
             {orderStatus && (
-              <div className="mt-6 p-4 bg-[#ffeeee] border border-[#ff575a]/30 text-gray-700 rounded-lg">
+              <div className="mt-4 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded">
                 {orderStatus}
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row justify-between items-center mt-8">
-              <p className="text-[#ff575a] font-bold text-xl mb-4 sm:mb-0">
-                Total: Ksh {cart.reduce((total, item) => total + item.quantity * item.price, 0).toFixed(2)}
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-6">
+              <p className="text-blue-700 font-semibold text-xl mb-4 sm:mb-0">
+                Total: Ksh{" "}
+                {cart
+                  .reduce(
+                    (total, item) => total + item.quantity * item.price,
+                    0
+                  )
+                  .toFixed(2)}
               </p>
               <button
                 onClick={placeOrder}
-                disabled={!selectedTable || (isClientPresent === false && !selectedDateTime)}
-                className={`bg-[#ff575a] hover:bg-[#ff575a]/90 transition text-white px-8 py-3 rounded-xl font-medium shadow-md ${
-                  (!selectedTable || (isClientPresent === false && !selectedDateTime)) && "opacity-50 cursor-not-allowed"
+                disabled={!selectedDateTime || !selectedTable}
+                className={`bg-red-500 hover:bg-red-600 transition text-white px-6 py-2 rounded-md ${
+                  (!selectedDateTime || !selectedTable) &&
+                  "opacity-50 cursor-not-allowed"
                 }`}
               >
                 Place Order
