@@ -59,7 +59,8 @@ export default function CustomerDashboard() {
           const res = await fetch(`http://localhost:5000/orders?customer_id=${session.user.id}`);
           const data = await res.json();
           if (res.ok) {
-            setPastOrders(data.orders || []);
+            // Assuming your backend returns an array of orders
+            setPastOrders(data);
           } else {
             console.error("Error fetching orders:", data.error);
           }
@@ -109,12 +110,13 @@ export default function CustomerDashboard() {
             Recent Order Summary
           </h2>
           <ul className="list-disc list-inside">
-            {recentOrder.foodItems.map((food, index) => (
-              <li key={index} className="text-green-800">
-                {food.name}
-                {food.quantity > 1 ? ` x${food.quantity}` : ""}
-              </li>
-            ))}
+            {recentOrder.order_items &&
+              recentOrder.order_items.map((item, index) => (
+                <li key={index} className="text-green-800">
+                  {item.food?.name || "Item"} 
+                  {item.quantity > 1 ? ` x${item.quantity}` : ""}
+                </li>
+              ))}
           </ul>
           <p className="mt-2 text-green-800">
             Time to be served: {recentOrder.orderTime}
@@ -151,11 +153,13 @@ export default function CustomerDashboard() {
                     <td className="py-2 px-4 border">{order.status}</td>
                     <td className="py-2 px-4 border">
                       <ul className="list-disc list-inside text-left">
-                        {order.cart.map((item, idx) => (
-                          <li key={idx}>
-                            {item.name} {item.quantity > 1 ? `x${item.quantity}` : ""}
-                          </li>
-                        ))}
+                        {order.order_items &&
+                          order.order_items.map((item, idx) => (
+                            <li key={idx}>
+                              {item.food?.name || "Item"}{" "}
+                              {item.quantity > 1 ? `x${item.quantity}` : ""}
+                            </li>
+                          ))}
                       </ul>
                     </td>
                   </tr>

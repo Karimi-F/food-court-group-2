@@ -1,5 +1,5 @@
 from app import app, db
-from models import Customer, Owner, Outlet, TableReservation, Food, Order
+from models import Customer, Owner, Outlet, TableReservation, Food, Order, OrderItem
 from datetime import datetime
 
 # Initialize the app context
@@ -55,8 +55,8 @@ with app.app_context():
     # Order 1: 2 cheeseburgers for customer1 at table1.
     order1 = Order(
         customer_id=customer1.id,
-        table_id=table1.id,    # Use table_id to link to the TableReservation
-        status="Pending",
+        table_id=table1.id,    # Link to the TableReservation
+        status="pending",
         datetime=datetime.utcnow(),
         total=2 * food1.price  # For 2 cheeseburgers
     )
@@ -64,12 +64,27 @@ with app.app_context():
     order2 = Order(
         customer_id=customer2.id,
         table_id=table2.id,
-        status="Pending",
+        status="pending",
         datetime=datetime.utcnow(),
         total=1 * food2.price  # For 1 pasta dish
     )
 
     db.session.add_all([order1, order2])
+    db.session.commit()
+
+    # Create Order Items (Cart Details)
+    order_item1 = OrderItem(
+        order_id=order1.id,
+        food_id=food1.id,
+        quantity=2
+    )
+    order_item2 = OrderItem(
+        order_id=order2.id,
+        food_id=food2.id,
+        quantity=1
+    )
+    
+    db.session.add_all([order_item1, order_item2])
     db.session.commit()
 
     print("Database seeded successfully!")

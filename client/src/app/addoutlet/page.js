@@ -29,8 +29,7 @@ export default function AddFoodModal() {
     let newErrors = {};
     if (!formData.foodName.trim())
       newErrors.foodName = "Food name is required";
-    if (!formData.price)
-      newErrors.price = "Price is required";
+    if (!formData.price) newErrors.price = "Price is required";
     if (!formData.waitingTime.trim())
       newErrors.waitingTime = "Waiting time is required";
     setErrors(newErrors);
@@ -42,12 +41,14 @@ export default function AddFoodModal() {
     if (!validateForm()) return;
 
     try {
-      // Call API to add food
-      // Assumption: outlet id is available from session or query params.
-      // Here we assume session.user.outletId contains the outlet id.
+      // Prepare payload matching your backend Food model:
+      // Note: the backend expects outlet_id, waiting_time as string, etc.
       const payload = {
-        ...formData,
-        outletId: session?.user?.outletId, // adjust according to your data
+        name: formData.foodName,
+        price: parseFloat(formData.price),
+        waiting_time: formData.waitingTime, // e.g., "10 mins"
+        category: formData.category,
+        outlet_id: session?.user?.outletId, // Ensure this matches your session data
       };
 
       const res = await fetch("/api/food", {
@@ -58,8 +59,8 @@ export default function AddFoodModal() {
       const data = await res.json();
 
       if (res.ok) {
-        setSuccessMessage("Food added successfully! ??");
-        // Clear form if desired
+        setSuccessMessage("Food added successfully!");
+        // Clear form fields
         setFormData({
           foodName: "",
           price: "",

@@ -9,11 +9,10 @@ export default function AddFood() {
   const { data: session } = useSession();
   
   const [formData, setFormData] = useState({
-    food: "",
-    food_category: "",
+    name: "",
+    category: "",
     price: "",
-    wait_time: "",
-    description: "",
+    waiting_time: "",
   });
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
@@ -24,9 +23,10 @@ export default function AddFood() {
 
   const validateForm = () => {
     let newErrors = {};
-    if (!formData.food.trim()) newErrors.food = "Food item is required";
+    if (!formData.name.trim()) newErrors.name = "Food item is required";
     if (!formData.price) newErrors.price = "Price is required";
-    if (!formData.wait_time) newErrors.wait_time = "Wait time is required";
+    if (!formData.waiting_time.trim())
+      newErrors.waiting_time = "Wait time is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -36,11 +36,13 @@ export default function AddFood() {
     if (!validateForm()) return;
 
     try {
-      // Construct payload with the current outlet id from session
-      // (Adjust according to how your outlet id is stored in session)
+      // Prepare payload matching the backend model
       const payload = {
-        ...formData,
-        outletId: session?.user?.outletId, 
+        name: formData.name,
+        price: parseFloat(formData.price),
+        waiting_time: formData.waiting_time, // e.g., "10 mins"
+        category: formData.category,
+        outlet_id: session?.user?.outletId, // Ensure session contains outletId
       };
 
       const res = await fetch("/api/food", {
@@ -51,17 +53,14 @@ export default function AddFood() {
       const data = await res.json();
 
       if (res.ok) {
-        setSuccessMessage("Food added successfully! ??");
-        // Clear form fields
+        setSuccessMessage("Food added successfully!");
         setFormData({
-          food: "",
-          food_category: "",
+          name: "",
+          category: "",
           price: "",
-          wait_time: "",
-          description: "",
+          waiting_time: "",
         });
         setErrors({});
-        // After a delay, redirect to the outlet's menu page.
         setTimeout(() => {
           router.push(`/menu/${session?.user?.outletId}`);
         }, 2000);
@@ -73,6 +72,8 @@ export default function AddFood() {
       setErrors({ api: "Error adding food" });
     }
   };
+
+  if (!session) return null;
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
@@ -90,25 +91,25 @@ export default function AddFood() {
             <label className="block font-semibold text-blue-700">Food Name</label>
             <input
               type="text"
-              name="food"
-              value={formData.food}
+              name="name"
+              value={formData.name}
               onChange={handleChange}
+              placeholder="Enter food name"
               className="w-full text-blue-700 px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               required
             />
-            {errors.food && (
-              <p className="text-red-500 text-sm">{errors.food}</p>
-            )}
+            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
           </div>
-          
-          {/* Food Category */}
+
+          {/* Category */}
           <div>
-            <label className="block font-semibold text-blue-700">Food Category</label>
+            <label className="block font-semibold text-blue-700">Category</label>
             <input
               type="text"
-              name="food_category"
-              value={formData.food_category}
+              name="category"
+              value={formData.category}
               onChange={handleChange}
+              placeholder="e.g., Breakfast, Lunch..."
               className="w-full text-blue-700 px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
           </div>
@@ -121,44 +122,32 @@ export default function AddFood() {
               name="price"
               value={formData.price}
               onChange={handleChange}
+              placeholder="Enter price"
               className="w-full text-blue-700 px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               required
             />
-            {errors.price && (
-              <p className="text-red-500 text-sm">{errors.price}</p>
-            )}
+            {errors.price && <p className="text-red-500 text-sm">{errors.price}</p>}
           </div>
 
-          {/* Wait Time */}
+          {/* Waiting Time */}
           <div>
             <label className="block font-semibold text-blue-700">
-              Wait Time (in minutes)
+              Wait Time (e.g., 10 mins)
             </label>
             <input
               type="text"
-              name="wait_time"
-              value={formData.wait_time}
+              name="waiting_time"
+              value={formData.waiting_time}
               onChange={handleChange}
+              placeholder="Enter waiting time"
               className="w-full text-blue-700 px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               required
             />
-            {errors.wait_time && (
-              <p className="text-red-500 text-sm">{errors.wait_time}</p>
+            {errors.waiting_time && (
+              <p className="text-red-500 text-sm">{errors.waiting_time}</p>
             )}
           </div>
 
-          {/* Description (optional) */}
-          <div>
-            <label className="block font-semibold text-blue-700">Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              className="w-full text-blue-700 px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </div>
-
-          {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-300"

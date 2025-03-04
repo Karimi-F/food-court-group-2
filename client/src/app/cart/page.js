@@ -1,4 +1,5 @@
 "use client";
+
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -30,13 +31,34 @@ export default function Cart() {
   const [orderStatus, setOrderStatus] = useState("");
   const [countdown, setCountdown] = useState(null);
 
+  // Parse and normalize the cart data
   useEffect(() => {
     if (cartParam) {
       try {
-        const parsedCart = JSON.parse(decodeURIComponent(cartParam));
-        setCart(parsedCart);
+        const decoded = decodeURIComponent(cartParam);
+        const parsed = JSON.parse(decoded);
+        console.log("Parsed cart data:", parsed);
+        // Ensure parsed data is an array
+        if (!Array.isArray(parsed)) {
+          console.error("Cart data is not an array:", parsed);
+          setCart([]);
+          return;
+        }
+        // Normalize each item
+        const normalized = parsed.map((item) => ({
+          id: item.id || Math.random().toString(36).substr(2, 9),
+          name: item.name || (item.outlet && item.outlet.name) || "Unnamed Food",
+          price: Number(item.price) || 0,
+          waiting_time: item.waiting_time || "",
+          quantity: item.quantity ? Number(item.quantity) : 1,
+          outlet: item.outlet || null,
+          category: item.category || "",
+        }));
+        console.log("Normalized cart data:", normalized);
+        setCart(normalized);
       } catch (error) {
-        console.error("Failed to parse cart data", error);
+        console.error("Failed to parse cart data:", error);
+        setCart([]);
       }
     }
   }, [cartParam]);
@@ -49,7 +71,6 @@ export default function Cart() {
         setCountdown((prev) => prev - 1);
       }, 1000);
     } else if (countdown === 0) {
-      // When timer reaches 0, update order status: served then completed
       setOrderStatus("Served!");
       setTimeout(() => {
         setOrderStatus("Completed!");
@@ -60,10 +81,10 @@ export default function Cart() {
 
   // Helpers for quantity adjustments
   const updateItemQuantity = (id, newQuantity) => {
-    const updatedCart = cart.map((item) =>
+    const updated = cart.map((item) =>
       item.id === id ? { ...item, quantity: newQuantity } : item
     );
-    setCart(updatedCart);
+    setCart(updated);
   };
 
   const handleIncrement = (id) => {
@@ -81,8 +102,8 @@ export default function Cart() {
   };
 
   const handleDelete = (id) => {
-    const updatedCart = cart.filter((item) => item.id !== id);
-    setCart(updatedCart);
+    const updated = cart.filter((item) => item.id !== id);
+    setCart(updated);
   };
 
   // Determine table status based on selected date/time
@@ -114,12 +135,17 @@ export default function Cart() {
 
     setOrderStatus("Pending...");
 
+    const orderItems = cart.map((item) => ({
+      food_id: item.id,
+      quantity: item.quantity,
+    }));
+
     const orderData = {
       customer_id: session.user.id,
-      cart,
       tableId: selectedTable,
       datetime: selectedDateTime,
       total: cart.reduce((total, item) => total + item.quantity * item.price, 0),
+      order_items: orderItems,
     };
 
     try {
@@ -130,27 +156,31 @@ export default function Cart() {
       });
       const result = await res.json();
       if (res.ok) {
-        // Save recent order details to localStorage so that the dashboard can display it.
         localStorage.setItem(
           "recentOrder",
           JSON.stringify({
-            id: result.orderId, // if returned by the backend
-            foodItems: cart.map((item) => ({
-              name: item.name,
+            id: result.id, // assuming backend returns order id
+            order_items: cart.map((item) => ({
+              food: {
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                waiting_time: item.waiting_time,
+                category: item.category,
+                outlet: item.outlet,
+              },
               quantity: item.quantity,
             })),
             orderTime: selectedDateTime,
-            status: "Pending..."
+            status: "Pending...",
           })
         );
 
-        // Simulate order lifecycle: pending ? confirmed ? (countdown) ? served ? completed
         setTimeout(() => {
           setOrderStatus("Confirmed!");
-          setCountdown(300); // For example, 5 minutes countdown (300 seconds)
+          setCountdown(300);
         }, 2000);
 
-        // Redirect to customer dashboard after a delay (simulate dashboard update)
         setTimeout(() => {
           router.push("/customer-dashboard");
         }, 4000);
@@ -164,7 +194,6 @@ export default function Cart() {
     }
   };
 
-  // Helper to format countdown timer (MM:SS)
   const formatCountdown = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -190,6 +219,25 @@ export default function Cart() {
                 >
                   <div className="w-full">
                     <p className="text-blue-700 font-semibold text-lg">{item.name}</p>
+                    {item.waiting_time && (
+                      <p className="text-gray-600">
+                        Waiting Time: {item.waiting_time} mins
+                      </p>
+                    )}
+                    {item.outlet && (
+                      <div className="mt-1">
+                        <p className="text-gray-700 font-medium">
+                          Outlet: {item.outlet.name}
+                        </p>
+                        {item.outlet.photo_url && (
+                          <img
+                            src={item.outlet.photo_url}
+                            alt={item.outlet.name}
+                            className="w-16 h-16 object-cover rounded mt-1"
+                          />
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center mt-1 space-x-2">
                       <button
                         onClick={() => handleDecrement(item.id)}
@@ -197,7 +245,9 @@ export default function Cart() {
                       >
                         -
                       </button>
-                      <span className="text-gray-600 font-medium">Quantity: {item.quantity}</span>
+                      <span className="text-gray-600 font-medium">
+                        Quantity: {item.quantity}
+                      </span>
                       <button
                         onClick={() => handleIncrement(item.id)}
                         className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300"
@@ -206,7 +256,9 @@ export default function Cart() {
                       </button>
                     </div>
                     <p className="text-gray-600 mt-2">Price: Ksh {item.price}</p>
-                    <p className="text-gray-600">Total: Ksh {item.quantity * item.price}</p>
+                    <p className="text-gray-600">
+                      Total: Ksh {item.quantity * item.price}
+                    </p>
                   </div>
                   <div className="mt-2 sm:mt-0">
                     <button
@@ -220,10 +272,12 @@ export default function Cart() {
               ))}
             </div>
 
-            {/* Order Summary Card */}
+            {/* Order Summary */}
             <div className="mt-6">
               <div className="bg-green-50 border border-green-300 p-4 rounded-lg shadow">
-                <h3 className="text-xl font-bold text-green-700 mb-2">Order Summary</h3>
+                <h3 className="text-xl font-bold text-green-700 mb-2">
+                  Order Summary
+                </h3>
                 <ul className="list-disc list-inside text-green-800">
                   {cart.map((item) => (
                     <li key={item.id}>
@@ -233,7 +287,9 @@ export default function Cart() {
                   ))}
                 </ul>
                 {selectedDateTime && (
-                  <p className="mt-2 text-green-800">Time to be served: {selectedDateTime}</p>
+                  <p className="mt-2 text-green-800">
+                    Time to be served: {selectedDateTime}
+                  </p>
                 )}
               </div>
             </div>
@@ -276,10 +332,12 @@ export default function Cart() {
               </div>
             </div>
 
-            {/* Date and Time Picker */}
+            {/* Date & Time Picker */}
             {isClientPresent === false && (
               <div className="mt-6">
-                <label className="block text-gray-700 font-semibold mb-2">Select Date & Time:</label>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Select Date & Time:
+                </label>
                 <input
                   type="datetime-local"
                   value={selectedDateTime}
@@ -300,9 +358,11 @@ export default function Cart() {
               </div>
             )}
 
-            {/* Dropdown for booking a table */}
+            {/* Table Booking Dropdown */}
             <div className="mt-6">
-              <label className="block text-gray-700 font-semibold mb-2">Book a Table:</label>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Book a Table:
+              </label>
               <select
                 value={selectedTable || ""}
                 onChange={(e) => setSelectedTable(Number(e.target.value))}
@@ -328,7 +388,7 @@ export default function Cart() {
               </select>
             </div>
 
-            {/* Notification and Countdown Timer */}
+            {/* Order Status & Countdown */}
             {orderStatus && (
               <div className="mt-4 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded">
                 <p>{orderStatus}</p>
@@ -349,8 +409,7 @@ export default function Cart() {
                 onClick={placeOrder}
                 disabled={!selectedDateTime || !selectedTable}
                 className={`bg-red-500 hover:bg-red-600 transition text-white px-6 py-2 rounded-md ${
-                  (!selectedDateTime || !selectedTable) &&
-                  "opacity-50 cursor-not-allowed"
+                  (!selectedDateTime || !selectedTable) && "opacity-50 cursor-not-allowed"
                 }`}
               >
                 Order

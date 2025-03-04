@@ -12,15 +12,15 @@ export default function OwnerDashboard() {
   const [isAddingOutlet, setIsAddingOutlet] = useState(false);
   const [newOutlet, setNewOutlet] = useState({ name: "", photo_url: "" });
   
-  // Dummy orders data (simulate orders received via cart)
+  // Dummy orders data updated to reflect backend's order_items structure
   const [orders, setOrders] = useState([
     {
       id: 1,
       outletId: 1,
       table: "Table 1",
-      orderSummary: [
-        { name: "Burger", quantity: 2 },
-        { name: "Fries", quantity: 1 },
+      order_items: [
+        { food: { name: "Burger" }, quantity: 2 },
+        { food: { name: "Fries" }, quantity: 1 },
       ],
       orderTime: "2025-02-23T10:30",
       status: "pending",
@@ -29,9 +29,9 @@ export default function OwnerDashboard() {
       id: 2,
       outletId: 2,
       table: "Table 3",
-      orderSummary: [
-        { name: "Pizza", quantity: 1 },
-        { name: "Coke", quantity: 2 },
+      order_items: [
+        { food: { name: "Pizza" }, quantity: 1 },
+        { food: { name: "Coke" }, quantity: 2 },
       ],
       orderTime: "2025-02-23T11:00",
       status: "pending",
@@ -80,7 +80,7 @@ export default function OwnerDashboard() {
         localStorage.setItem(
           "recentOrder",
           JSON.stringify({
-            foodItems: order.orderSummary,
+            foodItems: order.order_items,
             orderTime: order.orderTime,
             status: order.status,
           })
@@ -108,8 +108,8 @@ export default function OwnerDashboard() {
     if (order && order.status === "pending") {
       updateOrderStatus(orderId, "confirmed");
       alert(
-        `Order for ${order.orderSummary
-          .map((item) => item.name)
+        `Order for ${order.order_items
+          .map((item) => item.food.name)
           .join(", ")} has been confirmed.`
       );
     } else {
@@ -122,8 +122,8 @@ export default function OwnerDashboard() {
     if (order && order.status === "confirmed") {
       updateOrderStatus(orderId, "served");
       alert(
-        `Order for ${order.orderSummary
-          .map((item) => item.name)
+        `Order for ${order.order_items
+          .map((item) => item.food.name)
           .join(", ")} is now being served.`
       );
     } else {
@@ -136,8 +136,8 @@ export default function OwnerDashboard() {
     if (order && order.status === "served") {
       updateOrderStatus(orderId, "completed");
       alert(
-        `Order for ${order.orderSummary
-          .map((item) => item.name)
+        `Order for ${order.order_items
+          .map((item) => item.food.name)
           .join(", ")} is completed.`
       );
     } else {
@@ -221,7 +221,7 @@ export default function OwnerDashboard() {
                 <tr>
                   <th className="py-2 px-4 border">Outlet</th>
                   <th className="py-2 px-4 border">Table</th>
-                  <th className="py-2 px-4 border">Order Summary</th>
+                  <th className="py-2 px-4 border">Order Items</th>
                   <th className="py-2 px-4 border">Time</th>
                   <th className="py-2 px-4 border">Status</th>
                   <th className="py-2 px-4 border">Action</th>
@@ -251,9 +251,9 @@ export default function OwnerDashboard() {
                       </td>
                       <td className="py-2 px-4 border">{order.table}</td>
                       <td className="py-2 px-4 border">
-                        {order.orderSummary.map((item, idx) => (
+                        {order.order_items.map((item, idx) => (
                           <div key={idx}>
-                            {item.name}
+                            {item.food.name}
                             {item.quantity > 1 ? ` x${item.quantity}` : ""}
                           </div>
                         ))}

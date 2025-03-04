@@ -86,7 +86,7 @@ export default function OutletMenu() {
 
     fetchOrders();
 
-    // Optionally, you might poll the orders endpoint every few seconds:
+    // Optionally poll the orders endpoint every few seconds:
     const interval = setInterval(fetchOrders, 5000);
     return () => clearInterval(interval);
   }, [outletId]);
@@ -153,7 +153,7 @@ export default function OutletMenu() {
       ...newFood,
       outlet_id: outletId,
       price: parseFloat(newFood.price),
-      waiting_time: parseInt(newFood.waiting_time, 10),
+      waiting_time: newFood.waiting_time, // keep as string if needed
     };
 
     try {
@@ -211,7 +211,7 @@ export default function OutletMenu() {
                         type="number"
                         value={editingFood.waiting_time}
                         onChange={(e) =>
-                          setEditingFood({ ...editingFood, waiting_time: parseInt(e.target.value, 10) })
+                          setEditingFood({ ...editingFood, waiting_time: e.target.value })
                         }
                         className="p-2 border rounded-md w-20"
                         required
@@ -231,7 +231,7 @@ export default function OutletMenu() {
                     <>
                       <div>
                         <h3 className="font-semibold">{food.name}</h3>
-                        <p className="text-gray-500">${food.price}</p>
+                        <p className="text-gray-500">Price: ${food.price}</p>
                         <p className="text-gray-500">Waiting time: {food.waiting_time} min</p>
                       </div>
                       <div>
@@ -274,11 +274,13 @@ export default function OutletMenu() {
                   <div className="mb-2">
                     <h3 className="font-semibold">Items:</h3>
                     <ul className="list-disc list-inside">
-                      {order.foodItems.map((item, index) => (
-                        <li key={index}>
-                          {item.name} {item.quantity > 1 && ` x${item.quantity}`}
-                        </li>
-                      ))}
+                      {order.order_items &&
+                        order.order_items.map((item, idx) => (
+                          <li key={idx}>
+                            {item.food?.name || "Item"}{" "}
+                            {item.quantity > 1 && ` x${item.quantity}`}
+                          </li>
+                        ))}
                     </ul>
                   </div>
                   <div className="flex gap-2">
@@ -352,7 +354,9 @@ export default function OutletMenu() {
                 className="w-full p-2 border rounded"
                 required
               >
-                <option value="" disabled>Select Category</option>
+                <option value="" disabled>
+                  Select Category
+                </option>
                 <option value="Breakfast">Breakfast</option>
                 <option value="Lunch">Lunch</option>
                 <option value="Snacks">Snacks</option>
@@ -361,7 +365,10 @@ export default function OutletMenu() {
                 <option value="Dinner">Dinner</option>
               </select>
               <div className="flex justify-end gap-2">
-                <button onClick={() => setIsAddingFood(false)} className="bg-gray-400 text-white px-4 py-2 rounded">
+                <button
+                  onClick={() => setIsAddingFood(false)}
+                  className="bg-gray-400 text-white px-4 py-2 rounded"
+                >
                   Cancel
                 </button>
                 <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">

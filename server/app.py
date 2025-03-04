@@ -190,6 +190,7 @@ class Logout(Resource):
         session.pop('user_id', None)
         session.pop('user', None)
         return jsonify({'message': 'Logged out successfully'}), 200
+
 # -------------------------------
 # Outlet Endpoints
 # -------------------------------
@@ -243,7 +244,6 @@ class FoodsResource(Resource):
         name = data.get('name')
         price = data.get('price')
         waiting_time = data.get('waiting_time')
-        category=data.get('category')
         category = data.get('category')
         outlet_id = data.get('outlet_id')
 
@@ -254,7 +254,7 @@ class FoodsResource(Resource):
         if Food.query.filter_by(name=name).first():
             return {"error": "Food already exists"}, 409
         
-        new_food = Food(name=name, price=price, waiting_time=waiting_time, category=category,outlet_id=outlet_id)
+        new_food = Food(name=name, price=price, waiting_time=waiting_time, category=category, outlet_id=outlet_id)
         db.session.add(new_food)
         db.session.commit()
 
@@ -446,6 +446,7 @@ class FoodByOutletResource(Resource):
             return {"message": "No food found for this outlet"}, 404
         except Exception as e:
             return {"message": str(e)}, 500
+
 class FoodByIDResource(Resource):
     def get(self, food_id=None):
         try:
@@ -507,12 +508,9 @@ class FoodByIDResource(Resource):
             return {"message": str(e)}, 500
             
 # Resource to get food by price
-
 class FoodByPriceResource(Resource):
     def get(self, price):
         try:
-            # Using filter_by(price=price) returns the first matching record;
-            # adjust this as needed if multiple items can share the same price.
             food = Food.query.filter_by(price=price).first()
             if food:
                 return food.to_dict(), 200
@@ -521,7 +519,7 @@ class FoodByPriceResource(Resource):
             return {"message": str(e)}, 500
 
 # ------------------------------------------------
-# Unified OrdersResource (merged and fixed)
+# Updated OrdersResource for customer dashboard and status updates
 # ------------------------------------------------
 class OrdersResource(Resource):
     def post(self):
@@ -533,10 +531,10 @@ class OrdersResource(Resource):
             table_id = data.get('tableId')
             datetime_str = data.get('datetime')
             total = data.get('total')
-            customer_id = data.get('customer_id',None)
+            customer_id = data.get('customer_id', None)
 
             if not customer_id:
-                return {"error":"customer_id is required"}, 400
+                return {"error": "customer_id is required"}, 400
 
             # Convert the datetime string into a datetime object.
             order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
@@ -546,7 +544,7 @@ class OrdersResource(Resource):
                 table_id=table_id,
                 datetime=order_datetime,
                 total=total,
-                status="pending"
+                status="pending"  # Default status
             )
 
             db.session.add(new_order)
@@ -558,11 +556,22 @@ class OrdersResource(Resource):
             return {"error": str(e)}, 500
 
     def get(self, id=None):
+        # If a customer_id query parameter is provided, filter orders for that customer
+        customer_id = request.args.get('customer_id')
+        if customer_id:
+            orders = Order.query.filter_by(customer_id=customer_id).all()
+            if not orders:
+                return {"message": "No orders found for this customer"}, 404
+            return [order.to_dict() for order in orders], 200
+
+        # Otherwise, if a specific order id is provided, return that order
         if id:
             order = Order.query.get(id)
             if not order:
                 return {"error": "Order not found"}, 404
             return order.to_dict(), 200
+
+        # Return all orders (for administrative purposes)
         orders = Order.query.all()
         return [order.to_dict() for order in orders], 200
 
@@ -578,8 +587,13 @@ class OrdersResource(Resource):
         if not data:
             return {"error": "No update data provided"}, 400
 
+        # Update the order status if provided.
+        # Expected statuses could be "confirmed", "served", "completed"
         if "status" in data:
             order.status = data["status"]
+
+        # Optionally, update additional order details if necessary
+        # e.g., updating cart details if those fields are part of the order model
 
         db.session.commit()
         return order.to_dict(), 200
@@ -609,10 +623,6 @@ class OwnerOutletResource(Resource):
 
         return jsonify([outlet.to_dict() for outlet in outlets])
 
-
-
-
-
 # Register resources with the API
 api.add_resource(FoodsResource, "/foods")
 api.add_resource(FoodByNameResource, "/foods/<string:name>")
@@ -626,11 +636,6 @@ api.add_resource(Login, "/login")
 api.add_resource(Logout, "/logout")
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 api.add_resource(OwnerOutletResource, "/owner/<int:owner_id>/outlets")
-
-
-
-# api.add_resource(OutletResource, "/api/outlets", "/api/outlets/<int:id>")
-
 
 if __name__ == '__main__':
     app.run(debug=True)
