@@ -6,7 +6,7 @@ from models import db, Owner, Customer, Outlet, Food, Order, TableReservation
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 # from datetime import datetime, timedelta
-from datetime import datetime, timezone
+from datetime import datetime, timedelta
 
 import json
 
@@ -679,12 +679,21 @@ class TableAvailability(Resource):
             return {"error": "Missing datetime parameter"}, 400
 
         try:
-            # Normalize the datetime format
-            normalized_datetime = datetime.fromisoformat(datetime_str).strftime("%Y-%m-%dT%H:%M")
+            # Parse the input datetime string
+            input_datetime = datetime.fromisoformat(datetime_str)
+            # Extract just the date part (ignoring the time)
+            input_date = input_datetime.date()
 
-            # Query the database for any orders matching the table_id and datetime
-            is_booked = Order.query.filter_by(tablereservation_id=table_id, datetime=normalized_datetime).first() is not None
+            # Calculate the start and end of the day
+            start_of_day = datetime(input_date.year, input_date.month, input_date.day, 0, 0, 0)
+            end_of_day = start_of_day + timedelta(days=1)
 
+            # Query the database for any orders matching the table_id and the date (ignoring time)
+            is_booked = Order.query.filter(
+                Order.tablereservation_id == table_id,
+                Order.datetime >= start_of_day,
+                Order.datetime < end_of_day
+            ).first() is not None
 
             return {"table_id": table_id, "available": not is_booked}, 200
 
