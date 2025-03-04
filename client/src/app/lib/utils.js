@@ -229,6 +229,7 @@ export async function getFood() {
         const foods = await response.json();
 
         const formattedFoods = foods.map(food => ({
+            photo_url: food.photo_url,
             category: food.category,
             name: food.name,
             price: food.price,
@@ -238,6 +239,26 @@ export async function getFood() {
         return formattedFoods;
     } catch (error) {
         console.error("Error fetching food data:", error);
+        return [];
+    }
+}
+
+export async function getOutlets() {
+    try {
+        const response = await fetch("http://127.0.0.1:5000/outlets");
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const outlets = await response.json();
+
+        const formattedOutlets = outlets.map(outlet => ({
+            photo_url: outlet.photo_url,
+            name: outlet.name
+        }));
+
+        return formattedOutlets;
+    } catch (error) {
+        console.error("Error fetching outlet data:", error);
         return [];
     }
 }
@@ -346,7 +367,7 @@ export async function deleteFoodItem(foodId) {  // Change to use 'foodId'
 
 
 export async function addFoodItem(foodData) {
-  if (!foodData.name || !foodData.price || !foodData.waiting_time || !foodData.outlet_id) {
+  if (!foodData.name || !foodData.price || !foodData.waiting_time || !foodData.photo_url || !foodData.outlet_id) {
     console.error("All fields are required to add food");
     return null;
   }

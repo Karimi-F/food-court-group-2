@@ -78,6 +78,8 @@ class Food(db.Model, SerializerMixin):
     price = db.Column(db.Float, nullable=False)
     waiting_time = db.Column(db.String, nullable=False)
     category = db.Column(db.String, nullable=True)
+    photo_url = db.Column(db.String, nullable=False)
+    # Foreign key linking to Outlet
     outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id'), nullable=False)
     
     outlet = db.relationship('Outlet', back_populates='foods')
@@ -110,8 +112,10 @@ class OrderItem(db.Model, SerializerMixin):
 class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
+    # Foreign key linking to Customer
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.id', ondelete='SET NULL'), nullable=False)
-    table_id = db.Column(db.Integer, db.ForeignKey('table_reservations.id', ondelete='CASCADE'), nullable=False)
+    # Foreign key linking to TableReservation
+    tablereservation_id = db.Column(db.Integer, db.ForeignKey('table_reservations.id', ondelete='CASCADE'), nullable=False)
     datetime = db.Column(db.DateTime, nullable=False)
     total = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(50), default="pending")
@@ -123,7 +127,7 @@ class Order(db.Model):
         return {
             "id": self.id,
             "customer_id": self.customer_id,
-            "table_id": self.table_id,
+            "tableId": self.tablereservation_id,
             "datetime": self.datetime.isoformat(),
             "total": self.total,
             "status": self.status,

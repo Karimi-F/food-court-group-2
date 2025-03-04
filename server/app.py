@@ -5,12 +5,14 @@ from flask_cors import CORS
 from models import db, Owner, Customer, Outlet, Food, Order, TableReservation
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
+# from datetime import datetime, timedelta
 from datetime import datetime, timedelta
+
 import json
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://food_court_user:123456@localhost:5432/food_court_db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://beren:123456@localhost:5432/food_court"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
 app.config["SECRET_KEY"] = "your_secret_key"          # Add a secure secret key
@@ -245,11 +247,13 @@ class FoodsResource(Resource):
         price = data.get('price')
         waiting_time = data.get('waiting_time')
         category = data.get('category')
+        category=data.get('category')
+        photo_url = data.get('photo_url')
         outlet_id = data.get('outlet_id')
 
         # Validate required fields
-        if not name or price is None or waiting_time is None or outlet_id is None:
-            return {"error": "Name, price, waiting_time, and outlet_id are required"}, 400
+        if not name or price is None or waiting_time is None or outlet_id is None or photo_url is None:
+            return {"error": "Name, price, waiting_time, outlet_id, and photo_url are required"}, 400
 
         if Food.query.filter_by(name=name).first():
             return {"error": "Food already exists"}, 409
@@ -284,10 +288,11 @@ class FoodResource(Resource):
         price = data.get('price')
         waiting_time = data.get('waiting_time')
         category = data.get('category')
+        photo_url = data.get('photo_url')
         outlet_id = data.get('outlet_id')
 
-        if not name or price is None or waiting_time is None or outlet_id is None:
-            return {"error": "All fields (name, price, waiting_time, outlet_id) are required"}, 400
+        if not name or price is None or waiting_time is None or outlet_id is None or photo_url is None:
+            return {"error": "All fields (name, price, waiting_time, outlet_id, photo_url) are required"}, 400
 
         # Check if another food with the new name exists
         if Food.query.filter(Food.name == name, Food.id != id).first():
@@ -297,6 +302,7 @@ class FoodResource(Resource):
         food.price = price
         food.waiting_time = waiting_time
         food.category = category
+        food.photo_url = photo_url
         food.outlet_id = outlet_id
 
         db.session.commit()
@@ -327,6 +333,8 @@ class FoodResource(Resource):
             food.waiting_time = data['waiting_time']
         if 'category' in data:
             food.category = data['category']
+        if 'photo_url' in data:
+            food.photo_url = data['photo_url']
         if 'outlet_id' in data:
             food.outlet_id = data['outlet_id']
 
@@ -378,9 +386,10 @@ class FoodByNameResource(Resource):
         price = data.get('price')
         waiting_time = data.get('waiting_time')
         category = data.get('category')
+        photo_url = data.get('photo_url')
         outlet_id = data.get('outlet_id')
 
-        if not new_name or price is None or waiting_time is None or outlet_id is None:
+        if not new_name or price is None or waiting_time is None or outlet_id is None or photo_url is None:
             return {"error": "All fields (name, price, waiting_time, outlet_id) are required"}, 400
 
         # Check if another food with the new name exists (if name is changing)
@@ -391,6 +400,7 @@ class FoodByNameResource(Resource):
         food.price = price
         food.waiting_time = waiting_time
         food.category = category
+        food.photo_url = photo_url
         food.outlet_id = outlet_id
 
         db.session.commit()
@@ -419,6 +429,8 @@ class FoodByNameResource(Resource):
             food.waiting_time = data['waiting_time']
         if 'category' in data:
             food.category = data['category']
+        if 'photo_url' in data:
+            food.photo_url = data['photo_url']
         if 'outlet_id' in data:
             food.outlet_id = data['outlet_id']
 
@@ -483,6 +495,8 @@ class FoodByIDResource(Resource):
                 food.price = data["price"]
             if "category" in data:  # Correct the field name
                 food.category = data["category"]
+            if "photo_url" in data:  # Correct the field name
+                food.photo_url = data["photo_url"]
 
             # Save the changes to the database
             db.session.commit()
@@ -541,7 +555,7 @@ class OrdersResource(Resource):
 
             new_order = Order(
                 customer_id=customer_id,
-                table_id=table_id,
+                tablereservation_id=table_id,
                 datetime=order_datetime,
                 total=total,
                 status="pending"  # Default status
@@ -623,6 +637,86 @@ class OwnerOutletResource(Resource):
 
         return jsonify([outlet.to_dict() for outlet in outlets])
 
+class TableReservationResource(Resource):
+    def get(self, id=None):
+        if id is None:
+            table_name = request.args.get('table_name')
+            if table_name:
+                reservations = TableReservation.query.filter(TableReservation.table_name.ilike(f"%{table_name}%")).all()
+                if not reservations:
+                    return {"error": "Reservation not found"}, 404
+                return [res.to_dict() for res in reservations], 200
+            reservations = TableReservation.query.all()
+            return [reservation.to_dict() for reservation in reservations], 200
+        
+        reservation = TableReservation.query.get(id)
+        if not reservation:
+            return {"error": "Reservation not found"}, 404
+        return reservation.to_dict(), 200
+
+    def post(self):
+        data = request.get_json()
+        table_name = data.get('table_name')
+        
+        if not table_name:
+            return {"error": "Table name is required"}, 400
+
+        new_reservation = TableReservation(table_name=table_name)
+        db.session.add(new_reservation)
+        db.session.commit()
+
+        return new_reservation.to_dict(), 201
+
+    def put(self, id):
+        reservation = TableReservation.query.get(id)
+        if not reservation:
+            return {"error": "Reservation not found"}, 404
+        
+        data = request.get_json()
+        reservation.table_name = data.get('table_name', reservation.table_name)
+        
+        db.session.commit()
+        return reservation.to_dict(), 200
+
+    def delete(self, id):
+        reservation = TableReservation.query.get(id)
+        if not reservation:
+            return {"error": "Reservation not found"}, 404
+        
+        db.session.delete(reservation)
+        db.session.commit()
+        return {"message": "Reservation deleted successfully"}, 200
+
+class TableAvailability(Resource):
+    def get(self, table_id):  # Ensure table_id is included as a parameter
+        datetime_str = request.args.get("datetime")
+
+        if not datetime_str:
+            return {"error": "Missing datetime parameter"}, 400
+
+        try:
+            # Parse the input datetime string
+            input_datetime = datetime.fromisoformat(datetime_str)
+            # Extract just the date part (ignoring the time)
+            input_date = input_datetime.date()
+
+            # Calculate the start and end of the day
+            start_of_day = datetime(input_date.year, input_date.month, input_date.day, 0, 0, 0)
+            end_of_day = start_of_day + timedelta(days=1)
+
+            # Query the database for any orders matching the table_id and the date (ignoring time)
+            is_booked = Order.query.filter(
+                Order.tablereservation_id == table_id,
+                Order.datetime >= start_of_day,
+                Order.datetime < end_of_day
+            ).first() is not None
+
+            return {"table_id": table_id, "available": not is_booked}, 200
+
+        except ValueError:
+            return {"error": "Invalid datetime format. Use ISO format (YYYY-MM-DDTHH:MM)"}, 400
+
+
 # Register resources with the API
 api.add_resource(FoodsResource, "/foods")
 api.add_resource(FoodByNameResource, "/foods/<string:name>")
@@ -636,6 +730,14 @@ api.add_resource(Login, "/login")
 api.add_resource(Logout, "/logout")
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 api.add_resource(OwnerOutletResource, "/owner/<int:owner_id>/outlets")
+api.add_resource(TableReservationResource, "/reservations", "/reservations/<int:id>")
+api.add_resource(TableAvailability, "/tables/<int:table_id>/availability")
+
+
+
+
+# api.add_resource(OutletResource, "/api/outlets", "/api/outlets/<int:id>")
+
 
 if __name__ == '__main__':
     app.run(debug=True)

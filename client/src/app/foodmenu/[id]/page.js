@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation"; // Get restaurant ID from URL
 import { fetchMenu } from "../../lib/utils";
+import Image from "next/image";
+import { PhoneOutgoing } from "lucide-react";
 
 export default function MenuPage() {
   const { id } = useParams(); // Get restaurant ID from URL
@@ -69,43 +71,43 @@ export default function MenuPage() {
     <div className="flex">
       {/* Menu Section */}
       <div className="w-3/4 p-6 bg-gray-100">
-        <h2 className="text-2xl text-blue-700 flex justify-center items-center font-bold mb-4">
+        <h2 className="text-2xl text-[#ff575a] flex justify-center items-center font-bold mb-4">
           Menu for Restaurant {id}
         </h2>
 
         {/* Back to Outlets Button */}
         <button
           onClick={() => router.push("/customer-dashboard")}
-          className="bg-gray-600 text-white px-4 py-2 rounded-md mb-4"
+          className="bg-[#ff575a] text-white px-4 py-2 rounded-xl mb-4"
         >
           Back to Outlets
         </button>
 
         {/* Search and Filters */}
-        <div className="flex justify-between gap-4 mb-4">
+        <div className="flex justify-between gap-20 p-4 ">
           <input
             type="text"
             placeholder="Search food..."
-            className="w-full h-12 px-4 rounded-lg text-blue-700 text-lg placeholder:text-gray-400 border border-gray-300 outline-none"
+            className="w-full h-12 px-4 rounded-xl text-[#ff575a] text-lg placeholder:text-gray-400 border border-gray-300 outline-none"
             value={searchFood}
             onChange={(e) => setSearchFood(e.target.value)}
           />
           <input
             type="number"
             placeholder="Min Price"
-            className="w-full h-12 px-4 rounded-lg text-blue-700 text-lg placeholder:text-gray-400 border border-gray-300 outline-none"
+            className="w-full h-12 px-4 rounded-xl text-[#ff575a] text-lg placeholder:text-gray-400 border border-gray-300 outline-none"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
           />
           <input
             type="number"
             placeholder="Max Price"
-            className="w-full h-12 px-4 rounded-lg text-blue-700 text-lg placeholder:text-gray-400 border border-gray-300 outline-none"
+            className="w-full h-12 px-4 rounded-xl text-[#ff575a] text-lg placeholder:text-gray-400 border border-gray-300 outline-none"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
           />
           <select
-            className="w-full h-12 px-4 border rounded-lg text-blue-700"
+            className="w-full h-12 px-4 border rounded-xl text-[#ff575a]"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
@@ -122,7 +124,7 @@ export default function MenuPage() {
         {loading && <p className="text-gray-600">Loading menu...</p>}
         {error && <p className="text-red-600">Error: {error}</p>}
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {menu
             .filter((item) =>
               item.name.toLowerCase().includes(searchFood.toLowerCase())
@@ -133,11 +135,20 @@ export default function MenuPage() {
             .map((item) => (
               <div
                 key={item.id}
-                className="flex justify-between items-center p-4 border rounded-md bg-white shadow-md"
+                className="bg-white shadow-lg rounded-lg overflow-hidden p-4 text-center"
               >
+                <div className="relative w-full h-40">
+                  <Image
+                    src={item.photo_url}
+                    alt="{item.name}"
+                    layout="fill"
+                    objectFit="cover"
+                    className="rounded-lg"
+                  />
+                </div>
                 <div>
-                  <p className="text-blue-700 font-semibold">{item.name}</p>
-                  <p className="text-gray-600">Price: Ksh {item.price}</p>
+                  <p className="text-[#ff575a] font-semibold">{item.name}</p>
+                  {/* <p className="text-gray-600">Price: Ksh {item.price}</p> */}
                   <p className="text-gray-600">Category: {item.category}</p>
                   <p className="text-gray-600">
                     Wait Time: {item.waiting_time} mins
@@ -166,6 +177,7 @@ export default function MenuPage() {
                   >
                     +
                   </button>
+                  <p className="text-gray-600">Price: Ksh {item.price}</p>
                   <button
                     onClick={() => handleRemoveFromCart(item)}
                     className="bg-red-500 text-white px-3 py-1 rounded-md"
@@ -179,7 +191,19 @@ export default function MenuPage() {
       </div>
 
       {/* Cart Section */}
-      {cart.length > 0 && (
+      {cart.length === 0 ? (
+        <div>
+          <Image
+            src="/images/emptycart.jpg"
+            alt="Empty Cart"
+            layout="intrinsic"
+            width={300}
+            height={300}
+          />
+          <p>Your cart is empty</p>
+        </div>
+      ) : (
+        // {cart.length > 0 &&
         <div
           className="w-1/4 bg-white shadow-md fixed top-0 right-0 h-full overflow-auto p-6"
           style={{ zIndex: 999 }}
@@ -220,7 +244,9 @@ export default function MenuPage() {
           </div>
           <button
             onClick={() =>
-              router.push(`/cart?data=${encodeURIComponent(JSON.stringify(cart))}`)
+              router.push(
+                `/cart?data=${encodeURIComponent(JSON.stringify(cart))}`
+              )
             }
             className="bg-red-500 text-white px-4 py-2 rounded-md mb-4"
           >
