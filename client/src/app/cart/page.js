@@ -13,7 +13,7 @@ export default function Cart() {
   const [cart, setCart] = useState([])
   const [isClientPresent, setIsClientPresent] = useState(true)
   const [selectedDateTime, setSelectedDateTime] = useState("")
-  const [tables, setTables] = useState([])
+  const [reservations, setReservations] = useState([])
   const [confirmedBookings, setConfirmedBookings] = useState([])
   const [selectedTable, setSelectedTable] = useState(null)
   const [orderStatus, setOrderStatus] = useState("")
@@ -28,25 +28,20 @@ export default function Cart() {
       }
     }
 
-    // Fetch tables and bookings from backend
+    // Fetch reservations and bookings from backend
     fetch("http://localhost:5000/reservations")
       .then((response) => response.json())
       .then((data) => {
-        // Transform reservations data to match expected format
-        const transformedTables = data.map((table) => ({
-          id: table.id,
-          name: table.table_name, // Map table_name to name
-        }))
-        console.log("Transformed tables:", transformedTables) // Debugging
-        setTables(transformedTables)
+        console.log("Fetched reservations:", data) // Debugging
+        setReservations(data)
       })
-      .catch((error) => console.error("Error fetching tables:", error))
+      .catch((error) => console.error("Error fetching reservations:", error))
 
     fetch("http://localhost:5000/orders")
       .then((response) => response.json())
       .then((data) => {
-        console.log("Fetched bookings:", data) // Debugging
-        setConfirmedBookings(data)
+        console.log("Fetched bookings (raw):", data) // Debugging
+        setConfirmedBookings(data) // Use the raw data directly
       })
       .catch((error) => console.error("Error fetching bookings:", error))
   }, [cartParam])
@@ -75,27 +70,36 @@ export default function Cart() {
     setCart(updatedCart)
   }
 
-  const getTableStatus = (table) => {
-    if (!selectedDateTime) return "N/A"
+  const getTableStatus = (reservation) => {
+    if (!selectedDateTime) return "N/A";
 
-    // Normalize the datetime format (remove milliseconds)
-    const normalizedSelectedDateTime = new Date(selectedDateTime).toISOString().slice(0, 16)
+    try {
+      
+      const selectedDate = new Date(selectedDateTime).toISOString().slice(0, 10);
 
-    const isBooked = confirmedBookings.some(
-      (booking) =>
-        booking.tableId === table.id &&
-        new Date(booking.datetime).toISOString().slice(0, 16) === normalizedSelectedDateTime,
-    )
+      
+      const isBooked = confirmedBookings.some((booking) => {
+        if (!booking.datetime) return false;
 
-    return isBooked ? "booked" : "available"
-  }
+        
+        const bookingDate = new Date(booking.datetime).toISOString().slice(0, 10);
+
+        
+        return booking.tableId === reservation.id && bookingDate === selectedDate;
+      });
+
+      return isBooked ? "booked" : "available";
+    } catch (error) {
+      console.error("Error checking table status:", error);
+      return "N/A";
+    }
+  };
 
   const checkTableAvailability = async (tableId, datetime) => {
     try {
       const response = await fetch(
         `http://localhost:5000/tables/${tableId}/availability?datetime=${datetime}`
-      );
-      
+      )
       const data = await response.json()
       return data.available
     } catch (error) {
@@ -105,13 +109,15 @@ export default function Cart() {
   }
 
   const placeOrder = async () => {
-    if (!selectedDateTime) {
-      alert("Please select a date and time before placing your order.")
-      return
-    }
     if (!selectedTable) {
       alert("Please select a table before placing your order.")
       return
+    }
+
+    
+    if (isClientPresent) {
+      const now = new Date().toISOString().slice(0, 16)
+      setSelectedDateTime(now)
     }
 
     // Check if the table is available
@@ -147,7 +153,7 @@ export default function Cart() {
       if (res.ok) {
         setOrderStatus("Your order has been confirmed!")
 
-        // Add the new booking to confirmedBookings
+        
         setConfirmedBookings((prevBookings) => [
           ...prevBookings,
           {
@@ -156,7 +162,7 @@ export default function Cart() {
           },
         ])
 
-        // Save the order summary in localStorage
+        
         localStorage.setItem(
           "recentOrder",
           JSON.stringify({
@@ -168,9 +174,9 @@ export default function Cart() {
           }),
         )
 
-        // Redirect the customer to their dashboard after order confirmation
+        
         setTimeout(() => {
-          router.push("/home")
+          router.push("/customer-dashboard")
         }, 2000)
       } else {
         setOrderStatus(`Failed to place order: ${result.error}`)
@@ -201,7 +207,7 @@ export default function Cart() {
             <div className="space-y-4">
               {cart.map((item) => (
                 <div
-                  key={item.id}
+                  key={item.id} // Add key prop
                   className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 border rounded-xl bg-white shadow-sm transition transform hover:shadow-md hover:border-[#ff575a]/30"
                 >
                   <div className="w-full">
@@ -250,7 +256,7 @@ export default function Cart() {
                   {cart.map((item) => (
                     <li key={item.id} className="flex justify-between">
                       <span>
-                        {item.name} {item.quantity > 1 ? ` x${item.quantity}` : ""}
+                        {item.name} {item.quantity > 1 ? `x${item.quantity}` : ""}
                       </span>
                       <span className="font-medium">Ksh {item.quantity * item.price}</span>
                     </li>
@@ -346,16 +352,16 @@ export default function Cart() {
                 className="w-full p-3 border border-[#ff575a]/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff575a] bg-[#ffeeee] text-gray-800 disabled:opacity-60"
               >
                 <option value="">{selectedDateTime ? "Select a table" : "Select date & time first"}</option>
-                {tables.map((table) => {
-                  const status = getTableStatus(table)
+                {reservations.map((reservation) => {
+                  const status = getTableStatus(reservation)
                   return (
                     <option
-                      key={table.id}
-                      value={table.id}
+                      key={reservation.id} 
+                      value={reservation.id} 
                       disabled={status !== "available"}
                       className={status === "available" ? "text-green-600" : "text-red-500"}
                     >
-                      {table.name} - {status.charAt(0).toUpperCase() + status.slice(1)}
+                      {reservation.table_name} - {status.charAt(0).toUpperCase() + status.slice(1)}
                     </option>
                   )
                 })}
@@ -374,9 +380,9 @@ export default function Cart() {
               </p>
               <button
                 onClick={placeOrder}
-                disabled={!selectedDateTime || !selectedTable}
+                disabled={!selectedTable || (isClientPresent === false && !selectedDateTime)}
                 className={`bg-[#ff575a] hover:bg-[#ff575a]/90 transition text-white px-8 py-3 rounded-xl font-medium shadow-md ${
-                  (!selectedDateTime || !selectedTable) && "opacity-50 cursor-not-allowed"
+                  (!selectedTable || (isClientPresent === false && !selectedDateTime)) && "opacity-50 cursor-not-allowed"
                 }`}
               >
                 Place Order
