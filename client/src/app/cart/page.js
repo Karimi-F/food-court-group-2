@@ -6,47 +6,81 @@ import { useSession } from "next-auth/react"
 import { Minus, Plus, Trash2, ShoppingCart, Calendar, MapPin } from "lucide-react"
 
 export default function Cart() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const searchParams = useSearchParams();
-  const router = useRouter(); // For redirection
+  const router = useRouter();
   const cartParam = searchParams.get("data");
   const [cart, setCart] = useState([]);
-
-  // New state for checking if the client is present at the restaurant
+  
+  // States for client presence, date/time, table selection, and order lifecycle
   const [isClientPresent, setIsClientPresent] = useState(null);
-
-  // State for the date and time selected by the customer
   const [selectedDateTime, setSelectedDateTime] = useState("");
+  const [selectedTable, setSelectedTable] = useState(null);
 
-  // Dummy confirmed bookings (simulate tables already booked)
-  const [confirmedBookings, setConfirmedBookings] = useState([
+  // Dummy booking data and tables list
+  const [confirmedBookings] = useState([
     { tableId: 3, datetime: "2025-02-23T10:30" },
   ]);
-
-  // Sample tables data
-  const [tables, setTables] = useState([
+  const [tables] = useState([
     { id: 1, name: "Table 1" },
     { id: 2, name: "Table 2" },
     { id: 3, name: "Table 3" },
     { id: 4, name: "Table 4" },
   ]);
 
-  const [selectedTable, setSelectedTable] = useState(null);
+  // Order status and countdown timer states
   const [orderStatus, setOrderStatus] = useState("");
+  const [countdown, setCountdown] = useState(null);
 
   // Parse and normalize the cart data
   useEffect(() => {
     if (cartParam) {
       try {
-        const parsedCart = JSON.parse(decodeURIComponent(cartParam));
-        setCart(parsedCart);
+        const decoded = decodeURIComponent(cartParam);
+        const parsed = JSON.parse(decoded);
+        console.log("Parsed cart data:", parsed);
+        // Ensure parsed data is an array
+        if (!Array.isArray(parsed)) {
+          console.error("Cart data is not an array:", parsed);
+          setCart([]);
+          return;
+        }
+        // Normalize each item
+        const normalized = parsed.map((item) => ({
+          id: item.id || Math.random().toString(36).substr(2, 9),
+          name: item.name || (item.outlet && item.outlet.name) || "Unnamed Food",
+          price: Number(item.price) || 0,
+          waiting_time: item.waiting_time || "",
+          quantity: item.quantity ? Number(item.quantity) : 1,
+          outlet: item.outlet || null,
+          category: item.category || "",
+        }));
+        console.log("Normalized cart data:", normalized);
+        setCart(normalized);
       } catch (error) {
-        console.error("Failed to parse cart data", error);
+        console.error("Failed to parse cart data:", error);
+        setCart([]);
       }
     }
-  }, [cartParam]);
 
-  // Update the quantity of an item
+    // Fetch reservations and bookings from backend
+    fetch("http://localhost:5000/reservations")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Fetched reservations:", data) // Debugging
+        setReservations(data)
+      })
+      .catch((error) => console.error("Error fetching reservations:", error))
+
+    fetch("http://localhost:5000/orders")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Fetched bookings (raw):", data) // Debugging
+        setConfirmedBookings(data) // Use the raw data directly
+      })
+      .catch((error) => console.error("Error fetching bookings:", error))
+  }, [cartParam])
+
   const updateItemQuantity = (id, newQuantity) => {
     const updatedCart = cart.map((item) =>
       item.id === id ? { ...item, quantity: newQuantity } : item
