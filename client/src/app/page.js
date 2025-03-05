@@ -8,52 +8,54 @@ import Image from "next/image"
 
 export default function Home() {
   const router = useRouter()
-  const [isOpen, setIsOpen] = useState(false); // ✅ Removed extra closing brace here
+  const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#c84346] via-[#ff575a] to-[#ff8a8c]
-">
+    <main className="min-h-screen bg-white overflow-hidden">
       {/* Navigation */}
-      <nav className="shadow-md">
+      <nav className="shadow-md bg-white/95 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             {/* Logo */}
-            <div className="text-2xl font-bold text-black">BiteScape</div>
+            <div className="text-2xl font-bold bg-gradient-to-r from-[#c84346] to-[#ff8a8c] text-transparent bg-clip-text">
+              BiteScape
+            </div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link href="/home" className="text-black hover:text-[#ff8a8c]">
+              <Link href="/home" className="text-gray-800 hover:text-[#ff8a8c] transition-colors">
                 Home
               </Link>
-              <Link href="/about" className="text-black hover:text-[#ff8a8c]">
+              <Link href="/about" className="text-gray-800 hover:text-[#ff8a8c] transition-colors">
                 About
               </Link>
-              <Link href="/contact-us" className="text-black hover:text-[#ff8a8c]">
+              <Link href="/contact-us" className="text-gray-800 hover:text-[#ff8a8c] transition-colors">
                 Contact Us
               </Link>
             </div>
 
             {/* Mobile Menu Button */}
             <div className="md:hidden">
-              <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="text-black focus:outline-none"
-              >
+              <button onClick={() => setIsOpen(!isOpen)} className="text-gray-800 focus:outline-none">
                 {isOpen ? <X size={28} /> : <Menu size={28} />}
               </button>
             </div>
           </div>
 
-          {/* for mobile users */}
+          {/* Mobile Menu */}
           {isOpen && (
             <div className="md:hidden space-y-4 px-4 pb-4 transition-all">
-              <Link href="/home" className="block text-black hover:text-[#ff8a8c]" onClick={() => setIsOpen(false)}>
+              <Link href="/home" className="block text-gray-800 hover:text-[#ff8a8c]" onClick={() => setIsOpen(false)}>
                 Home
               </Link>
-              <Link href="/about" className="block text-black hover:text-[#ff8a8c]" onClick={() => setIsOpen(false)}>
+              <Link href="/about" className="block text-gray-800 hover:text-[#ff8a8c]" onClick={() => setIsOpen(false)}>
                 About
               </Link>
-              <Link href="/contact-us" className="block text-black hover:text-[#ff8a8c]" onClick={() => setIsOpen(false)}>
+              <Link
+                href="/contact-us"
+                className="block text-gray-800 hover:text-[#ff8a8c]"
+                onClick={() => setIsOpen(false)}
+              >
                 Contact Us
               </Link>
             </div>
@@ -61,35 +63,64 @@ export default function Home() {
         </div>
       </nav>
 
-      <section className="relative min-h-screen flex items-center justify-center bg-[#E65C00] overflow-hidden">
-              {/* Grid Background */}
-      <div className="absolute inset-0 bg-black">
-        <div className="absolute inset-0 bg-grid-white/[0.2] bg-grid-pattern" />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#c84346] via-[#ff575a] to-[#ff8a8c]/70" />
-      </div>
-        <div className="absolute inset-0 bg-gradient-to-br from-[#c84346] via-[#ff575a] to-[#ff8a8c]/70" />
+      {/* Hero Section */}
+      <section className="relative min-h-[90vh] flex items-center">
+        {/* Background Elements */}
+        <div className="absolute inset-0 bg-[#fef2f2]">
+          <div className="absolute inset-0 bg-grid-white/[0.2] bg-[length:50px_50px]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-white via-transparent to-transparent" />
+        </div>
 
-        <div className="relative z-10 container mx-auto px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight tracking-tight text-white mb-8">
-              Great Food, <span className="text-[#ff8a8c] inline-block animate-pulse">Great Vibes 🎉</span>
+        {/* Gradient Circles */}
+        <div className="absolute top-20 left-10 w-72 h-72 bg-[#ff575a]/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#ff8a8c]/20 rounded-full blur-3xl" />
+
+        {/* Content Container */}
+        <div className="relative z-10 container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+          {/* Left Column - Text Content */}
+          <div className="text-left pt-20 md:pt-0">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight text-gray-900 mb-8">
+              Great Food,{" "}
+              <span className="text-[#ff575a] inline-block">
+                Great Vibes <span className="inline-block animate-bounce">🎉</span>
+              </span>
               <br />
-              <span className="text-white/90">All in One Place!</span>
-              <span className="inline-block animate-bounce">🍔</span>
+              <span className="text-gray-800/90">
+                All in One Place! <span className="inline-block animate-bounce delay-150">🍔</span>
+              </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-white/80 mb-12 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-gray-600 mb-12 max-w-2xl">
               Experience the perfect blend of flavors and atmosphere. Your next memorable meal awaits.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="px-8 py-4 bg-white text-[#E65C00] rounded-full font-semibold text-lg hover:bg-[#FFB088] hover:text-white transition-colors duration-300">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => router.push("/customer-signup")}
+                className="px-8 py-4 bg-gradient-to-r from-[#c84346] to-[#ff575a] text-white rounded-full font-semibold text-lg hover:opacity-90 transition-opacity duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
                 Order Now
               </button>
-              <button className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-full font-semibold text-lg hover:bg-white/10 transition-colors duration-300"
-              onClick = {() => router.push("/outlets")}>
+              <button
+                onClick={() => router.push("/outlets")}
+                className="px-8 py-4 bg-white text-[#ff575a] rounded-full font-semibold text-lg border-2 border-[#ff575a] hover:bg-[#ff575a] hover:text-white transition-colors duration-300"
+              >
                 See Outlets
               </button>
+            </div>
+          </div>
+
+          {/* Right Column - Hero Image */}
+          <div className="relative hidden md:block">
+            <div className="relative w-full h-[600px]">
+              <Image
+                src="/images/regina-victorica.webp"
+                alt="Delicious Food Spread"
+                width={600}
+                height={600}
+                className="object-cover rounded-2xl shadow-2xl"
+                priority
+              />
             </div>
           </div>
         </div>
