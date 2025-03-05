@@ -7,7 +7,7 @@ import Link from "next/link";
 import { fetchOutlets } from "../lib/utils";
 
 export default function CustomerDashboard() {
-  const { data: session } = useSession();
+  const { data:session, status } = useSession();
   const router = useRouter();
   const [searchOutlet, setSearchOutlet] = useState("");
   const [outlets, setOutlets] = useState([]);
@@ -16,11 +16,12 @@ export default function CustomerDashboard() {
   const [recentOrder, setRecentOrder] = useState(null);
   
 
-  // Handle logout functionality
-  const handleLogout = async () => {
-    const confirmLogout = window.confirm("Are you sure you want to log out?");
+// Handle logout functionality
+const handleLogout = async () => {
+  const confirmLogout = window.confirm("Are you sure you want to log out?");
     if (confirmLogout) {
-      await signOut({ redirect: false });
+      // signout without redirect 
+      await signOut({redirect: false});
       alert("You have been logged out successfully");
       router.push("/home");
     }
@@ -37,40 +38,18 @@ export default function CustomerDashboard() {
     const delayDebounce = setTimeout(() => {
       getOutlets();
     }, 500);
+
     return () => clearTimeout(delayDebounce);
   }, [searchOutlet]);
 
-  // Poll localStorage for recent order updates every 5 seconds
+  // Retrieve recent order from localStorage (if available) on component mount
   useEffect(() => {
-    const interval = setInterval(() => {
-      const order = localStorage.getItem("recentOrder");
-      if (order) {
-        setRecentOrder(JSON.parse(order));
-      }
-    }, 5000);
-    return () => clearInterval(interval);
+    const order = localStorage.getItem("recentOrder");
+    if (order) {
+      setRecentOrder(JSON.parse(order));
+      localStorage.removeItem("recentOrder"); // Clear after showing
+    }
   }, []);
-
-  // Fetch past orders for the logged-in customer
-  useEffect(() => {
-    const fetchPastOrders = async () => {
-      if (session?.user?.id) {
-        try {
-          const res = await fetch(`http://localhost:5000/orders?customer_id=${session.user.id}`);
-          const data = await res.json();
-          if (res.ok) {
-            // Assuming your backend returns an array of orders
-            setPastOrders(data);
-          } else {
-            console.error("Error fetching orders:", data.error);
-          }
-        } catch (error) {
-          console.error("Error fetching past orders:", error);
-        }
-      }
-    };
-    fetchPastOrders();
-  }, [session]);
 
   return (
     <div className="bg-[#ffeeee] min-h-screen p-6">
@@ -87,7 +66,7 @@ export default function CustomerDashboard() {
           <div className="flex gap-2">
             <Link href="/home">
               <button className="bg-white text-[#ff575a] p-3 rounded">
-                ↝ Back to Home
+                ← Back to Home
               </button>
             </Link>
             <button 
@@ -104,65 +83,18 @@ export default function CustomerDashboard() {
             Recent Order Summary
           </h2>
           <ul className="list-disc list-inside">
-            {recentOrder.order_items &&
-              recentOrder.order_items.map((item, index) => (
-                <li key={index} className="text-green-800">
-                  {item.food?.name || "Item"} 
-                  {item.quantity > 1 ? ` x${item.quantity}` : ""}
-                </li>
-              ))}
+            {recentOrder.foodItems.map((food, index) => (
+              <li key={index} className="text-green-800">
+                {food.name}
+                {food.quantity > 1 ? ` x${food.quantity}` : ""}
+              </li>
+            ))}
           </ul>
           <p className="mt-2 text-green-800">
             Time to be served: {recentOrder.orderTime}
           </p>
-          {recentOrder.status && (
-            <p className="mt-2 text-green-800">Current Status: {recentOrder.status}</p>
-          )}
         </div>
       )}
-
-      {/* Past Orders Table */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-blue-700 mb-4">Past Orders</h2>
-        {pastOrders.length === 0 ? (
-          <p className="text-gray-600">No past orders found.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border rounded-lg">
-              <thead className="bg-blue-700 text-white">
-                <tr>
-                  <th className="py-2 px-4 border">Order ID</th>
-                  <th className="py-2 px-4 border">Order Time</th>
-                  <th className="py-2 px-4 border">Total (Ksh)</th>
-                  <th className="py-2 px-4 border">Status</th>
-                  <th className="py-2 px-4 border">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pastOrders.map((order) => (
-                  <tr key={order.id} className="text-center border-b">
-                    <td className="py-2 px-4 border">{order.id}</td>
-                    <td className="py-2 px-4 border">{order.datetime}</td>
-                    <td className="py-2 px-4 border">{order.total}</td>
-                    <td className="py-2 px-4 border">{order.status}</td>
-                    <td className="py-2 px-4 border">
-                      <ul className="list-disc list-inside text-left">
-                        {order.order_items &&
-                          order.order_items.map((item, idx) => (
-                            <li key={idx}>
-                              {item.food?.name || "Item"}{" "}
-                              {item.quantity > 1 ? `x${item.quantity}` : ""}
-                            </li>
-                          ))}
-                      </ul>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
 
       {/* Search Form */}
       <form className="mb-4" onSubmit={(e) => e.preventDefault()}>
@@ -184,7 +116,7 @@ export default function CustomerDashboard() {
               className="border p-4 rounded-2xl shadow bg-[#e6d6d6] hover:shadow-xl hover:scale-105 transition-transform duration-300"
             >
               <img
-                src={outlet.photo_url}
+                src={outlet.photo_url} // Ensure this matches your API response key
                 alt={outlet.name}
                 className="w-full h-48 object-cover rounded-2xl mb-2"
               />

@@ -12,15 +12,15 @@ class Customer(db.Model):
     name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(200))
-    # Define relationship to orders.
+    # Define relationship to orders. SQLAlchemy will use the foreign key on Order.
     orders = db.relationship('Order', backref='customer', lazy=True)
 
     def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "email": self.email
-        }
+            return {
+                "id": self.id,
+                "name": self.name,
+                "email": self.email
+            }
 
 # Owner Model
 class Owner(db.Model, SerializerMixin):
@@ -31,9 +31,10 @@ class Owner(db.Model, SerializerMixin):
     email = db.Column(db.String, unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
     
+    # One owner can have multiple outlets
     outlets = relationship('Outlet', back_populates='owner', cascade="all, delete-orphan")
     
-    # Exclude password and prevent circular reference with outlets
+    # Serialization rules
     serialize_rules = ('-password', '-outlets.owner')
 
 # Outlet Model
@@ -44,10 +45,11 @@ class Outlet(db.Model, SerializerMixin):
     name = db.Column(db.String, unique=True, nullable=False)
     description = db.Column(db.String, nullable=False)
     photo_url = db.Column(db.String, nullable=False)
+    # Foreign key linking to Owner
     owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'), nullable=False)
     
-    owner = db.relationship('Owner', back_populates='outlets')
-    foods = db.relationship('Food', back_populates='outlet', cascade="all, delete-orphan")
+    # Relationship to Owner
+    owner = relationship('Owner', back_populates='outlets')
     
     # One outlet can have many food items
     foods = relationship('Food', back_populates='outlet', cascade="all, delete-orphan")
@@ -90,6 +92,7 @@ class Food(db.Model, SerializerMixin):
     # Foreign key linking to Outlet
     outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id'), nullable=False)
     
+    # Relationship to Outlet
     outlet = db.relationship('Outlet', back_populates='foods')
     
     # (Note: The previous relationship to Order has been removed. 
@@ -97,27 +100,6 @@ class Food(db.Model, SerializerMixin):
     order_items = db.relationship('OrderItem', back_populates='food')
     # Serialization rules
     serialize_rules = ('-outlet.foods',)
-
-
-# New Model: OrderItem (represents individual items in the order/cart)
-class OrderItem(db.Model, SerializerMixin):
-    __tablename__ = 'order_items'
-    id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('orders.id', ondelete='CASCADE'), nullable=False)
-    food_id = db.Column(db.Integer, db.ForeignKey('foods.id', ondelete='CASCADE'), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False, default=1)
-    
-    # Relationship to Food
-    food = db.relationship('Food')
-    
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "order_id": self.order_id,
-            "food": self.food.to_dict() if self.food else None,
-            "quantity": self.quantity
-        }
-    
 
 # Order Model
 class Order(db.Model):
@@ -131,6 +113,7 @@ class Order(db.Model):
     total = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(50), default="pending")
     
+    # Relationship to TableReservation (one-to-one)
     table_reservation = db.relationship('TableReservation', back_populates='order', passive_deletes=True)
     order_items = db.relationship('OrderItem', back_populates='order', lazy=True)
     
@@ -142,7 +125,6 @@ class Order(db.Model):
             "datetime": self.datetime.isoformat(),
             "total": self.total,
             "status": self.status,
-            "order_items": [item.to_dict() for item in self.order_items]
         }
 
 class OrderItem(db.Model):
