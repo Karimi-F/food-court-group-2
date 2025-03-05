@@ -44,10 +44,12 @@ export default function Login() {
         password: formData.password,
       })
       if (signInResult.error) {
-        setErrors({ auth: signInResult.error })
+        setErrors({ form: "Invalid email or password. Please try again." })
       } else {
-        setSuccessMessage("Login successful!")
-        router.push("/owner-dashboard")
+        setSuccessMessage("Login successful! Redirecting...")
+        setTimeout(() => {
+          router.push("/owner-dashboard")
+        })
       }
     }
   }
@@ -81,6 +83,8 @@ export default function Login() {
         {errors.auth && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{errors.auth}</div>
         )}
+        
+        {successMessage && <p className="text-green-600 text-sm text-center mb-4">{successMessage}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Email */}

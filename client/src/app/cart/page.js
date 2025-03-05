@@ -8,25 +8,24 @@ import { toast, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function Cart() {
-  const { data: session, status } = useSession()
-  const searchParams = useSearchParams()
-  const router = useRouter() // For redirection
-  const cartParam = searchParams.get("data")
-  const [cart, setCart] = useState([])
-  const [orderItems, setOrderItems] = useState([]);
+  const { data: session,status } = useSession();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const cartParam = searchParams.get("data");
+  const [cart, setCart] = useState([]);
+    const [orderItems, setOrderItems] = useState([]);
 
 
-  // New state for checking if the client is present at the restaurant
-  const [isClientPresent, setIsClientPresent] = useState(true);
+  // States for client presence, date/time, table selection, and order lifecycle
+  const [isClientPresent, setIsClientPresent] = useState(null);
+  const [selectedDateTime, setSelectedDateTime] = useState("");
+  const [selectedTable, setSelectedTable] = useState(null);
 
-  // State for the date and time selected by the customer
-  const [selectedDateTime, setSelectedDateTime] = useState("")
-
-  // Dummy confirmed bookings (simulate tables already booked)
-  const [confirmedBookings, setConfirmedBookings] = useState([{ tableId: 3, datetime: "2025-02-23T10:30" }])
-
-  // Sample tables data
-  const [tables, setTables] = useState([
+  // Dummy booking data and tables list
+  const [confirmedBookings] = useState([
+    { tableId: 3, datetime: "2025-02-23T10:30" },
+  ]);
+  const [tables] = useState([
     { id: 1, name: "Table 1" },
     { id: 2, name: "Table 2" },
     { id: 3, name: "Table 3" },
@@ -42,11 +41,13 @@ export default function Cart() {
     { id: 13, name: "Table 13" },
     { id: 14, name: "Table 14" },
     { id: 15, name: "Table 15" },
-  ])
+  ]);
 
-  const [selectedTable, setSelectedTable] = useState(null)
-  const [orderStatus, setOrderStatus] = useState("")
+  // Order status and countdown timer states
+  const [orderStatus, setOrderStatus] = useState("");
+  const [countdown, setCountdown] = useState(null);
 
+  // Parse and normalize the cart data
   useEffect(() => {
     if (cartParam) {
       try {
@@ -57,6 +58,8 @@ export default function Cart() {
           setCart([]);
         }
       } catch (error) {
+        console.error("Failed to parse cart data:", error);
+        setCart([]);
         console.error("Failed to parse cart data", error)
         setCart([]);
       }
@@ -129,7 +132,24 @@ export default function Cart() {
     );
   };
 
-  // Update the quantity of an item
+    // Fetch reservations and bookings from backend
+    fetch("http://localhost:5000/reservations")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Fetched reservations:", data) // Debugging
+        setReservations(data)
+      })
+      .catch((error) => console.error("Error fetching reservations:", error))
+
+    fetch("http://localhost:5000/orders")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Fetched bookings (raw):", data) // Debugging
+        setConfirmedBookings(data) // Use the raw data directly
+      })
+      .catch((error) => console.error("Error fetching bookings:", error))
+  }, [cartParam])
+
   const updateItemQuantity = (id, newQuantity) => {
     const updatedCart = cart.map((outlet) => ({
       ...outlet,
@@ -157,7 +177,6 @@ export default function Cart() {
     }
   };
 
-  // Decrease item quantity by 1 (if above 1)
   const handleDecrement = (id) => {
     const item = cart.flatMap((outlet) => outlet.items).find((item) => item.food_id === id);
     if (item && item.quantity > 1) {
@@ -166,7 +185,6 @@ export default function Cart() {
   };
 
 
-  // Remove the item from the cart
   const handleDelete = (id) => {
     const updatedCart = cart.map((outlet) => ({
       ...outlet,
@@ -188,12 +206,13 @@ export default function Cart() {
 
   // Determine the table's status based on the selected date/time
   const getTableStatus = (table) => {
-    if (!selectedDateTime) return "N/A"
+    if (!selectedDateTime) return "N/A";
     const isBooked = confirmedBookings.some(
-      (booking) => booking.tableId === table.id && booking.datetime === selectedDateTime,
-    )
-    return isBooked ? "booked" : "available"
-  }
+      (booking) =>
+        booking.tableId === table.id && booking.datetime === selectedDateTime
+    );
+    return isBooked ? "booked" : "available";
+  };
 
   // Send the order data to the Flask API endpoint and redirect customer
   const handleSubmit = async () => {
@@ -272,7 +291,7 @@ export default function Cart() {
       setOrderStatus("Error placing order. Please try again.");
     }
   };
-  
+
   return (
     <div className="min-h-screen bg-[#ff575a] flex flex-col items-center p-4">
       <div className="w-full max-w-screen-lg bg-white rounded-2xl shadow-xl p-6 border border-[#ff575a]/10">
@@ -294,12 +313,14 @@ export default function Cart() {
             <div className="space-y-4">
               {Array.isArray(cart) && cart.map((item) => (
                 <div
-                  key={item.id}
+                  key={item.id} // Add key prop
                   className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 border rounded-xl bg-white shadow-sm transition transform hover:shadow-md hover:border-[#ff575a]/30"
                 >
                   <div className="w-full">
-                    <p className="text-[#ff575a] font-semibold text-lg">{item.name}</p>
-                    <div className="flex items-center mt-2 space-x-2">
+                    <p className="text-blue-700 font-semibold text-lg">
+                      {item.name}
+                    </p>
+                    <div className="flex items-center mt-1 space-x-2">
                       <button
                         onClick={() => handleDecrement(item.id)}
                         className="bg-[#ffeeee] text-[#ff575a] p-2 rounded-full hover:bg-[#ff575a]/10 transition-colors"
@@ -335,16 +356,16 @@ export default function Cart() {
             </div>
 
             {/* Order Summary Card */}
-            <div className="mt-8">
-              <div className="bg-[#ffeeee] border border-[#ff575a]/20 p-5 rounded-xl shadow-sm">
-                <h3 className="text-xl font-bold text-[#ff575a] mb-3 flex items-center">
-                  <ShoppingCart className="h-5 w-5 mr-2" /> Order Summary
+            <div className="mt-6">
+              <div className="bg-green-50 border border-green-300 p-4 rounded-lg shadow">
+                <h3 className="text-xl font-bold text-green-700 mb-2">
+                  Order Summary
                 </h3>
                 <ul className="space-y-2 text-gray-700">
                   {Array.isArray(cart) && cart.map((item) => (
                     <li key={item.id} className="flex justify-between">
                       <span>
-                        {item.name} {item.quantity > 1 ? ` x${item.quantity}` : ""}
+                        {item.name} {item.quantity > 1 ? `x${item.quantity}` : ""}
                       </span>
                       <span className="font-medium">Ksh {item.quantity * item.price}</span>
                     </li>
@@ -364,7 +385,6 @@ export default function Cart() {
               </div>
             </div>
 
-            {/* Client Presence Selection */}
             <div className="mt-8 p-5 border border-[#ff575a]/20 rounded-xl bg-white">
               <label className="block text-gray-700 font-semibold mb-3 flex items-center">
                 <MapPin className="h-5 w-5 mr-2 text-[#ff575a]" />
@@ -378,10 +398,10 @@ export default function Cart() {
                     value="yes"
                     checked={isClientPresent === true}
                     onChange={() => {
-                      setIsClientPresent(true)
+                      setIsClientPresent(true);
                       // Auto set current date & time for immediate booking
-                      const now = new Date().toISOString().slice(0, 16)
-                      setSelectedDateTime(now)
+                      const now = new Date().toISOString().slice(0, 16);
+                      setSelectedDateTime(now);
                     }}
                     className="mr-2 accent-[#ff575a]"
                   />
@@ -394,8 +414,8 @@ export default function Cart() {
                     value="no"
                     checked={isClientPresent === false}
                     onChange={() => {
-                      setIsClientPresent(false)
-                      setSelectedDateTime("") // Allow selection for future booking
+                      setIsClientPresent(false);
+                      setSelectedDateTime(""); // Allow selection for future booking
                     }}
                     className="mr-2 accent-[#ff575a]"
                   />
@@ -415,16 +435,15 @@ export default function Cart() {
                   type="datetime-local"
                   value={selectedDateTime}
                   onChange={(e) => {
-                    setSelectedDateTime(e.target.value)
+                    setSelectedDateTime(e.target.value);
                     // Reset table selection when datetime changes
-                    setSelectedTable(null)
+                    setSelectedTable(null);
                   }}
                   className="w-full p-3 border border-[#ff575a]/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff575a] bg-[#ffeeee] text-gray-800"
                 />
               </div>
             )}
 
-            {/* If client is present, display the auto-set date and time */}
             {isClientPresent === true && (
               <div className="mt-6 p-4 bg-[#ffeeee] rounded-lg border border-[#ff575a]/20">
                 <p className="text-gray-700 font-medium flex items-center">
@@ -435,9 +454,8 @@ export default function Cart() {
             )}
 
             {/* Dropdown for booking a table */}
-            <div className="mt-6 p-5 border border-[#ff575a]/20 rounded-xl bg-white">
-              <label className="block text-gray-700 font-semibold mb-3 flex items-center">
-                <MapPin className="h-5 w-5 mr-2 text-[#ff575a]" />
+            <div className="mt-6">
+              <label className="block text-gray-700 font-semibold mb-2">
                 Book a Table:
               </label>
               <select
@@ -446,17 +464,24 @@ export default function Cart() {
                 disabled={!selectedDateTime}
                 className="w-full p-3 border border-[#ff575a]/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#ff575a] bg-[#ffeeee] text-gray-800 disabled:opacity-60"
               >
-                <option value="">{selectedDateTime ? "Select a table" : "Select date & time first"}</option>
+                <option value="">
+                  {selectedDateTime
+                    ? "Select a table"
+                    : "Select date & time first"}
+                </option>
                 {tables.map((table) => {
-                  const status = getTableStatus(table)
+                  const status = getTableStatus(table);
                   return (
                     <option
-                      key={table.id}
-                      value={table.id}
+                      key={reservation.id} 
+                      value={reservation.id} 
                       disabled={status !== "available"}
-                      className={status === "available" ? "text-green-600" : "text-red-500"}
+                      style={{
+                        color: status === "available" ? "green" : "red",
+                      }}
                     >
-                      {table.name} - {status.charAt(0).toUpperCase() + status.slice(1)}
+                      {table.name} -{" "}
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
                     </option>
                   )
                 })}
@@ -465,20 +490,27 @@ export default function Cart() {
 
             {/* Notification Message */}
             {orderStatus && (
-              <div className="mt-6 p-4 bg-[#ffeeee] border border-[#ff575a]/30 text-gray-700 rounded-lg">
+              <div className="mt-4 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded">
                 {orderStatus}
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row justify-between items-center mt-8">
-              <p className="text-[#ff575a] font-bold text-xl mb-4 sm:mb-0">
-                Total: Ksh {cart.reduce((total, item) => total + item.quantity * item.price, 0).toFixed(2)}
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-6">
+              <p className="text-blue-700 font-semibold text-xl mb-4 sm:mb-0">
+                Total: Ksh{" "}
+                {cart
+                  .reduce(
+                    (total, item) => total + item.quantity * item.price,
+                    0
+                  )
+                  .toFixed(2)}
               </p>
               <button
                 onClick={handleSubmit}
                 disabled={!selectedDateTime || !selectedTable}
-                className={`bg-[#ff575a] hover:bg-[#ff575a]/90 transition text-white px-8 py-3 rounded-xl font-medium shadow-md ${
-                  (!selectedDateTime || !selectedTable) && "opacity-50 cursor-not-allowed"
+                className={`bg-red-500 hover:bg-red-600 transition text-white px-6 py-2 rounded-md ${
+                  (!selectedDateTime || !selectedTable) &&
+                  "opacity-50 cursor-not-allowed"
                 }`}
               >
                 Place Order
@@ -490,4 +522,3 @@ export default function Cart() {
     </div>
   )
 }
-

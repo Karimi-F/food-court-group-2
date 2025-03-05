@@ -14,6 +14,7 @@ export default function OutletMenu() {
   const router = useRouter();
   const { outletId } = useParams();
   const [foods, setFoods] = useState([]);
+  const [orders, setOrders] = useState([]); // State for orders
   const [editingFood, setEditingFood] = useState(null);
   const [isAddingFood, setIsAddingFood] = useState(false);
   const [newFood, setNewFood] = useState({
@@ -71,6 +72,52 @@ export default function OutletMenu() {
 
     fetchOutlet();
   }, [outletId]);
+
+  // Fetch orders for this outlet
+  useEffect(() => {
+    if (!outletId) return;
+
+    const fetchOrders = async () => {
+      try {
+        // Update this URL to your orders endpoint and pass outletId as needed.
+        const res = await fetch(`/api/orders?outletId=${outletId}`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setOrders(data);
+        }
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+    };
+
+    fetchOrders();
+
+    // Optionally poll the orders endpoint every few seconds:
+    const interval = setInterval(fetchOrders, 5000);
+    return () => clearInterval(interval);
+  }, [outletId]);
+
+  // Function to update order status (e.g., Confirm, Serve, Complete)
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setOrders((prevOrders) =>
+          prevOrders.map((order) =>
+            order.id === orderId ? { ...order, status: newStatus } : order
+          )
+        );
+      } else {
+        console.error("Failed to update order status");
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+    }
+  };
 
   // Handle deleting a food item
   const handleDelete = async (foodId) => {
@@ -145,9 +192,9 @@ export default function OutletMenu() {
           onClick={() => router.push("/owner-dashboard")}
           className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white text-[#ff575a] px-4 py-2 rounded-xl"
         >
-          ← Back to Outlets
+          &#8592; Back to Outlets
         </button>
-        {outletName ? `${outletName}'s Menu` : "Loading..."}
+        {outletName ? `${outletName}'s Menu & Orders` : "Loading..."}
       </header>
 
       <div className="max-w-4xl mx-auto mt-6 bg-[#ffeeee] p-6 shadow-md rounded-xl">
