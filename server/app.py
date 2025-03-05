@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, session, make_response
 from flask_migrate import Migrate
 from flask_restful import Api, Resource, reqparse
 from flask_cors import CORS
-from models import db, Owner, Customer, Outlet, Food, Order, TableReservation
+from models import db, Owner, Customer, Outlet, Food, Order, TableReservation, OrderItem
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
@@ -10,7 +10,7 @@ import json
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://food_court_user:098765@localhost:5432/food_court_db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://karimi:123456@localhost:5432/food_court_db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
 app.config["SECRET_KEY"] = "your_secret_key"          # Add a secure secret key
@@ -73,11 +73,11 @@ class BaseSignup(Resource):
 
 class CustomerSignup(BaseSignup):
     model = Customer
-    redirect_url = "/customerdashboard"
+    redirect_url = "/customer-dashboard"
 
 class OwnerSignup(BaseSignup):
     model = Owner
-    redirect_url = "/ownerdashboard"  # Redirect to Owner Dashboard
+    redirect_url = "/owner-dashboard"  # Redirect to Owner Dashboard
 
 class OwnerResource(Resource):
     def get(self, id=None):
@@ -212,6 +212,7 @@ class OutletResource(Resource):
     def post(self):
         data = request.get_json()
         name = data.get('name')
+        description = data.get('description')
         owner_id = data.get('owner_id')
         photo_url = data.get('photo_url')
         if not name or not owner_id:
@@ -220,11 +221,35 @@ class OutletResource(Resource):
         if Outlet.query.filter_by(name=name).first():
             return {"error": "Outlet with this name already exists"}, 409
 
-        new_outlet = Outlet(name=name, owner_id=owner_id, photo_url=photo_url)
+        new_outlet = Outlet(name=name, owner_id=owner_id, photo_url=photo_url, description=description)
         db.session.add(new_outlet)
         db.session.commit()
 
         return new_outlet.to_dict(), 201
+
+
+    def patch(self, id):
+        outlet = Outlet.query.get(id)
+        if not outlet:
+            return {"error": "Outlet not found"}, 404
+
+        data = request.get_json()
+        
+        # Update only the fields that are provided
+        if 'name' in data:
+            if Outlet.query.filter(Outlet.name == data['name']).first():
+                return {"error": "Outlet with this name already exists"}, 409
+            outlet.name = data['name']
+        
+        if 'description' in data:
+            outlet.description = data['description']
+        
+        if 'photo_url' in data:
+            outlet.photo_url = data['photo_url']
+        
+        db.session.commit()
+
+        return outlet.to_dict(), 200    
 
 # -------------------------------
 # Food Endpoints (Collection)
@@ -536,36 +561,123 @@ class FoodByPriceResource(Resource):
 class OrdersResource(Resource):
     def post(self):
         data = request.get_json()
-        if not data:
-            return {"error": "No input data provided"}, 400
 
+        customer_id = data.get('customer_id')
+        tablereservation_id = data.get('tablereservation_id')
+        datetime_str = data.get('datetime')
+        items_data = data.get('items')
+
+        # Parse datetime string into a Python datetime object
         try:
-            table_id = data.get('tableId')
-            datetime_str = data.get('datetime')
-            total = data.get('total')
-            customer_id = data.get('customer_id', None)
+            order_datetime = datetime.fromisoformat(datetime_str)
+        except ValueError:
+            return jsonify({"error": "Invalid datetime format"}), 400
 
-            if not customer_id:
-                return {"error":"customer_id is required"}, 400
+        # Fetch customer and reservation (ensure they exist)
+        customer = Customer.query.get(customer_id)
+        if not customer:
+            return jsonify({"error": "Customer not found"}), 404
 
-            # Convert the datetime string into a datetime object.
-            order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
+        table_reservation = TableReservation.query.get(tablereservation_id)
+        if not table_reservation:
+            return jsonify({"error": "Table reservation not found"}), 404
 
-            new_order = Order(
-                customer_id=customer_id,
-                tablereservation_id=table_id,
-                datetime=order_datetime,
-                total=total,
-                status="pending"
-            )
+        # Create new order
+        total = 0.0
+        order = Order(
+            customer_id=customer_id,
+            tablereservation_id=tablereservation_id,
+            datetime=order_datetime,
+            total=total,  # We'll update this later
+            status="pending"
+        )
 
-            db.session.add(new_order)
-            db.session.commit()
-            return new_order.to_dict(), 201
+        for outlet_group in items_data:
+            outlet_id = outlet_group.get('outlet_id')
+            outlet = Outlet.query.get(outlet_id)
+            if not outlet:
+                return jsonify({"error": f"Outlet with ID {outlet_id} not found"}), 404
+            
+            for food_data in outlet_group.get('items', []):
+                food_id = food_data.get('food_id')
+                quantity = food_data.get('quantity')
+                price = food_data.get('price')
 
-        except Exception as e:
-            db.session.rollback()
-            return {"error": str(e)}, 500
+                food = Food.query.get(food_id)
+                if not food:
+                    return jsonify({"error": f"Item with ID {food_id} not found"}), 404
+                
+                if price is None:
+                    return jsonify({"error": f"Price for food item {food_id} is missing or invalid"}), 400
+                if quantity is None:
+                    return jsonify({"error": f"Quantity for food item {food_id} is missing or invalid"}), 400
+        
+                try:
+                    price = float(price)  # Ensure price is a float
+                except ValueError:
+                     return jsonify({"error": f"Price for food item {food_id} is not a valid number"}), 400
+
+                if not isinstance(quantity, int):
+                    return jsonify({"error": f"Quantity for food item {food_id} should be an integer"}), 400
+
+
+                # Calculate total price
+                total_price = price * quantity
+
+                total += total_price
+
+                # Create order items
+                order_item = OrderItem(
+                    order=order,
+                    food_id=food_id,
+                    outlet_id=outlet_id,
+                    quantity=quantity,
+                    total_price=total_price,
+                    tablereservation_id=tablereservation_id
+                )
+                db.session.add(order_item)
+
+        # Update the total price for the order
+        order.total = total
+        db.session.add(order)
+        db.session.commit()
+
+        order_dict = order.to_dict()
+        print(order_dict)
+
+        return jsonify(order_dict), 201
+    # def post(self):
+    #     data = request.get_json()
+    #     if not data:
+    #         return {"error": "No input data provided"}, 400
+
+    #     try:
+    #         table_id = data.get('tableId')
+    #         datetime_str = data.get('datetime')
+    #         total = data.get('total')
+    #         customer_id = data.get('customer_id', None)
+
+    #         if not customer_id:
+    #             return {"error":"customer_id is required"}, 400
+
+    #         # Convert the datetime string into a datetime object.
+    #         order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
+
+    #         new_order = Order(
+    #             customer_id=customer_id,
+    #             tablereservation_id=table_id,
+    #             datetime=order_datetime,
+    #             total=total,
+    #             status="pending"
+    #         )
+
+    #         db.session.add(new_order)
+    #         db.session.commit()
+    #         return new_order.to_dict(), 201
+
+    #     except Exception as e:
+    #         db.session.rollback()
+    #         return {"error": str(e)}, 500
 
     def get(self, id=None):
         if id:
@@ -619,9 +731,170 @@ class OwnerOutletResource(Resource):
 
         return jsonify([outlet.to_dict() for outlet in outlets])
 
+def calculate_total(order_items):
+    return sum(item["total_price"] for order in order_items for item in order['items'])
+
+class PlaceOrder(Resource):
+    def post(self):
+        data = request.get_json()
+        customer_id = data.get('customer_id')
+        tablereservation_id = data.get('tablereservation_id')
+        orders = data.get('orders', [])
+        order_datetime = data.get('order_datetime')
+
+        if not customer_id:
+            return {"error": "Missing required customer_id"}, 400
+        if not tablereservation_id:
+            return {"error": "Missing required tablereservation_id"}, 400
+        if not orders:
+            return {"error": "Missing required orders"}, 400
+
+        for order_data in orders:
+            if 'outlet_id' not in order_data or not order_data['items']:
+                return {"error": "Missing outlet_id or items in order data"}, 400
+            for item in order_data['items']:
+                if 'food_id' not in item :
+                    return {"error": "Missing food_id in order"}, 400
+                if 'quantity' not in item :
+                    return {"error": "Missing quantity in order"}, 400
+                if 'total_price' not in item:
+                    return {"error": "Missing total_price in order"}, 400
 
 
+        try:
+            if not order_datetime:
+                raise ValueError("Missing order datetime.")
 
+            # Parse datetime string into a datetime object
+            order_datetime_obj = datetime.strptime(order_datetime, '%Y-%m-%dT%H:%M:%S')
+
+            new_order = Order(
+                customer_id=customer_id,
+                tablereservation_id=tablereservation_id,
+                datetime=order_datetime_obj,
+                total=calculate_total(orders),
+                status='pending'
+            )
+            db.session.add(new_order)
+            db.session.flush()
+
+            for order_data in orders:
+                for item in order_data['items']:
+                    new_item = OrderItem(
+                        order_id=new_order.id,
+                        outlet_id=order_data['outlet_id'],
+                        food_id=item['food_id'],
+                        quantity=item['quantity'],
+                        total_price=item['total_price'],
+                        tablereservation_id=new_order.tablereservation_id
+                    )
+                    db.session.add(new_item)
+
+            db.session.commit()
+
+            order_items = OrderItem.query.filter_by(order_id=new_order.id).all()
+
+            return {
+                'message':"Order placed successfully!",
+                'items': [
+                    {"food_id": item.food_id, "quantity": item.quantity, "total_price": item.total_price}
+                    for item in order_items
+                ]
+                }, 201
+
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error placing order:v{str(e)}")
+            return{"error":"Error placing order.", "details":str(e)}, 400        
+
+class CustomerOrders(Resource):
+    def get(self, customer_id):
+        # Fetch the customer by ID
+        customer = Customer.query.get(customer_id)
+        
+        # If the customer does not exist, return a 404 error
+        if not customer:
+            return {"error": "Customer not found"}, 404
+
+        # Fetch all orders associated with the customer
+        orders = Order.query.filter_by(customer_id=customer_id).all()
+
+        # If no orders are found, return a message indicating so
+        if not orders:
+            return {"message": "No orders found for this customer"}, 404
+
+        # Serialize the orders into a list of dictionaries
+        orders_data = []
+        for order in orders:
+            order_data = {
+                "id": order.id,
+                "customer_id": order.customer_id,
+                "tablereservation_id": order.tablereservation_id,
+                "datetime": order.datetime.strftime('%Y-%m-%dT%H:%M:%S'),
+                "total": order.total,
+                "status": order.status
+            }
+            orders_data.append(order_data)
+
+        # Return the orders data as JSON
+        return jsonify(orders_data)
+
+class AddToCart(Resource):
+    def post(self):
+        item = request.get_json()
+        food_id = item.get('food_id')
+        quantity = item.get('quantity')
+
+        # Initialize cart if it doesn't exist
+        if 'cart' not in session:
+            session['cart'] = []
+
+        # Check if the item already exists in the cart
+        item_exists = False
+        for cart_item in session['cart']:
+            if cart_item['food_id'] == food_id:
+                cart_item['quantity'] += quantity  # Update quantity
+                item_exists = True
+                break
+
+        if not item_exists:
+            session['cart'].append({'food_id': food_id, 'quantity': quantity})
+
+        session.modified = True  # Mark session as modified
+
+        # Set session variable for the toast notification
+        session['toast_message'] = 'Item added to cart successfully!'
+
+        return jsonify({'message': 'Item added to cart successfully!'})
+
+
+class ViewCart(Resource):
+    def get(self):
+        # Return the cart stored in the session
+        return jsonify(session.get('cart', []))
+
+
+class CheckToast(Resource):
+    def get(self):
+        # Check if toast notification should be shown
+        toast_message = session.get('toast_message', None)
+        # Clear the session variable after showing the toast message
+        session.pop('toast_message', None)
+        return jsonify({'toast_message': toast_message}) 
+    
+class TableReservationResource(Resource):
+    def post(self):
+        data = request.get_json()
+        table_name = data.get('table_name')
+            
+        if not table_name:
+            return {"error": "Table name is required"}, 400
+
+        new_reservation = TableReservation(table_name=table_name)
+        db.session.add(new_reservation)
+        db.session.commit()
+
+        return new_reservation.to_dict(), 201             
 
 # Register resources with the API
 api.add_resource(FoodsResource, "/foods")
@@ -632,11 +905,16 @@ api.add_resource(FoodByIDResource, "/api/food/id/<int:food_id>")
 api.add_resource(OutletResource, '/outlets', '/outlets/<int:id>')
 api.add_resource(OwnerResource, "/owners", "/owners/<int:id>")  
 api.add_resource(CustomerResource, "/customers", "/customers/<int:id>")  
+api.add_resource(CustomerOrders, '/customers/<int:customer_id>/orders')
 api.add_resource(Login, "/login")
 api.add_resource(Logout, "/logout")
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 api.add_resource(OwnerOutletResource, "/owner/<int:owner_id>/outlets")
-
+api.add_resource(PlaceOrder, '/place-order')
+api.add_resource(AddToCart, '/add-to-cart')
+api.add_resource(ViewCart, '/view-cart')
+api.add_resource(CheckToast, '/check-toast')
+api.add_resource(TableReservationResource, '/reservations')
 
 
 # api.add_resource(OutletResource, "/api/outlets", "/api/outlets/<int:id>")

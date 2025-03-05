@@ -129,6 +129,7 @@ export default function OwnerDashboard() {
               />
               <h2 className="text-[#ff575a] font-semibold mt-2">{outlet.name}</h2>
               <p className="text-gray-500">{outlet.owner?.name}</p>
+              <p className="text-gray-500">{outlet.description}</p>
 
               {/* View Menu Button */}
               <button

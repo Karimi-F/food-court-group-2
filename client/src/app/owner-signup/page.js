@@ -3,17 +3,18 @@
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { createOwner } from "../lib/utils"
 
 // Utility function
-const createOwner = async (fullName, email, password) => {
-  // Replace with your actual owner creation logic
-  console.log("Creating owner:", fullName, email, password)
-  return Promise.resolve()
-}
+// const createOwner = async (name, email, password) => {
+//   // Replace with your actual owner creation logic
+//   console.log("Creating owner:", name, email, password)
+//   return Promise.resolve()
+// }
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
-    fullName: "",
+    name: "",
     email: "",
     password1: "",
     password2: "",
@@ -33,7 +34,7 @@ export default function SignupPage() {
   const validateForm = () => {
     const newErrors = {}
 
-    if (!formData.fullName.trim()) newErrors.fullName = "Full name is required"
+    if (!formData.name.trim()) newErrors.name = "Full name is required"
 
     if (!formData.email.trim()) newErrors.email = "Email is required"
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email address"
@@ -53,15 +54,15 @@ export default function SignupPage() {
     e.preventDefault()
     if (validateForm()) {
       try {
-        await createOwner(formData.fullName, formData.email, formData.password1)
+        await createOwner(formData.name, formData.email, formData.password1)
         setSuccessMessage("Outlet Owner Signup successful! 🎉")
 
-        setTimeout(async() => {
+        setTimeout(async() =>{
           const signInResult = await signIn("credentials", {
           redirect: false,
           email: formData.email,
           password: formData.password1,
-        });
+        })
 
         if (signInResult?.ok) {
           router.push("/owner-dashboard");
@@ -97,12 +98,12 @@ export default function SignupPage() {
             <label className="block text-[#FC555B] font-medium">Full Name</label>
             <input
               type="text"
-              name="fullName"
-              value={formData.fullName}
+              name="name"
+              value={formData.name}
               onChange={handleChange}
               className="w-full text-gray-800 px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-[#FC555B] focus:outline-none"
             />
-            {errors.fullName && <p className="text-red-500 text-sm">{errors.fullName}</p>}
+            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
           </div>
 
           {/* Email */}

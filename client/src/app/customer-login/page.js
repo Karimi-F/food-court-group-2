@@ -35,25 +35,20 @@ export default function Login() {
     e.preventDefault()
     setErrors({})
     setSuccessMessage("")
-  
+
     if (validateForm()) {
       const signInResult = await signIn("credentials", {
         redirect: false,
         email: formData.email,
         password: formData.password,
       })
-  
       if (signInResult.error) {
-        setErrors({ form: "Invalid email or password. Please try again." })
+        setErrors(signInResult.error)
       } else {
-        setSuccessMessage("Login successfull! Redirecting...")
-        setTimeout(()=>{
-          router.push("/customer-dashboard")
-        },2000)
+        router.push("/customer-dashboard")
       }
     }
   }
-  
 
   return (
     <div className="relative flex justify-center items-center min-h-screen">
@@ -67,6 +62,8 @@ export default function Login() {
           priority
         />
         <div className="absolute inset-0 bg-black/40"></div>
+        <div className="absolute inset-0 bg-[#ff575a]/20"></div>
+
       </div>
 
       {/* Login Form */}
@@ -74,7 +71,6 @@ export default function Login() {
         <h2 className="text-2xl font-bold text-center text-[#FC555B] mb-6">Customer Login</h2>
 
         {successMessage && <p className="text-green-600 text-center">{successMessage}</p>}
-        {errors.form && <p className="text-[#FC555B] text-sm text-center mb-4">{errors.form}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email */}

@@ -102,12 +102,12 @@ export default function HomePage() {
                   <div className="absolute inset-0 bg-[#ff575a] rounded-lg -rotate-3 opacity-20"></div>
                   <span className="relative z-10 flex items-center justify-center h-full text-[#ff575a]">B</span>
                 </div>
-                <a href="/">BiteScape</a>
+                BiteScape
               </motion.div>
             </Link>
 
             <nav className="hidden md:flex items-center gap-8">
-              {["Home", "About", "Contact us"].map((item, index) => (
+              {["Home", "About", "Contact us", "My orders"].map((item, index) => (
                 <motion.div
                   key={item}
                   initial={{ opacity: 0, y: -10 }}
@@ -421,7 +421,7 @@ export default function HomePage() {
             >
               <div className="relative h-[600px]">
                 <Image
-                  src="/images/pizza.webp"
+                  src="/placeholder.svg?height=600&width=300"
                   alt="BiteScape App"
                   layout="fill"
                   objectFit="contain"
@@ -429,7 +429,7 @@ export default function HomePage() {
                 />
               </div>
               {/* Floating Elements */}
-              {/* <div className="absolute top-1/4 -left-8 bg-white p-4 rounded-2xl shadow-xl">
+              <div className="absolute top-1/4 -left-8 bg-white p-4 rounded-2xl shadow-xl">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gray-100 rounded-full"></div>
                   <div>
@@ -446,7 +446,7 @@ export default function HomePage() {
                     <div className="h-3 w-16 bg-gray-100 rounded mt-2"></div>
                   </div>
                 </div>
-              </div> */}
+              </div>
             </motion.div>
           </div>
         </div>
