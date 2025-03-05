@@ -4,6 +4,8 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Minus, Plus, Trash2, ShoppingCart, Calendar, MapPin } from "lucide-react"
+import { toast, ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function Cart() {
   const { data: session, status } = useSession()
@@ -11,6 +13,8 @@ export default function Cart() {
   const router = useRouter() // For redirection
   const cartParam = searchParams.get("data")
   const [cart, setCart] = useState([])
+  const [orderItems, setOrderItems] = useState([]);
+
 
   // New state for checking if the client is present at the restaurant
   const [isClientPresent, setIsClientPresent] = useState(true);
@@ -27,6 +31,17 @@ export default function Cart() {
     { id: 2, name: "Table 2" },
     { id: 3, name: "Table 3" },
     { id: 4, name: "Table 4" },
+    { id: 5, name: "Table 5" },
+    { id: 6, name: "Table 6" },
+    { id: 7, name: "Table 7" },
+    { id: 8, name: "Table 8" },
+    { id: 9, name: "Table 9" },
+    { id: 10, name: "Table 10" },
+    { id: 11, name: "Table 11" },
+    { id: 12, name: "Table 12" },
+    { id: 13, name: "Table 13" },
+    { id: 14, name: "Table 14" },
+    { id: 15, name: "Table 15" },
   ])
 
   const [selectedTable, setSelectedTable] = useState(null)
@@ -35,18 +50,57 @@ export default function Cart() {
   useEffect(() => {
     if (cartParam) {
       try {
-        const parsedCart = JSON.parse(decodeURIComponent(cartParam))
-        setCart(parsedCart)
+        const parsedCart = JSON.parse(decodeURIComponent(cartParam));
+        if (Array.isArray(parsedCart)){
+          setCart(parsedCart);
+        } else{
+          setCart([]);
+        }
       } catch (error) {
         console.error("Failed to parse cart data", error)
+        setCart([]);
       }
+    } else {
+      setCart([]);
     }
-  }, [cartParam])
+  }, [cartParam]);
+
+  // Add food item to the cart and trigger toast notification
+  const handleAddToCart = (item) => {
+    // Add item to cart state
+    setCart((prevCart) => [...prevCart, { ...item, quantity: 1 }]);
+
+    // Show toast notification
+    toast.success(
+      <>
+        <div>Added to cart!</div>
+        <button 
+          onClick={() => router.push('/cart')} 
+          style={{ marginTop: '10px', padding: '5px 10px', backgroundColor: '#007bff', color: '#fff', borderRadius: '4px', border: 'none' }}
+        >
+          Go to Cart
+        </button>
+      </>,
+      {
+        position: toast.POSITION.BOTTOM_RIGHT,
+        autoClose: 3000,  // Close after 3 seconds
+      }
+    );
+  };
 
   // Update the quantity of an item
   const updateItemQuantity = (id, newQuantity) => {
-    const updatedCart = cart.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item))
-    setCart(updatedCart)
+    const updatedCart = cart.map((item) => 
+      (item.id === id ? { ...item, quantity: newQuantity } : item))
+    setCart(updatedCart);
+
+    const updatedOrderItems = updatedCart.map((item) =>({
+      item_id: item.id,
+      quantity: item.quantity,
+      total_price: item.price * item.quantity,
+    }));
+  
+    setOrderItems(updatedOrderItems);
   }
 
   // Increase item quantity by 1
@@ -63,12 +117,20 @@ export default function Cart() {
     if (item && item.quantity > 1) {
       updateItemQuantity(id, item.quantity - 1)
     }
-  }
+  };
 
   // Remove the item from the cart
   const handleDelete = (id) => {
     const updatedCart = cart.filter((item) => item.id !== id)
     setCart(updatedCart)
+
+    const updatedOrderItems = updatedCart.map((item) =>({
+      item_id: item.id,
+      quantity: quantity,
+      total_price: item.price * item.quantity,
+    }))
+
+    setOrderItems(updatedOrderItems);
   }
 
   // Determine the table's status based on the selected date/time
@@ -81,44 +143,61 @@ export default function Cart() {
   }
 
   // Send the order data to the Flask API endpoint and redirect customer
-  const placeOrder = async () => {
+  const handleSubmit = async () => {
     if (!selectedDateTime) {
-      alert("Please select a date and time before placing your order.")
-      return
+      alert("Please select a date and time before placing your order.");
+      return;
     }
     if (!selectedTable) {
-      alert("Please select a table before placing your order.")
-      return
+      alert("Please select a table before placing your order.");
+      return;
     }
-
-    const customer_id = session?.user?.id
-
+  
+    const customer_id = session?.user?.id;
     if (!customer_id) {
-      alert("Please log in to place an order.")
+      alert("Please log in to place an order.");
+      return; // Ensure function stops here
     }
-
-    console.log("Customer ID: ", session?.user?.id)
-
-    setOrderStatus("Please wait as your order is being confirmed...")
-
+  
+    console.log("Customer ID: ", customer_id);
+  
+    setOrderStatus("Please wait as your order is being confirmed...");
+    console.log(cart)
+    // ✅ Convert cart to match the backend's expected format
+    const orders = cart.reduce((acc, item) => {
+      let outlet = acc.find((o) => o.outlet_id === item.outlet_id);
+      if (!outlet) {
+        outlet = { outlet_id: item.outlet_id, items: [] };
+        acc.push(outlet);
+      }
+      outlet.items.push({
+        food_id: item.id,
+        quantity: item.quantity,
+        total_price: item.quantity * item.price,
+      });
+      return acc;
+    }, []);
+  
     const orderData = {
-      customer_id: session?.user?.id,
-      cart,
-      tableId: selectedTable,
-      datetime: selectedDateTime,
-      total: cart.reduce((total, item) => total + item.quantity * item.price, 0),
-    }
-
+      customer_id: customer_id,
+      tablereservation_id: selectedTable,
+      order_datetime: selectedDateTime.length === 16 ? selectedDateTime + ":00" : selectedDateTime,
+      orders: orders, // ✅ Backend expects "orders" not "cart"
+    };
+  
+    console.log("Order Data:", JSON.stringify(orderData, null, 2)); // Debugging log
+  
     try {
-      const res = await fetch("http://localhost:5000/orders", {
+      const res = await fetch("http://localhost:5000/place-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
-      })
-      const result = await res.json()
+      });
+  
+      const result = await res.json();
       if (res.ok) {
-        setOrderStatus("Your order has been confirmed!")
-
+        setOrderStatus("Your order has been confirmed!");
+  
         // Save the order summary in localStorage to display on the dashboard
         localStorage.setItem(
           "recentOrder",
@@ -128,26 +207,97 @@ export default function Cart() {
               quantity: item.quantity,
             })),
             orderTime: selectedDateTime,
-          }),
-        )
-
+          })
+        );
+  
         // Redirect the customer to their dashboard after order confirmation
         setTimeout(() => {
-          router.push("/customer-dashboard")
-        }, 2000)
+          router.push("/customer-dashboard");
+        }, 2000);
       } else {
-        setOrderStatus(`Failed to place order: ${result.error}`)
+        setOrderStatus(`Failed to place order: ${result.error}`);
       }
     } catch (error) {
-      console.error("Error placing order:", error)
-      setOrderStatus("Error placing order. Please try again.")
+      console.error("Error placing order:", error);
+      setOrderStatus("Error placing order. Please try again.");
     }
-  }
+  };
+  
+
+  // const handleSubmit = async () => {
+  //   try {
+  //     if (!cart.length) {
+  //       setOrderStatus("Your cart is empty!");
+  //       return;
+  //     }
+      
+  //     const formattedDateTime = selectedDateTime ? new Date(selectedDateTime).toISOString() : null; // Format date-time as a string
+
+  //     const outletId = cart.length > 0 ? cart[0].outlet_id: null;
+  //     if (!outletId){
+  //       setOrderStatus("Outlet ID is missing. Please try again.");
+  //       return;
+  //     }
+
+  //     console.log("Cart contents:", cart);
+  //     console.log("Extracted outlet ID:", outletId);
+
+  //     const formattedOrderItems = cart.map((item) => ({
+  //         item_id: item.id,
+  //         quantity: item.quantity,
+  //         total_price: item.price * item.quantity,
+  //       }));  
+        
+  //     if (formattedOrderItems.length === 0){
+  //       setOrderStatus("Your cart is empty. Add items before placing an order.");
+  //       return;
+  //     }  
+        
+  //       const requestBody = {
+  //         customer_id: session?.user?.id,
+  //         tablereservation_id: selectedTable,
+  //         outlet_id: outletId, // Ensure outlet_id is included
+  //         orders: formattedOrderItems,
+  //         order_datetime: formattedDateTime,
+  //       };  
+
+  //     const response = await fetch("http://127.0.0.1:5000/place-order",{
+  //       method: "POST",
+  //       headers: {"Content-Type": "application/json"},
+  //       body: JSON.stringify(requestBody),
+  //     });
+
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(errorData.error || "Failed to place order.");
+  //     }
+
+  //     const responseData = await response.json();
+  //     console.log("Order placed successfully:", responseData);
+
+  //     setOrderStatus("Your order has been placed!");
+
+  //     localStorage.setItem(
+  //       "recentOrder",
+  //       JSON.stringify({
+  //         foodItems: formattedOrderItems,
+  //         orderTime: formattedDateTime,
+  //       })
+  //     );
+  //         setTimeout(() => {
+  //           router.push("/customer-dashboard");
+  //         }, 2000);
+  //       }catch(error){
+  //         console.error("Error placing order:", error.message);
+  //         setOrderStatus("Error placing order. Please try again.");
+  //       }
+  //     };
 
   return (
     <div className="min-h-screen bg-[#ff575a] flex flex-col items-center p-4">
       <div className="w-full max-w-screen-lg bg-white rounded-2xl shadow-xl p-6 border border-[#ff575a]/10">
         <div className="flex items-center justify-center mb-6">
+          <ToastContainer position="bottom-right" autoClose={5000} />
           <ShoppingCart className="text-[#ff575a] mr-3 h-8 w-8" />
           <h2 className="text-3xl sm:text-4xl text-[#ff575a] font-bold text-center">
             {session?.user?.name ? `${session.user.name}'s Cart` : "Your Cart"}
@@ -162,7 +312,7 @@ export default function Cart() {
         ) : (
           <>
             <div className="space-y-4">
-              {cart.map((item) => (
+              {Array.isArray(cart) && cart.map((item) => (
                 <div
                   key={item.id}
                   className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 border rounded-xl bg-white shadow-sm transition transform hover:shadow-md hover:border-[#ff575a]/30"
@@ -211,7 +361,7 @@ export default function Cart() {
                   <ShoppingCart className="h-5 w-5 mr-2" /> Order Summary
                 </h3>
                 <ul className="space-y-2 text-gray-700">
-                  {cart.map((item) => (
+                  {Array.isArray(cart) && cart.map((item) => (
                     <li key={item.id} className="flex justify-between">
                       <span>
                         {item.name} {item.quantity > 1 ? ` x${item.quantity}` : ""}
@@ -221,7 +371,8 @@ export default function Cart() {
                   ))}
                   <li className="border-t border-[#ff575a]/20 pt-2 mt-2 font-bold text-[#ff575a] flex justify-between">
                     <span>Total</span>
-                    <span>Ksh {cart.reduce((total, item) => total + item.quantity * item.price, 0).toFixed(2)}</span>
+                    <span>Ksh {""}
+                      {cart.reduce((total, item) => total + item.quantity * item.price, 0).toFixed(2)}</span>
                   </li>
                 </ul>
                 {selectedDateTime && (
@@ -344,7 +495,7 @@ export default function Cart() {
                 Total: Ksh {cart.reduce((total, item) => total + item.quantity * item.price, 0).toFixed(2)}
               </p>
               <button
-                onClick={placeOrder}
+                onClick={handleSubmit}
                 disabled={!selectedDateTime || !selectedTable}
                 className={`bg-[#ff575a] hover:bg-[#ff575a]/90 transition text-white px-8 py-3 rounded-xl font-medium shadow-md ${
                   (!selectedDateTime || !selectedTable) && "opacity-50 cursor-not-allowed"

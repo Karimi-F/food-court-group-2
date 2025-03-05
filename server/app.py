@@ -897,9 +897,9 @@ api.add_resource(Logout, "/logout")
 api.add_resource(OrdersResource, "/orders", "/orders/<int:id>")
 api.add_resource(OwnerOutletResource, "/owner/<int:owner_id>/outlets")
 api.add_resource(PlaceOrder, '/place-order')
-api.add_resource(AddToCart, '/add_to_cart')
-api.add_resource(ViewCart, '/view_cart')
-api.add_resource(CheckToast, '/check_toast')
+api.add_resource(AddToCart, '/add-to-cart')
+api.add_resource(ViewCart, '/view-cart')
+api.add_resource(CheckToast, '/check-toast')
 
 
 # api.add_resource(OutletResource, "/api/outlets", "/api/outlets/<int:id>")
