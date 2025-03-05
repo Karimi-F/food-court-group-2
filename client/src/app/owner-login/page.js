@@ -67,6 +67,8 @@ export default function Login() {
   priority
 />
       <div className="absolute inset-0 bg-black opacity-50"></div>
+      <div className="absolute inset-0 bg-[#ff575a]/20"></div>
+
       <div className="relative bg-white p-8 rounded-lg shadow-lg max-w-md w-full m-4">
         <h1 className="text-4xl font-bold text-[#ff575a] mb-2">Welcome Back!</h1>
         <p className="text-gray-500 mb-8">
