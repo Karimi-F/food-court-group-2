@@ -162,7 +162,7 @@ export default function Cart() {
     console.log("Customer ID: ", customer_id);
   
     setOrderStatus("Please wait as your order is being confirmed...");
-    console.log(cart)
+    console.log(cart);
     // ✅ Convert cart to match the backend's expected format
     const orders = cart.reduce((acc, item) => {
       let outlet = acc.find((o) => o.outlet_id === item.outlet_id);
