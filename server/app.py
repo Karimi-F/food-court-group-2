@@ -10,7 +10,7 @@ import json
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://karimi:123456@localhost:5432/food_court_db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://beren:123456@localhost:5432/food_court"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
 app.config["SECRET_KEY"] = "your_secret_key"          # Add a secure secret key
@@ -646,46 +646,26 @@ class OrdersResource(Resource):
         print(order_dict)
 
         return jsonify(order_dict), 201
-    # def post(self):
-    #     data = request.get_json()
-    #     if not data:
-    #         return {"error": "No input data provided"}, 400
-
-    #     try:
-    #         table_id = data.get('tableId')
-    #         datetime_str = data.get('datetime')
-    #         total = data.get('total')
-    #         customer_id = data.get('customer_id', None)
-
-    #         if not customer_id:
-    #             return {"error":"customer_id is required"}, 400
-
-    #         # Convert the datetime string into a datetime object.
-    #         order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
-
-    #         new_order = Order(
-    #             customer_id=customer_id,
-    #             tablereservation_id=table_id,
-    #             datetime=order_datetime,
-    #             total=total,
-    #             status="pending"
-    #         )
-
-    #         db.session.add(new_order)
-    #         db.session.commit()
-    #         return new_order.to_dict(), 201
-
-    #     except Exception as e:
-    #         db.session.rollback()
-    #         return {"error": str(e)}, 500
 
     def get(self, id=None):
+        # Get query parameters
+        outlet_id = request.args.get('outlet_id')
+
         if id:
+            # Fetch a single order by ID
             order = Order.query.get(id)
             if not order:
                 return {"error": "Order not found"}, 404
             return order.to_dict(), 200
-        orders = Order.query.all()
+
+        # Fetch all orders, optionally filtered by outlet_id
+        query = Order.query
+
+        if outlet_id:
+            # Filter orders by outlet_id using a join with OrderItem
+            query = query.join(OrderItem).filter(OrderItem.outlet_id == outlet_id)
+
+        orders = query.all()
         return [order.to_dict() for order in orders], 200
 
     def patch(self, id=None):
@@ -700,10 +680,14 @@ class OrdersResource(Resource):
         if not data:
             return {"error": "No update data provided"}, 400
 
+        # Update the order status if provided
         if "status" in data:
             order.status = data["status"]
 
+        # Commit changes to the database
         db.session.commit()
+
+        # Return the updated order
         return order.to_dict(), 200
 
     def delete(self, id=None):
@@ -717,7 +701,6 @@ class OrdersResource(Resource):
         db.session.delete(order)
         db.session.commit()
         return {"message": "Order deleted successfully"}, 200
-
 class OwnerOutletResource(Resource):
     def get(self, owner_id):  # Accept owner_id from URL
         owner = Owner.query.get(owner_id)
@@ -883,6 +866,12 @@ class CheckToast(Resource):
         return jsonify({'toast_message': toast_message}) 
     
 class TableReservationResource(Resource):
+
+    def get(self):
+        """Fetch all table reservations."""
+        reservations = TableReservation.query.all()
+        return jsonify([reservation.to_dict() for reservation in reservations])
+
     def post(self):
         data = request.get_json()
         table_name = data.get('table_name')
@@ -895,6 +884,21 @@ class TableReservationResource(Resource):
         db.session.commit()
 
         return new_reservation.to_dict(), 201             
+
+@app.route("/orders/<int:order_id>", methods=["PATCH"])
+def update_order(order_id):
+    data = request.get_json()
+    new_status = data.get("status")
+
+    # Find the order and update its status
+    order = Order.query.get(order_id)
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    order.status = new_status
+    db.session.commit()
+
+    return jsonify(order.to_dict()), 200  # Use to_dict() to serialize the order
 
 # Register resources with the API
 api.add_resource(FoodsResource, "/foods")

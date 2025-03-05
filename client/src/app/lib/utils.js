@@ -424,3 +424,56 @@ export async function fetchOutletDetails(outletId) {
   }
   return response.json();
 }
+
+
+
+// lib/utils.js
+
+export const fetchOrdersByOutlet = async (outletId) => {
+  try {
+    // Replace this with your actual API endpoint
+    const response = await fetch(`http://127.0.0.1:5000/orders?outletId=${outletId}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch orders");
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return [];
+  }
+};
+
+export const handleConfirmOrder = async (orderId, setSelectedOutletOrders) => {
+  console.log("Confirming order:", orderId); // Debugging
+  try {
+    // Call the backend API to update the order status
+    const response = await fetch(`http://127.0.0.1:5000/orders/${orderId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status: "confirmed" }), // Update the status to "confirmed"
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to confirm order");
+    }
+
+    // Parse the updated order data from the response
+    const updatedOrder = await response.json();
+    console.log("Updated order:", updatedOrder); // Debugging
+
+    // Update the local state to reflect the new status
+    setSelectedOutletOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.id === orderId ? { ...order, status: updatedOrder.status } : order
+      )
+    );
+
+    alert("Order confirmed successfully!");
+  } catch (error) {
+    console.error("Error confirming order:", error);
+    alert("Failed to confirm order. Please try again.");
+  }
+};
