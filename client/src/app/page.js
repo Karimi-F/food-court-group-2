@@ -2,6 +2,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
+import { Facebook, Youtube, Instagram } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 
@@ -143,9 +144,90 @@ export default function Home() {
         </div>
       </section>
 
+
+      {/* Decorative Border Between Story and Footer */}
+      <div className="relative">
+        {/* Wave Border */}
+        <div className="absolute left-0 right-0 h-24 overflow-hidden">
+          <svg
+            viewBox="0 0 1200 120"
+            preserveAspectRatio="none"
+            className="absolute bottom-0 w-full h-full transform rotate-180"
+            style={{ fill: "#111827" }} // matches footer bg-gray-900
+          >
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+          </svg>
+        </div>
+
+        {/* Food Icons Border */}
+        <div className="relative z-10 flex justify-center items-center py-8">
+          <div className="flex space-x-8 md:space-x-16 px-4 py-2 bg-white rounded-full shadow-lg transform -translate-y-1/2">
+            {["🍕", "🍔", "🍣", "🍜", "🍰"].map((emoji, index) => (
+              <div
+                key={index}
+                className="text-2xl md:text-3xl animate-bounce"
+                style={{ animationDelay: `${index * 0.2}s`, animationDuration: "1s" }}
+              >
+                {emoji}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Footer */}
-      <footer className="bg-gradient-to-r from-[#c84346] to-[#ff8a8c] text-white text-center py-8">
-        <p className="text-sm md:text-base">&copy; {new Date().getFullYear()} BiteScape. All Rights Reserved.</p>
+      <footer className="bg-gray-900 text-white py-20">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-4 gap-12">
+            <div>
+              <h3 className="text-2xl font-bold mb-6">BiteScape</h3>
+              <p className="text-gray-400">
+                Discover the best food from over 1,000 restaurants and fast delivery to your doorstep
+              </p>
+              <div className="flex gap-4 mt-6">
+                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Facebook className="w-6 h-6" />
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Youtube className="w-6 h-6" />
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Instagram className="w-6 h-6" />
+                </Link>
+              </div>
+            </div>
+            {[
+              {
+                title: "About",
+                links: ["Company", "Team", "Careers", "Blog"],
+              },
+              {
+                title: "Legal",
+                links: ["Terms & Conditions", "Privacy Policy", "Cookie Policy"],
+              },
+              {
+                title: "Contact",
+                links: ["Help Center", "Partner with us", "Ride with us"],
+              },
+            ].map((column, index) => (
+              <div key={index}>
+                <h3 className="text-lg font-semibold mb-6">{column.title}</h3>
+                <ul className="space-y-4">
+                  {column.links.map((link, linkIndex) => (
+                    <li key={linkIndex}>
+                      <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                        {link}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-gray-800 mt-16 pt-8 text-center text-gray-400">
+            <p>&copy; {new Date().getFullYear()} BiteScape. All rights reserved.</p>
+          </div>
+        </div>
       </footer>
     </main>
   )
