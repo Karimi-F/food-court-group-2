@@ -65,10 +65,51 @@ export default function Cart() {
     }
   }, [cartParam]);
 
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
+
   // Add food item to the cart and trigger toast notification
   const handleAddToCart = (item) => {
-    // Add item to cart state
-    setCart((prevCart) => [...prevCart, { ...item, quantity: 1 }]);
+    setCart((prevCart) => {
+      // Check if the outlet already exists in the cart
+      const existingOutletIndex = prevCart.findIndex((outlet) => outlet.outlet_id === item.outlet_id);
+      if (existingOutletIndex > -1) {
+        // Outlet exists, update the items for this outlet
+        const updatedCart = [...prevCart];
+        const outlet = updatedCart[existingOutletIndex];
+        const existingItemIndex = outlet.items.findIndex((i) => i.food_id === item.id);
+        
+        if (existingItemIndex > -1) {
+          // Item exists, update quantity
+          outlet.items[existingItemIndex].quantity += 1;
+        } else {
+          // New item for this outlet
+          outlet.items.push({
+            food_id: item.id,
+            quantity: 1,
+            total_price: item.price,
+          });
+        }
+
+        return updatedCart;
+      } else {
+        // New outlet, add it to the cart
+        return [
+          ...prevCart,
+          {
+            outlet_id: item.outlet_id,
+            items: [
+              {
+                food_id: item.id,
+                quantity: 1,
+                total_price: item.price,
+              },
+            ],
+          },
+        ];
+      }
+    });
 
     // Show toast notification
     toast.success(
@@ -90,48 +131,60 @@ export default function Cart() {
 
   // Update the quantity of an item
   const updateItemQuantity = (id, newQuantity) => {
-    const updatedCart = cart.map((item) => 
-      (item.id === id ? { ...item, quantity: newQuantity } : item))
+    const updatedCart = cart.map((outlet) => ({
+      ...outlet,
+      items: outlet.items.map((item) =>
+        item.food_id === id ? { ...item, quantity: newQuantity } : item
+      ),
+    }));
     setCart(updatedCart);
 
-    const updatedOrderItems = updatedCart.map((item) =>({
-      item_id: item.id,
-      quantity: item.quantity,
-      total_price: item.price * item.quantity,
-    }));
-  
+    const updatedOrderItems = updatedCart.flatMap((outlet) =>
+      outlet.items.map((item) => ({
+        item_id: item.food_id,
+        quantity: item.quantity,
+        total_price: item.price * item.quantity,
+      }))
+    );
+
     setOrderItems(updatedOrderItems);
-  }
+  };
 
-  // Increase item quantity by 1
   const handleIncrement = (id) => {
-    const item = cart.find((item) => item.id === id)
+    const item = cart.flatMap((outlet) => outlet.items).find((item) => item.food_id === id);
     if (item) {
-      updateItemQuantity(id, item.quantity + 1)
-    }
-  }
-
-  // Decrease item quantity by 1 (if above 1)
-  const handleDecrement = (id) => {
-    const item = cart.find((item) => item.id === id)
-    if (item && item.quantity > 1) {
-      updateItemQuantity(id, item.quantity - 1)
+      updateItemQuantity(id, item.quantity + 1);
     }
   };
 
+  // Decrease item quantity by 1 (if above 1)
+  const handleDecrement = (id) => {
+    const item = cart.flatMap((outlet) => outlet.items).find((item) => item.food_id === id);
+    if (item && item.quantity > 1) {
+      updateItemQuantity(id, item.quantity - 1);
+    }
+  };
+
+
   // Remove the item from the cart
   const handleDelete = (id) => {
-    const updatedCart = cart.filter((item) => item.id !== id)
-    setCart(updatedCart)
+    const updatedCart = cart.map((outlet) => ({
+      ...outlet,
+      items: outlet.items.filter((item) => item.food_id !== id),
+    })).filter((outlet) => outlet.items.length > 0);  // Remove outlet if it has no items
 
-    const updatedOrderItems = updatedCart.map((item) =>({
-      item_id: item.id,
-      quantity: quantity,
-      total_price: item.price * item.quantity,
-    }))
+    setCart(updatedCart);
+
+    const updatedOrderItems = updatedCart.flatMap((outlet) =>
+      outlet.items.map((item) => ({
+        item_id: item.food_id,
+        quantity: item.quantity,
+        total_price: item.price * item.quantity,
+      }))
+    );
 
     setOrderItems(updatedOrderItems);
-  }
+  };
 
   // Determine the table's status based on the selected date/time
   const getTableStatus = (table) => {
@@ -152,28 +205,28 @@ export default function Cart() {
       alert("Please select a table before placing your order.");
       return;
     }
-  
+
     const customer_id = session?.user?.id;
     if (!customer_id) {
       alert("Please log in to place an order.");
-      return; // Ensure function stops here
+      return;
     }
-  
-    console.log("Customer ID: ", customer_id);
-  
+
     setOrderStatus("Please wait as your order is being confirmed...");
     console.log(cart);
-    // ✅ Convert cart to match the backend's expected format
-    const orders = cart.reduce((acc, item) => {
-      let outlet = acc.find((o) => o.outlet_id === item.outlet_id);
-      if (!outlet) {
-        outlet = { outlet_id: item.outlet_id, items: [] };
-        acc.push(outlet);
-      }
-      outlet.items.push({
-        food_id: item.id,
-        quantity: item.quantity,
-        total_price: item.quantity * item.price,
+    // Convert cart to match the backend's expected format
+    const orders = cart.reduce((acc, outlet) => {
+      outlet.items.forEach((item) => {
+        let outletData = acc.find((o) => o.outlet_id === outlet.outlet_id);
+        if (!outletData) {
+          outletData = { outlet_id: outlet.outlet_id, items: [] };
+          acc.push(outletData);
+        }
+        outletData.items.push({
+          food_id: item.food_id,
+          quantity: item.quantity,
+          total_price: item.quantity * item.price,
+        });
       });
       return acc;
     }, []);
@@ -193,23 +246,20 @@ export default function Cart() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
       });
-  
+
       const result = await res.json();
       if (res.ok) {
         setOrderStatus("Your order has been confirmed!");
-  
+
         // Save the order summary in localStorage to display on the dashboard
-        localStorage.setItem(
-          "recentOrder",
-          JSON.stringify({
-            foodItems: cart.map((item) => ({
-              name: item.name,
-              quantity: item.quantity,
-            })),
-            orderTime: selectedDateTime,
-          })
-        );
-  
+        localStorage.setItem("recentOrder", JSON.stringify({
+          foodItems: cart.flatMap((outlet) => outlet.items.map((item) => ({
+            name: item.name,
+            quantity: item.quantity,
+          }))),
+          orderTime: selectedDateTime,
+        }));
+
         // Redirect the customer to their dashboard after order confirmation
         setTimeout(() => {
           router.push("/customer-dashboard");
@@ -223,76 +273,6 @@ export default function Cart() {
     }
   };
   
-
-  // const handleSubmit = async () => {
-  //   try {
-  //     if (!cart.length) {
-  //       setOrderStatus("Your cart is empty!");
-  //       return;
-  //     }
-      
-  //     const formattedDateTime = selectedDateTime ? new Date(selectedDateTime).toISOString() : null; // Format date-time as a string
-
-  //     const outletId = cart.length > 0 ? cart[0].outlet_id: null;
-  //     if (!outletId){
-  //       setOrderStatus("Outlet ID is missing. Please try again.");
-  //       return;
-  //     }
-
-  //     console.log("Cart contents:", cart);
-  //     console.log("Extracted outlet ID:", outletId);
-
-  //     const formattedOrderItems = cart.map((item) => ({
-  //         item_id: item.id,
-  //         quantity: item.quantity,
-  //         total_price: item.price * item.quantity,
-  //       }));  
-        
-  //     if (formattedOrderItems.length === 0){
-  //       setOrderStatus("Your cart is empty. Add items before placing an order.");
-  //       return;
-  //     }  
-        
-  //       const requestBody = {
-  //         customer_id: session?.user?.id,
-  //         tablereservation_id: selectedTable,
-  //         outlet_id: outletId, // Ensure outlet_id is included
-  //         orders: formattedOrderItems,
-  //         order_datetime: formattedDateTime,
-  //       };  
-
-  //     const response = await fetch("http://127.0.0.1:5000/place-order",{
-  //       method: "POST",
-  //       headers: {"Content-Type": "application/json"},
-  //       body: JSON.stringify(requestBody),
-  //     });
-
-  //     if (!response.ok) {
-  //       const errorData = await response.json();
-  //       throw new Error(errorData.error || "Failed to place order.");
-  //     }
-
-  //     const responseData = await response.json();
-  //     console.log("Order placed successfully:", responseData);
-
-  //     setOrderStatus("Your order has been placed!");
-
-  //     localStorage.setItem(
-  //       "recentOrder",
-  //       JSON.stringify({
-  //         foodItems: formattedOrderItems,
-  //         orderTime: formattedDateTime,
-  //       })
-  //     );
-  //         setTimeout(() => {
-  //           router.push("/customer-dashboard");
-  //         }, 2000);
-  //       }catch(error){
-  //         console.error("Error placing order:", error.message);
-  //         setOrderStatus("Error placing order. Please try again.");
-  //       }
-  //     };
-
   return (
     <div className="min-h-screen bg-[#ff575a] flex flex-col items-center p-4">
       <div className="w-full max-w-screen-lg bg-white rounded-2xl shadow-xl p-6 border border-[#ff575a]/10">
@@ -330,7 +310,7 @@ export default function Cart() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => handleIncrement(item.id)}
+                        onClick={() => {handleAddToCart(item);handleIncrement(item.id)}}
                         className="bg-[#ffeeee] text-[#ff575a] p-2 rounded-full hover:bg-[#ff575a]/10 transition-colors"
                       >
                         <Plus className="h-4 w-4" />
