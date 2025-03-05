@@ -107,7 +107,7 @@ export default function HomePage() {
             </Link>
 
             <nav className="hidden md:flex items-center gap-8">
-              {["Home", "About", "Contact us"].map((item, index) => (
+              {["Home", "About", "Contact us", "My orders"].map((item, index) => (
                 <motion.div
                   key={item}
                   initial={{ opacity: 0, y: -10 }}
