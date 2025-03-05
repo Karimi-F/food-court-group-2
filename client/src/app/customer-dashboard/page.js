@@ -14,7 +14,7 @@ export default function CustomerDashboard() {
   const [searchFood, setSearchFood] = useState("");
   const [category, setCategory] = useState("");
   const [recentOrder, setRecentOrder] = useState(null);
-  
+  const [pastOrders, setPastOrders] = useState([]); // <-- 
 
   // Handle logout functionality
   const handleLogout = async () => {
@@ -24,7 +24,7 @@ export default function CustomerDashboard() {
       alert("You have been logged out successfully");
       router.push("/home");
     }
-};
+  };
 
   // Fetch outlets based on search input
   const getOutlets = async () => {
@@ -87,12 +87,15 @@ export default function CustomerDashboard() {
           <div className="flex gap-2">
             <Link href="/home">
               <button className="bg-white text-[#ff575a] p-3 rounded">
-                ↝ Back to Home
+                &larr; Back to Home
               </button>
             </Link>
             <button 
-          onClick={handleLogout}
-          className="bg-[#ff575a] text-white p-3 rounded hover:bg-[#e04e50] transition">Log out</button>
+              onClick={handleLogout}
+              className="bg-[#ff575a] text-white p-3 rounded hover:bg-[#e04e50] transition"
+            >
+              Log out
+            </button>
           </div>
         </div>
       </header>

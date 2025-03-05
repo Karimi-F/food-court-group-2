@@ -1,0 +1,52 @@
+"""Merging migration branches
+
+Revision ID: d057b2d52441
+Revises: None
+Create Date: 2025-02-27 06:54:54.176810
+
+"""
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy import inspect
+from sqlalchemy.dialects import postgresql
+
+# revision identifiers, used by Alembic.
+revision = 'd057b2d52441'
+down_revision = None  # Removed reference to fe458b92d336.
+branch_labels = None
+depends_on = None
+
+def upgrade():
+    # ### Create tables from 031920ae9fed (Initial migration part) ###
+    # op.create_table('customers',
+    #     sa.Column('id', sa.Integer(), nullable=False),
+    #     sa.Column('name', sa.String(), nullable=False),
+    #     sa.Column('email', sa.String(), nullable=False),
+    #     sa.Column('password', sa.String(), nullable=False),
+    #     sa.PrimaryKeyConstraint('id'),
+    #     sa.UniqueConstraint('email')
+    # )
+    # Add more tables creation as necessary...
+
+    conn = op.get_bind()
+    if 'total' not in [column['name'] for column in inspect(conn).get_columns('orders')]:
+        with op.batch_alter_table('orders') as batch_op:
+            batch_op.add_column(sa.Column('total', sa.Float(), nullable=False, server_default=sa.text('0.0')))
+
+    # ### Alter columns, add foreign keys, etc., from the second migration part ###
+    with op.batch_alter_table('orders', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('table_id', sa.Integer(), nullable=False, server_default=sa.text('1')))
+        # batch_op.add_column(sa.Column('total', sa.Float(), nullable=False, server_default=sa.text('0.0')))
+        batch_op.alter_column('customer_id', existing_type=sa.INTEGER(), nullable=True)
+        batch_op.alter_column('datetime', existing_type=postgresql.TIMESTAMP(), nullable=False)
+        batch_op.drop_constraint('orders_tablereservation_id_fkey', type_='foreignkey')
+        batch_op.create_foreign_key(None, 'table_reservations', ['table_id'], ['id'])
+        # batch_op.drop_column('quantity')
+        # batch_op.drop_column('food_id')
+        batch_op.drop_column('tablereservation_id')
+        batch_op.alter_column('table_id', server_default=None)
+        batch_op.alter_column('total', server_default=None)
+
+def downgrade():
+    # Reverse the operations performed in the upgrade() function, as necessary
+    pass
