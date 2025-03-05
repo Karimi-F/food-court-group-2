@@ -880,7 +880,21 @@ class CheckToast(Resource):
         toast_message = session.get('toast_message', None)
         # Clear the session variable after showing the toast message
         session.pop('toast_message', None)
-        return jsonify({'toast_message': toast_message})      
+        return jsonify({'toast_message': toast_message}) 
+    
+class TableReservationResource(Resource):
+    def post(self):
+        data = request.get_json()
+        table_name = data.get('table_name')
+            
+        if not table_name:
+            return {"error": "Table name is required"}, 400
+
+        new_reservation = TableReservation(table_name=table_name)
+        db.session.add(new_reservation)
+        db.session.commit()
+
+        return new_reservation.to_dict(), 201             
 
 # Register resources with the API
 api.add_resource(FoodsResource, "/foods")
@@ -900,6 +914,7 @@ api.add_resource(PlaceOrder, '/place-order')
 api.add_resource(AddToCart, '/add-to-cart')
 api.add_resource(ViewCart, '/view-cart')
 api.add_resource(CheckToast, '/check-toast')
+api.add_resource(TableReservationResource, '/reservations')
 
 
 # api.add_resource(OutletResource, "/api/outlets", "/api/outlets/<int:id>")
