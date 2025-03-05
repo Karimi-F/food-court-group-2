@@ -14,7 +14,7 @@ export default function CustomerDashboard() {
   const [searchFood, setSearchFood] = useState("");
   const [category, setCategory] = useState("");
   const [recentOrder, setRecentOrder] = useState(null);
-  const [pastOrders, setPastOrders] = useState([]); // <-- 
+  const [pastOrders, setPastOrders] = useState([]); // Added state for past orders
 
   // Handle logout functionality
   const handleLogout = async () => {
@@ -62,7 +62,7 @@ export default function CustomerDashboard() {
             // Assuming your backend returns an array of orders
             setPastOrders(data);
           } else {
-            console.error("Error fetching orders:", data.error);
+            console.error("Error fetching orders:", data.error || data);
           }
         } catch (error) {
           console.error("Error fetching past orders:", error);
