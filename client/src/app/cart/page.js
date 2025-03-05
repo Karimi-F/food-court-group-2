@@ -4,14 +4,18 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Minus, Plus, Trash2, ShoppingCart, Calendar, MapPin } from "lucide-react"
+import { toast, ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function Cart() {
-  const { data: session } = useSession();
+  const { data: session,status } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
   const cartParam = searchParams.get("data");
   const [cart, setCart] = useState([]);
-  
+    const [orderItems, setOrderItems] = useState([]);
+
+
   // States for client presence, date/time, table selection, and order lifecycle
   const [isClientPresent, setIsClientPresent] = useState(null);
   const [selectedDateTime, setSelectedDateTime] = useState("");
@@ -26,6 +30,17 @@ export default function Cart() {
     { id: 2, name: "Table 2" },
     { id: 3, name: "Table 3" },
     { id: 4, name: "Table 4" },
+    { id: 5, name: "Table 5" },
+    { id: 6, name: "Table 6" },
+    { id: 7, name: "Table 7" },
+    { id: 8, name: "Table 8" },
+    { id: 9, name: "Table 9" },
+    { id: 10, name: "Table 10" },
+    { id: 11, name: "Table 11" },
+    { id: 12, name: "Table 12" },
+    { id: 13, name: "Table 13" },
+    { id: 14, name: "Table 14" },
+    { id: 15, name: "Table 15" },
   ]);
 
   // Order status and countdown timer states
@@ -36,32 +51,86 @@ export default function Cart() {
   useEffect(() => {
     if (cartParam) {
       try {
-        const decoded = decodeURIComponent(cartParam);
-        const parsed = JSON.parse(decoded);
-        console.log("Parsed cart data:", parsed);
-        // Ensure parsed data is an array
-        if (!Array.isArray(parsed)) {
-          console.error("Cart data is not an array:", parsed);
+        const parsedCart = JSON.parse(decodeURIComponent(cartParam));
+        if (Array.isArray(parsedCart)){
+          setCart(parsedCart);
+        } else{
           setCart([]);
-          return;
         }
-        // Normalize each item
-        const normalized = parsed.map((item) => ({
-          id: item.id || Math.random().toString(36).substr(2, 9),
-          name: item.name || (item.outlet && item.outlet.name) || "Unnamed Food",
-          price: Number(item.price) || 0,
-          waiting_time: item.waiting_time || "",
-          quantity: item.quantity ? Number(item.quantity) : 1,
-          outlet: item.outlet || null,
-          category: item.category || "",
-        }));
-        console.log("Normalized cart data:", normalized);
-        setCart(normalized);
       } catch (error) {
         console.error("Failed to parse cart data:", error);
         setCart([]);
+        console.error("Failed to parse cart data", error)
+        setCart([]);
       }
+    } else {
+      setCart([]);
     }
+  }, [cartParam]);
+
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
+
+  // Add food item to the cart and trigger toast notification
+  const handleAddToCart = (item) => {
+    setCart((prevCart) => {
+      // Check if the outlet already exists in the cart
+      const existingOutletIndex = prevCart.findIndex((outlet) => outlet.outlet_id === item.outlet_id);
+      if (existingOutletIndex > -1) {
+        // Outlet exists, update the items for this outlet
+        const updatedCart = [...prevCart];
+        const outlet = updatedCart[existingOutletIndex];
+        const existingItemIndex = outlet.items.findIndex((i) => i.food_id === item.id);
+        
+        if (existingItemIndex > -1) {
+          // Item exists, update quantity
+          outlet.items[existingItemIndex].quantity += 1;
+        } else {
+          // New item for this outlet
+          outlet.items.push({
+            food_id: item.id,
+            quantity: 1,
+            total_price: item.price,
+          });
+        }
+
+        return updatedCart;
+      } else {
+        // New outlet, add it to the cart
+        return [
+          ...prevCart,
+          {
+            outlet_id: item.outlet_id,
+            items: [
+              {
+                food_id: item.id,
+                quantity: 1,
+                total_price: item.price,
+              },
+            ],
+          },
+        ];
+      }
+    });
+
+    // Show toast notification
+    toast.success(
+      <>
+        <div>Added to cart!</div>
+        <button 
+          onClick={() => router.push('/cart')} 
+          style={{ marginTop: '10px', padding: '5px 10px', backgroundColor: '#007bff', color: '#fff', borderRadius: '4px', border: 'none' }}
+        >
+          Go to Cart
+        </button>
+      </>,
+      {
+        position: toast.POSITION.BOTTOM_RIGHT,
+        autoClose: 3000,  // Close after 3 seconds
+      }
+    );
+  };
 
     // Fetch reservations and bookings from backend
     fetch("http://localhost:5000/reservations")
@@ -82,30 +151,57 @@ export default function Cart() {
   }, [cartParam])
 
   const updateItemQuantity = (id, newQuantity) => {
-    const updatedCart = cart.map((item) =>
-      item.id === id ? { ...item, quantity: newQuantity } : item
-    );
+    const updatedCart = cart.map((outlet) => ({
+      ...outlet,
+      items: outlet.items.map((item) =>
+        item.food_id === id ? { ...item, quantity: newQuantity } : item
+      ),
+    }));
     setCart(updatedCart);
+
+    const updatedOrderItems = updatedCart.flatMap((outlet) =>
+      outlet.items.map((item) => ({
+        item_id: item.food_id,
+        quantity: item.quantity,
+        total_price: item.price * item.quantity,
+      }))
+    );
+
+    setOrderItems(updatedOrderItems);
   };
 
-  // Increase item quantity by 1
   const handleIncrement = (id) => {
-    const item = cart.find((item) => item.id === id)
+    const item = cart.flatMap((outlet) => outlet.items).find((item) => item.food_id === id);
     if (item) {
-      updateItemQuantity(id, item.quantity + 1)
+      updateItemQuantity(id, item.quantity + 1);
     }
-  }
+  };
 
   const handleDecrement = (id) => {
-    const item = cart.find((item) => item.id === id)
+    const item = cart.flatMap((outlet) => outlet.items).find((item) => item.food_id === id);
     if (item && item.quantity > 1) {
-      updateItemQuantity(id, item.quantity - 1)
+      updateItemQuantity(id, item.quantity - 1);
     }
-  }
+  };
+
 
   const handleDelete = (id) => {
-    const updatedCart = cart.filter((item) => item.id !== id);
+    const updatedCart = cart.map((outlet) => ({
+      ...outlet,
+      items: outlet.items.filter((item) => item.food_id !== id),
+    })).filter((outlet) => outlet.items.length > 0);  // Remove outlet if it has no items
+
     setCart(updatedCart);
+
+    const updatedOrderItems = updatedCart.flatMap((outlet) =>
+      outlet.items.map((item) => ({
+        item_id: item.food_id,
+        quantity: item.quantity,
+        total_price: item.price * item.quantity,
+      }))
+    );
+
+    setOrderItems(updatedOrderItems);
   };
 
   // Determine the table's status based on the selected date/time
@@ -119,76 +215,93 @@ export default function Cart() {
   };
 
   // Send the order data to the Flask API endpoint and redirect customer
-  const placeOrder = async () => {
+  const handleSubmit = async () => {
     if (!selectedDateTime) {
       alert("Please select a date and time before placing your order.");
       return;
     }
     if (!selectedTable) {
-      alert("Please select a table before placing your order.")
-      return
+      alert("Please select a table before placing your order.");
+      return;
     }
+
+    const customer_id = session?.user?.id;
+    if (!customer_id) {
+      alert("Please log in to place an order.");
+      return;
+    }
+
     setOrderStatus("Please wait as your order is being confirmed...");
-
+    console.log(cart);
+    // Convert cart to match the backend's expected format
+    const orders = cart.reduce((acc, outlet) => {
+      outlet.items.forEach((item) => {
+        let outletData = acc.find((o) => o.outlet_id === outlet.outlet_id);
+        if (!outletData) {
+          outletData = { outlet_id: outlet.outlet_id, items: [] };
+          acc.push(outletData);
+        }
+        outletData.items.push({
+          food_id: item.food_id,
+          quantity: item.quantity,
+          total_price: item.quantity * item.price,
+        });
+      });
+      return acc;
+    }, []);
+  
     const orderData = {
-      cart,
-      tableId: selectedTable,
-      datetime: selectedDateTime,
-      total: cart.reduce(
-        (total, item) => total + item.quantity * item.price,
-        0
-      ),
+      customer_id: customer_id,
+      tablereservation_id: selectedTable,
+      order_datetime: selectedDateTime.length === 16 ? selectedDateTime + ":00" : selectedDateTime,
+      orders: orders, // ✅ Backend expects "orders" not "cart"
     };
-
+  
+    console.log("Order Data:", JSON.stringify(orderData, null, 2)); // Debugging log
+  
     try {
-      const res = await fetch("http://localhost:5000/orders", {
+      const res = await fetch("http://localhost:5000/place-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
-      })
-      const result = await res.json()
+      });
+
+      const result = await res.json();
       if (res.ok) {
         setOrderStatus("Your order has been confirmed!");
 
         // Save the order summary in localStorage to display on the dashboard
-        localStorage.setItem(
-          "recentOrder",
-          JSON.stringify({
-            id: result.id, // assuming backend returns order id
-            order_items: cart.map((item) => ({
-              food: {
-                id: item.id,
-                name: item.name,
-                price: item.price,
-                waiting_time: item.waiting_time,
-                category: item.category,
-                outlet: item.outlet,
-              },
-              quantity: item.quantity,
-            })),
-            orderTime: selectedDateTime,
-          })
-        );
+        localStorage.setItem("recentOrder", JSON.stringify({
+          foodItems: cart.flatMap((outlet) => outlet.items.map((item) => ({
+            name: item.name,
+            quantity: item.quantity,
+          }))),
+          orderTime: selectedDateTime,
+        }));
 
         // Redirect the customer to their dashboard after order confirmation
         setTimeout(() => {
           router.push("/customer-dashboard");
         }, 2000);
       } else {
-        setOrderStatus(`Failed to place order: ${result.error}`)
+        setOrderStatus(`Failed to place order: ${result.error}`);
       }
     } catch (error) {
-      console.error("Error placing order:", error)
-      setOrderStatus("Error placing order. Please try again.")
+      console.error("Error placing order:", error);
+      setOrderStatus("Error placing order. Please try again.");
     }
   };
 
   return (
-    <div className="min-h-screen bg-blue-100 flex flex-col items-center p-4">
-      <div className="w-full max-w-screen-lg bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-3xl sm:text-4xl text-blue-700 font-bold mb-6 text-center">
-        {session?.user?.name ? `${session.user.name}'s Cart` : "Customer Cart"}
-        </h2>
+    <div className="min-h-screen bg-[#ff575a] flex flex-col items-center p-4">
+      <div className="w-full max-w-screen-lg bg-white rounded-2xl shadow-xl p-6 border border-[#ff575a]/10">
+        <div className="flex items-center justify-center mb-6">
+          <ToastContainer position="bottom-right" autoClose={5000} />
+          <ShoppingCart className="text-[#ff575a] mr-3 h-8 w-8" />
+          <h2 className="text-3xl sm:text-4xl text-[#ff575a] font-bold text-center">
+            {session?.user?.name ? `${session.user.name}'s Cart` : "Your Cart"}
+          </h2>
+        </div>
 
         {cart.length === 0 ? (
           <div className="text-center py-12">
@@ -198,7 +311,7 @@ export default function Cart() {
         ) : (
           <>
             <div className="space-y-4">
-              {cart.map((item) => (
+              {Array.isArray(cart) && cart.map((item) => (
                 <div
                   key={item.id} // Add key prop
                   className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 border rounded-xl bg-white shadow-sm transition transform hover:shadow-md hover:border-[#ff575a]/30"
@@ -218,7 +331,7 @@ export default function Cart() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => handleIncrement(item.id)}
+                        onClick={() => {handleAddToCart(item);handleIncrement(item.id)}}
                         className="bg-[#ffeeee] text-[#ff575a] p-2 rounded-full hover:bg-[#ff575a]/10 transition-colors"
                       >
                         <Plus className="h-4 w-4" />
@@ -249,7 +362,7 @@ export default function Cart() {
                   Order Summary
                 </h3>
                 <ul className="space-y-2 text-gray-700">
-                  {cart.map((item) => (
+                  {Array.isArray(cart) && cart.map((item) => (
                     <li key={item.id} className="flex justify-between">
                       <span>
                         {item.name} {item.quantity > 1 ? `x${item.quantity}` : ""}
@@ -259,7 +372,8 @@ export default function Cart() {
                   ))}
                   <li className="border-t border-[#ff575a]/20 pt-2 mt-2 font-bold text-[#ff575a] flex justify-between">
                     <span>Total</span>
-                    <span>Ksh {cart.reduce((total, item) => total + item.quantity * item.price, 0).toFixed(2)}</span>
+                    <span>Ksh {""}
+                      {cart.reduce((total, item) => total + item.quantity * item.price, 0).toFixed(2)}</span>
                   </li>
                 </ul>
                 {selectedDateTime && (
@@ -392,7 +506,7 @@ export default function Cart() {
                   .toFixed(2)}
               </p>
               <button
-                onClick={placeOrder}
+                onClick={handleSubmit}
                 disabled={!selectedDateTime || !selectedTable}
                 className={`bg-red-500 hover:bg-red-600 transition text-white px-6 py-2 rounded-md ${
                   (!selectedDateTime || !selectedTable) &&

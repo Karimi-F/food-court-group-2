@@ -213,6 +213,9 @@ export default function OwnerDashboard() {
               />
               <h2 className="text-[#ff575a] font-semibold mt-2">{outlet.name}</h2>
               <p className="text-gray-500">{outlet.owner?.name}</p>
+              <p className="text-gray-500">{outlet.description}</p>
+
+              {/* View Menu Button */}
               <button
                 onClick={() => router.push(`/menu/${outlet.id}`)}
                 className="mt-3 bg-[#ff575a] text-white w-full px-4 py-2 rounded-xl hover:bg-hover:bg-[#e04e50] transition"

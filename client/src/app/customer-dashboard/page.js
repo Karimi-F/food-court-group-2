@@ -82,7 +82,7 @@ export default function CustomerDashboard() {
       <header className="mb-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl text-[#ff575a] font-bold">
-            {session?.user?.name ? `${session.user.name}'s Dashboard` : "Customer Dashboard"}, Welcome to BiteScape Outlets
+            {session?.user?.name ? `${session.user.name}'s Dashboard` : "Customer Dashboard"}
           </h1>
           <div className="flex gap-2">
             <Link href="/home">

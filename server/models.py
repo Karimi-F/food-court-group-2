@@ -42,13 +42,19 @@ class Outlet(db.Model, SerializerMixin):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
+    description = db.Column(db.String, nullable=False)
     photo_url = db.Column(db.String, nullable=False)
     owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'), nullable=False)
     
     owner = db.relationship('Owner', back_populates='outlets')
     foods = db.relationship('Food', back_populates='outlet', cascade="all, delete-orphan")
     
-    # Include owner but prevent a circular structure
+    # One outlet can have many food items
+    foods = relationship('Food', back_populates='outlet', cascade="all, delete-orphan")
+
+    order_items = db.relationship('OrderItem', back_populates='outlet')
+
+    # Serialization rules
     serialize_rules = ('-owner.outlets', '-foods.outlet')
 
 # Table Reservation Model
@@ -65,6 +71,8 @@ class TableReservation(db.Model, SerializerMixin):
         uselist=False,
         cascade="all, delete-orphan"
     )
+
+    order_items = db.relationship('OrderItem', back_populates='table_reservation')
     
     # Serialization rules (exclude the order to avoid circular references)
     serialize_rules = ('-order',)
@@ -84,7 +92,10 @@ class Food(db.Model, SerializerMixin):
     
     outlet = db.relationship('Outlet', back_populates='foods')
     
-    # Exclude only the foods in the outlet to avoid circular reference
+    # (Note: The previous relationship to Order has been removed. 
+    # Typically an Order would reference multiple foods via an association table.)
+    order_items = db.relationship('OrderItem', back_populates='food')
+    # Serialization rules
     serialize_rules = ('-outlet.foods',)
 
 
@@ -121,15 +132,40 @@ class Order(db.Model):
     status = db.Column(db.String(50), default="pending")
     
     table_reservation = db.relationship('TableReservation', back_populates='order', passive_deletes=True)
-    order_items = db.relationship('OrderItem', backref='order', cascade="all, delete-orphan", lazy=True)
+    order_items = db.relationship('OrderItem', back_populates='order', lazy=True)
     
     def to_dict(self):
         return {
             "id": self.id,
             "customer_id": self.customer_id,
-            "tableId": self.tablereservation_id,
+            "tablereservation_id": self.tablereservation_id,
             "datetime": self.datetime.isoformat(),
             "total": self.total,
             "status": self.status,
             "order_items": [item.to_dict() for item in self.order_items]
         }
+
+class OrderItem(db.Model):
+     __tablename__ = 'order_items'
+     id = db.Column(db.Integer, primary_key=True)
+     order_id = db.Column(db.Integer, db.ForeignKey('orders.id', ondelete='CASCADE'), nullable=False)
+     outlet_id = db.Column(db.Integer, db.ForeignKey('outlets.id', ondelete='CASCADE'), nullable=False)
+     food_id = db.Column(db.Integer, db.ForeignKey('foods.id', ondelete='CASCADE'), nullable=False)
+     quantity = db.Column(db.Integer, nullable=False)
+     total_price = db.Column(db.Float, nullable=False)
+     tablereservation_id = db.Column(db.Integer, db.ForeignKey('table_reservations.id', ondelete='CASCADE'), nullable=False)
+
+     order = db.relationship('Order', back_populates='order_items')
+     outlet = db.relationship('Outlet', back_populates='order_items')
+     food = db.relationship('Food', back_populates='order_items')
+     table_reservation = db.relationship('TableReservation', back_populates='order_items')
+
+     def to_dict(self):
+          return{
+               "order_id": self.order_id,
+               "outlet_id": self.outlet_id,
+               "food_id": self.food_id,
+               "quantity": self.quantity,
+               "total_price": self.total_price,
+               "tablereservation_id": self.tablereservation_id
+          }
