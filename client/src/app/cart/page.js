@@ -112,21 +112,21 @@ export default function Cart() {
     });
 
     // Show toast notification
-    toast.success(
-      <>
-        <div>Added to cart!</div>
-        <button 
-          onClick={() => router.push('/cart')} 
-          style={{ marginTop: '10px', padding: '5px 10px', backgroundColor: '#007bff', color: '#fff', borderRadius: '4px', border: 'none' }}
-        >
-          Go to Cart
-        </button>
-      </>,
-      {
-        position: toast.POSITION.BOTTOM_RIGHT,
-        autoClose: 3000,  // Close after 3 seconds
-      }
-    );
+    // toast.success(
+    //   <>
+    //     <div>Added to cart!</div>
+    //     <button 
+    //       onClick={() => router.push('/cart')} 
+    //       style={{ marginTop: '10px', padding: '5px 10px', backgroundColor: '#007bff', color: '#fff', borderRadius: '4px', border: 'none' }}
+    //     >
+    //       Go to Cart
+    //     </button>
+    //   </>,
+    //   {
+    //     position: toast.POSITION.BOTTOM_RIGHT,
+    //     autoClose: 3000,  // Close after 3 seconds
+    //   }
+    // );
   };
 
   // Update the quantity of an item
@@ -151,7 +151,7 @@ export default function Cart() {
   };
 
   const handleIncrement = (id) => {
-    const item = cart.flatMap((outlet) => outlet.items).find((item) => item.food_id === id);
+    const item = cart.flatMap((outlet) => outlet.items || []).find((item) => item.food_id === id);
     if (item) {
       updateItemQuantity(id, item.quantity + 1);
     }
@@ -209,33 +209,50 @@ export default function Cart() {
     const customer_id = session?.user?.id;
     if (!customer_id) {
       alert("Please log in to place an order.");
+      router.push("/customer-login");
       return;
     }
 
     setOrderStatus("Please wait as your order is being confirmed...");
     console.log(cart);
     // Convert cart to match the backend's expected format
-    const orders = cart.reduce((acc, outlet) => {
-      outlet.items.forEach((item) => {
-        let outletData = acc.find((o) => o.outlet_id === outlet.outlet_id);
-        if (!outletData) {
-          outletData = { outlet_id: outlet.outlet_id, items: [] };
-          acc.push(outletData);
-        }
-        outletData.items.push({
-          food_id: item.food_id,
-          quantity: item.quantity,
-          total_price: item.quantity * item.price,
-        });
+    const groupedOrders = cart.reduce((acc, item) => {
+      if (!item.outlet_id) return acc; // Ensure outlet_id exists
+    
+      // Find if the outlet_id already exists in the accumulator
+      let outletOrder = acc.find(order => order.outlet_id === item.outlet_id);
+      
+      if (!outletOrder) {
+        // If the outlet_id is not present, create a new entry
+        outletOrder = {
+          outlet_id: item.outlet_id,
+          items: []
+        };
+        acc.push(outletOrder);
+      }
+    
+      // Push the current item into the items array
+      outletOrder.items.push({
+        food_id: item.id,  // Ensure you're using the correct food_id property
+        quantity: item.quantity,
+        total_price: item.price * item.quantity  // Calculate total price
       });
+    
       return acc;
     }, []);
+    
+    console.log("Final Order Data:", groupedOrders);
+    
+    // console.log("Orders:", orders);
+
+
+      // console.log("The orders:", orders);
   
     const orderData = {
       customer_id: customer_id,
       tablereservation_id: selectedTable,
       order_datetime: selectedDateTime.length === 16 ? selectedDateTime + ":00" : selectedDateTime,
-      orders: orders, // ✅ Backend expects "orders" not "cart"
+      orders: groupedOrders,// ✅ Backend expects "orders" not "cart"
     };
   
     console.log("Order Data:", JSON.stringify(orderData, null, 2)); // Debugging log
@@ -253,13 +270,22 @@ export default function Cart() {
 
         // Save the order summary in localStorage to display on the dashboard
         localStorage.setItem("recentOrder", JSON.stringify({
-          foodItems: cart.flatMap((outlet) => outlet.items.map((item) => ({
-            name: item.name,
-            quantity: item.quantity,
-          }))),
+          foodItems: cart.flatMap((outlet) => {
+            console.log("Processing outlet:", outlet); // Debugging log
+        
+            if (!outlet || !outlet.items) {
+              console.warn("Missing outlet or items:", outlet); // Warn if missing
+              return []; // Return an empty array to prevent `flatMap` errors
+            }
+        
+            return outlet.items.map((item) => ({
+              name: item.name,
+              quantity: item.quantity,
+            }));
+          }),
           orderTime: selectedDateTime,
         }));
-
+console.log(cart);
         // Redirect the customer to their dashboard after order confirmation
         setTimeout(() => {
           router.push("/customer-dashboard");
@@ -340,6 +366,9 @@ export default function Cart() {
                 <h3 className="text-xl font-bold text-[#ff575a] mb-3 flex items-center">
                   <ShoppingCart className="h-5 w-5 mr-2" /> Order Summary
                 </h3>
+                {console.log("Cart data:", cart)}
+
+
                 <ul className="space-y-2 text-gray-700">
                   {Array.isArray(cart) && cart.map((item) => (
                     <li key={item.id} className="flex justify-between">
@@ -355,6 +384,7 @@ export default function Cart() {
                       {cart.reduce((total, item) => total + item.quantity * item.price, 0).toFixed(2)}</span>
                   </li>
                 </ul>
+                
                 {selectedDateTime && (
                   <p className="mt-3 text-gray-700 flex items-center">
                     <Calendar className="h-4 w-4 mr-2 text-[#ff575a]" />
