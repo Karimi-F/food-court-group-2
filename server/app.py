@@ -652,21 +652,43 @@ class OrdersResource(Resource):
         outlet_id = request.args.get('outlet_id')
 
         if id:
-            # Fetch a single order by ID
-            order = Order.query.get(id)
+            # Fetch a single order by ID with customer name
+            order = (
+                db.session.query(Order, Customer.name)
+                .join(Customer, Order.customer_id == Customer.id)
+                .filter(Order.id == id)
+                .first()
+            )
+
             if not order:
                 return {"error": "Order not found"}, 404
-            return order.to_dict(), 200
 
-        # Fetch all orders, optionally filtered by outlet_id
-        query = Order.query
+            # Convert to dictionary and add customer_name
+            order_dict = order.Order.to_dict()
+            order_dict["customer_name"] = order.name
+            return order_dict, 200
+
+        # Query all orders with customer names
+        query = (
+            db.session.query(Order, Customer.name)
+            .join(Customer, Order.customer_id == Customer.id)
+        )
 
         if outlet_id:
             # Filter orders by outlet_id using a join with OrderItem
             query = query.join(OrderItem).filter(OrderItem.outlet_id == outlet_id)
 
         orders = query.all()
-        return [order.to_dict() for order in orders], 200
+
+        # Convert to list of dictionaries with customer names
+        orders_list = []
+        for order, customer_name in orders:
+            order_dict = order.to_dict()
+            order_dict["customer_name"] = customer_name
+            orders_list.append(order_dict)
+
+        return orders_list, 200
+
 
     def patch(self, id=None):
         if id is None:
