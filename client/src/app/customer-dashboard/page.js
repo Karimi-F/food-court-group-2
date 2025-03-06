@@ -59,7 +59,7 @@ export default function CustomerDashboard() {
         setError(null);
         try {
           const res = await fetch(
-            `http://localhost:5000/orders?customer_id=${session.user.id}`
+            `https://food-court-group-2-1.onrender.com/orders?customer_id=${session.user.id}`
           );
           if (!res.ok) {
             throw new Error("Failed to fetch orders");

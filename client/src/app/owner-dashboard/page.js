@@ -88,7 +88,7 @@ export default function OwnerDashboard() {
   // Handle canceling an order
   const handleCancelOrder = async (orderId, setSelectedOutletOrders) => {
     try {
-      const response = await fetch(`http://localhost:5000/orders/${orderId}`, {
+      const response = await fetch(`https://food-court-group-2-1.onrender.com/orders/${orderId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

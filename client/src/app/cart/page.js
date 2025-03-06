@@ -31,7 +31,7 @@ export default function Cart() {
 
   // Fetch reservations (tables) from the backend
   useEffect(() => {
-    fetch("http://localhost:5000/reservations")
+    fetch("https://food-court-group-2-1.onrender.com/reservations")
       .then((response) => response.json())
       .then((data) => {
         setReservations(data);
@@ -43,7 +43,7 @@ export default function Cart() {
 
   // Fetch confirmed bookings from the backend
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/orders")
+    fetch("https://food-court-group-2-1.onrender.com/orders")
       .then((response) => response.json())
       .then((data) => {
         console.log("Fetched confirmed bookings:", data); // Debugging
@@ -148,7 +148,7 @@ export default function Cart() {
     };
 
     try {
-      const res = await fetch("http://localhost:5000/place-order", {
+      const res = await fetch("https://food-court-group-2-1.onrender.com/place-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),

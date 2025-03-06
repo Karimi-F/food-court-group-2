@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation"; // For redirection after logout
 import { logoutUser } from "../utils"; // Import the utility function
 
-const API_URL = "http://127.0.0.1:5000"; // Adjust this based on your backend URL
+const API_URL = "https://food-court-group-2-1.onrender.com"; // Adjust this based on your backend URL
 
 export default function Logout() {
   const router = useRouter();

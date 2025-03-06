@@ -7,7 +7,7 @@
 // }
 
 export async function createCustomer(name, email, password){
-    const response = await fetch("http://127.0.0.1:5000/customers",{
+    const response = await fetch("https://food-court-group-2-1.onrender.com/customers",{
         method : "POST",
         headers:{
             "Content-Type": "application/json",
@@ -29,7 +29,7 @@ export async function createCustomer(name, email, password){
 
 export async function validateCustomerCredentials(email, password){
     try{
-        const response = await fetch(`http://127.0.0.1:5000/customers?email=${email}`)
+        const response = await fetch(`https://food-court-group-2-1.onrender.com/customers?email=${email}`)
      
         if (!response.ok){
             throw new Error (`HTTP error! Status: ${response.status}`);
@@ -64,7 +64,7 @@ export async function fetchOutlets({ outlet, food, category }) {
       console.log("Query parameters:", queryParams.toString());
   
       // Replace with your actual backend API URL
-      const url = `http://127.0.0.1:5000/outlets?${queryParams.toString()}`;
+      const url = `https://food-court-group-2-1.onrender.com/outlets?${queryParams.toString()}`;
       console.log("Fetching from URL:", url); // Log the full URL
   
       const response = await fetch(url);
@@ -89,7 +89,7 @@ export async function fetchOutlets({ outlet, food, category }) {
   }
   
 export async function createOwner(name, email, password){
-    const response = await fetch("http://127.0.0.1:5000/owners",{
+    const response = await fetch("https://food-court-group-2-1.onrender.com/owners",{
         method : "POST",
         headers:{
             "Content-Type": "application/json",
@@ -110,7 +110,7 @@ export async function createOwner(name, email, password){
 }
 export async function fetchMenu(outletId) {
     try {
-      const response = await fetch(`http://127.0.0.1:5000/outlets/${outletId}/foods`);
+      const response = await fetch(`https://food-court-group-2-1.onrender.com/outlets/${outletId}/foods`);
   
       if (!response.ok) {
         throw new Error(`Server error: ${response.status}`);
@@ -166,7 +166,7 @@ export async function fetchMenu(outletId) {
     
 export async function validateOwnerCredentials(email, password){
     try{
-        const response = await fetch (`http://127.0.0.1:5000/owners?email=${email}`);
+        const response = await fetch (`https://food-court-group-2-1.onrender.com/owners?email=${email}`);
         if (!response.ok){
             throw new Error("Failed to fetch owners");
         }
@@ -183,7 +183,7 @@ export async function validateOwnerCredentials(email, password){
 }
 export async function searchOutletByName(outletName) {
     try {
-        const response = await fetch(`http://127.0.0.1:5000/outlets?name=${encodeURIComponent(outletName)}`);
+        const response = await fetch(`https://food-court-group-2-1.onrender.com/outlets?name=${encodeURIComponent(outletName)}`);
         if (!response.ok) {
             throw new Error("Failed to fetch outlets");
         }
@@ -199,7 +199,7 @@ export async function searchOutletByName(outletName) {
 }
 
 export async function login(email, password) {
-    const response = await fetch("http://localhost:5000/login", {
+    const response = await fetch("https://food-court-group-2-1.onrender.com/login", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -222,7 +222,7 @@ export async function login(email, password) {
 
 export async function getFood() {
     try {
-        const response = await fetch("http://127.0.0.1:5000/foods");
+        const response = await fetch("https://food-court-group-2-1.onrender.com/foods");
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -245,7 +245,7 @@ export async function getFood() {
 
 export async function getOutlets() {
     try {
-        const response = await fetch("http://127.0.0.1:5000/outlets");
+        const response = await fetch("https://food-court-group-2-1.onrender.com/outlets");
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -274,7 +274,7 @@ export async function fetchOwnerOutlets(ownerId) {
   console.log(`Fetching outlets for owner_id: ${ownerId}`);
 
   try {
-    const response = await fetch(`http://127.0.0.1:5000/owner/${ownerId}/outlets`);
+    const response = await fetch(`https://food-court-group-2-1.onrender.com/owner/${ownerId}/outlets`);
     const data = await response.json();
     console.log("Fetched outlets:", data);
     return data;
@@ -292,7 +292,7 @@ export async function fetchFoodByOutlet(outletId) {
   console.log(`Fetching food for outlet_id: ${outletId}`);
 
   try {
-    const response = await fetch(`http://127.0.0.1:5000/outlets/${outletId}/foods`);
+    const response = await fetch(`https://food-court-group-2-1.onrender.com/outlets/${outletId}/foods`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
@@ -318,7 +318,7 @@ export async function updateFoodItem(foodId, updatedData) {
 
   try {
     // Use the correct endpoint with foodId in the URL
-    const response = await fetch(`http://127.0.0.1:5000/api/food/id/${foodId}`, {
+    const response = await fetch(`https://food-court-group-2-1.onrender.com/api/food/id/${foodId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json"
@@ -348,7 +348,7 @@ export async function deleteFoodItem(foodId) {  // Change to use 'foodId'
 
   try {
     // Use the correct 'foodId' in the API endpoint
-    const response = await fetch(`http://127.0.0.1:5000/api/food/id/${foodId}`, {
+    const response = await fetch(`https://food-court-group-2-1.onrender.com/api/food/id/${foodId}`, {
       method: "DELETE",
     });
 
@@ -375,7 +375,7 @@ export async function addFoodItem(foodData) {
   console.log("Adding new food:", foodData);
 
   try {
-    const response = await fetch("http://127.0.0.1:5000/foods", {
+    const response = await fetch("https://food-court-group-2-1.onrender.com/foods", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -399,7 +399,7 @@ export async function addFoodItem(foodData) {
 
 export const addOutlet = async (outletData) => {
   try {
-    const response = await fetch("http://127.0.0.1:5000/outlets", {
+    const response = await fetch("https://food-court-group-2-1.onrender.com/outlets", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -418,7 +418,7 @@ export const addOutlet = async (outletData) => {
   }
 };
 export async function fetchOutletDetails(outletId) {
-  const response = await fetch(`http://127.0.0.1:5000/outlets/${outletId}`); // Replace with your API endpoint
+  const response = await fetch(`https://food-court-group-2-1.onrender.com/outlets/${outletId}`); // Replace with your API endpoint
   if (!response.ok) {
     throw new Error("Failed to fetch outlet details");
   }
@@ -432,7 +432,7 @@ export async function fetchOutletDetails(outletId) {
 export const fetchOrdersByOutlet = async (outletId) => {
   try {
     // Replace this with your actual API endpoint
-    const response = await fetch(`http://127.0.0.1:5000/orders?outletId=${outletId}`);
+    const response = await fetch(`https://food-court-group-2-1.onrender.com/orders?outletId=${outletId}`);
     if (!response.ok) {
       throw new Error("Failed to fetch orders");
     }
@@ -447,7 +447,7 @@ export const fetchOrdersByOutlet = async (outletId) => {
 export const handleConfirmOrder = async (orderId, setSelectedOutletOrders) => {
   console.log("Confirming order:", orderId); // Debugging
   try {
-    const response = await fetch(`http://localhost:5000/orders/${orderId}`, {
+    const response = await fetch(`https://food-court-group-2-1.onrender.com/orders/${orderId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
