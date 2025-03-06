@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { fetchOwnerOutlets, addOutlet, fetchOrdersByOutlet, handleConfirmOrder } from "../lib/utils"; // Ensure correct path
+import { fetchOwnerOutlets, addOutlet, fetchOrdersByOutlet,handleConfirmOrder } from "../lib/utils"; // Ensure correct path
 
 export default function OwnerDashboard() {
   const { data: session, status } = useSession();
@@ -56,6 +56,58 @@ export default function OwnerDashboard() {
       setIsViewingOrders(true); // Open the orders modal
     } catch (error) {
       console.error("Error fetching orders:", error);
+    }
+  };
+
+  // Handle confirming an order
+  // const handleConfirmOrder = async (orderId, setSelectedOutletOrders) => {
+  //   try {
+  //     const response = await fetch(`http://localhost:5000/orders/${orderId}`, {
+  //       method: "PATCH",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ status: "confirmed" }),
+  //     });
+
+  //     if (response.ok) {
+  //       setSelectedOutletOrders((prevOrders) =>
+  //         prevOrders.map((order) =>
+  //           order.id === orderId ? { ...order, status: "confirmed" } : order
+  //         )
+  //       );
+  //       alert("Order confirmed successfully!");
+  //     } else {
+  //       console.error("Failed to confirm order:", await response.json());
+  //     }
+  //   } catch (error) {
+  //     console.error("Error confirming order:", error);
+  //   }
+  // };
+
+  // Handle canceling an order
+  const handleCancelOrder = async (orderId, setSelectedOutletOrders) => {
+    try {
+      const response = await fetch(`http://localhost:5000/orders/${orderId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "pending" }),
+      });
+
+      if (response.ok) {
+        setSelectedOutletOrders((prevOrders) =>
+          prevOrders.map((order) =>
+            order.id === orderId ? { ...order, status: "pending" } : order
+          )
+        );
+        alert("Order canceled successfully!");
+      } else {
+        console.error("Failed to cancel order:", await response.json());
+      }
+    } catch (error) {
+      console.error("Error canceling order:", error);
     }
   };
 
@@ -142,7 +194,7 @@ export default function OwnerDashboard() {
                   <thead>
                     <tr>
                       <th className="py-2 px-4 border">Order ID</th>
-                      <th className="py-2 px-4 border">Customer ID</th>
+                      <th className="py-2 px-4 border">Customer Name</th>
                       <th className="py-2 px-4 border">Table Reservation ID</th>
                       <th className="py-2 px-4 border">Date & Time</th>
                       <th className="py-2 px-4 border">Total</th>
@@ -159,19 +211,25 @@ export default function OwnerDashboard() {
                         }`}
                       >
                         <td className="py-2 px-4 border">{order.id}</td>
-                        <td className="py-2 px-4 border">{order.customer_id}</td>
+                        <td className="py-2 px-4 border">{order.customer_name}</td>
                         <td className="py-2 px-4 border">{order.tablereservation_id}</td>
                         <td className="py-2 px-4 border">{order.datetime}</td>
                         <td className="py-2 px-4 border">${order.total.toFixed(2)}</td>
                         <td className="py-2 px-4 border capitalize">{order.status}</td>
                         <td className="py-2 px-4 border">
-                          {/* Add a Confirm button for pending orders */}
-                          {order.status === "pending" && (
+                          {order.status === "pending" ? (
                             <button
-                              onClick={() => handleConfirmOrder(order.id, setSelectedOutletOrders)} // Call handleConfirmOrder
+                              onClick={() => handleConfirmOrder(order.id, setSelectedOutletOrders)}
                               className="bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded"
                             >
                               Confirm
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleCancelOrder(order.id, setSelectedOutletOrders)}
+                              className="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded"
+                            >
+                              Cancel
                             </button>
                           )}
                         </td>
