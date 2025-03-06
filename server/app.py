@@ -33,19 +33,7 @@ blacklist = set()
 
 print("DATABASE_URL:", os.environ.get('DATABASE_URL'))
 
-from sqlalchemy import create_engine
 
-def test_db_connection():
-    try:
-        engine = create_engine(os.environ.get('DATABASE_URL'))
-        connection = engine.connect()
-        connection.close()
-        print("Database connection successful!")
-    except Exception as e:
-        print(f"Database connection failed: {e}")
-
-# Call the function to test the connection
-test_db_connection()
 
 # -------------------------
 # Other Resources (Signup, Login, Owner, Customer, Outlet, Foods, etc.)
