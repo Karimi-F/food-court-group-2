@@ -43,7 +43,7 @@ class Outlet(db.Model, SerializerMixin):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
-    description = db.Column(db.String, nullable=False)
+    description = db.Column(db.String, nullable=True)
     photo_url = db.Column(db.String, nullable=False)
     # Foreign key linking to Owner
     owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'), nullable=False)
@@ -58,6 +58,15 @@ class Outlet(db.Model, SerializerMixin):
 
     # Serialization rules
     serialize_rules = ('-owner.outlets', '-foods.outlet')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "owner_id": self.owner_id,
+            "photo_url": self.photo_url
+        }
 
 # Table Reservation Model
 class TableReservation(db.Model, SerializerMixin):
