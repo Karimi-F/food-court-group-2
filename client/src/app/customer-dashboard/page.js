@@ -98,6 +98,48 @@ export default function CustomerDashboard() {
         </div>
       </header>
 
+      {/* My Orders Button */}
+      {/* <div className="mb-6">
+        <button
+        onClick={() => setDropdownOpen(!dropdownOpen)}
+        className="bg-[#ff575a] text-white p-3 rounded hover:bg-[#e04e50] transition w-full"
+        >
+          My Orders
+        </button>
+
+        {dropdownOpen && (
+          <div className="mt-2 bg-white border border-gray-300 rounded shadow-lg w-full p-4">
+            <div className="mb-2">
+              <h3 className="font-bold text-lg text-[#ff575a]">Past Orders</h3>
+                <ul className="list-disc pl-5">
+                  {pastOrders.length > 0 ? (
+                    pastOrders.map((order, index) => (
+                      <li key={index} className="text-gray-800">
+                        {order.food?.name || "Unknown Item"} - {order.status}
+                      </li>
+                    ))
+                  ) : (
+                    <p>No past orders available.</p>
+                  )}
+                </ul>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-[#ff575a]">Reservations</h3>
+              <ul className="list-disc pl-5">
+                {confirmedBookings.length > 0 ? (
+                  confirmedBookings.map((booking, index) => (
+                    <li key={index} className="text-gray-800">{booking.name}</li>
+                  ))
+                ) : (
+                  <p>No confirmed reservations available.</p>
+                )}
+              </ul>
+            </div>
+          </div>
+        )}
+      </div> */}
+
+
       {/* Recent Order Summary (if any) */}
       {recentOrder && (
         <div className="bg-green-50 border border-green-300 p-4 rounded-lg shadow mb-6">

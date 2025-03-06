@@ -807,6 +807,23 @@ class PlaceOrder(Resource):
             app.logger.error(f"Error placing order:v{str(e)}")
             return{"error":"Error placing order.", "details":str(e)}, 400        
 
+# class RecentOrderResource(Resource):
+#     def get(customer_id):
+#         try: 
+#             recent_order = Order.query.filter_by(customer_id=customer_id).order_by(Order.order_date.desc()).first()           
+
+#             if not recent_order:
+#                 return jsonify({"message":"No recent orders found"}),404
+            
+#             return jsonify({
+#                 "orderItems": recent_order.items,
+#                 "orderTime":recent_order.order_date,
+#                 "status": recent_order.status
+#             })
+#         except Exception as e:
+#             return jsonify({"error": str(e)}), 500
+        
+
 class CustomerOrders(Resource):
     def get(self, customer_id):
         # Fetch the customer by ID
@@ -915,6 +932,8 @@ api.add_resource(AddToCart, '/add-to-cart')
 api.add_resource(ViewCart, '/view-cart')
 api.add_resource(CheckToast, '/check-toast')
 api.add_resource(TableReservationResource, '/reservations')
+# api.add_resource(RecentOrderResource, '/customers/<int:customer_id>/recent-order')
+
 
 
 # api.add_resource(OutletResource, "/api/outlets", "/api/outlets/<int:id>")
