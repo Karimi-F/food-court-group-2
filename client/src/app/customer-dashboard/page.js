@@ -151,7 +151,6 @@ export default function CustomerDashboard() {
                   <th className="py-2 px-4 border">Order Time</th>
                   <th className="py-2 px-4 border">Total (Ksh)</th>
                   <th className="py-2 px-4 border">Status</th>
-                  <th className="py-2 px-4 border">Details</th>
                 </tr>
               </thead>
               <tbody>
