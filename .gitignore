@@ -80,3 +80,5 @@ Thumbs.db
 
 #Node.js dependencies 
 /.node_modules/server/instance/database.db
+
+

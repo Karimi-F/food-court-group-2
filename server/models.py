@@ -16,7 +16,7 @@ class Customer(db.Model):
     orders = db.relationship('Order', backref='customer', lazy=True)
 
     def to_dict(self):
-            return {
+        return {
                 "id": self.id,
                 "name": self.name,
                 "email": self.email
@@ -36,6 +36,13 @@ class Owner(db.Model, SerializerMixin):
     
     # Serialization rules
     serialize_rules = ('-password', '-outlets.owner')
+
+    def to_dict(self):
+        return {
+                "id": self.id,
+                "name": self.name,
+                "email": self.email
+            }
 
 # Outlet Model
 class Outlet(db.Model, SerializerMixin):
@@ -88,6 +95,12 @@ class TableReservation(db.Model, SerializerMixin):
     # Serialization rules (exclude the order to avoid circular references)
     serialize_rules = ('-order',)
 
+    def to_dict(self):
+        return{
+            "id" : self.id,
+            "table_name" : self.table_name
+        }
+
 # Food Model
 class Food(db.Model, SerializerMixin):
     __tablename__ = 'foods'
@@ -109,6 +122,16 @@ class Food(db.Model, SerializerMixin):
     order_items = db.relationship('OrderItem', back_populates='food')
     # Serialization rules
     serialize_rules = ('-outlet.foods',)
+
+    def to_dict(self):
+        return{
+            "id" : self.id,
+            "name" : self.name,
+            "price" : self.price,
+            "waiting_time" : self.waiting_time,
+            "category" : self.category,
+            "photo_url" :self.photo_url
+        }
 
 # Order Model
 class Order(db.Model):

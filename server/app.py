@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, request, jsonify, session, make_response
 from flask_migrate import Migrate
 from flask_restful import Api, Resource, reqparse
@@ -7,13 +9,17 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import json
+from dotenv import load_dotenv
+# Load environment variables from .env filev
+
+load_dotenv()  
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://karimi:123456@localhost:5432/food_court_db"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL')
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["JWT_SECRET_KEY"] = "your_jwt_secret_key"  # Add a secure JWT secret key
-app.config["SECRET_KEY"] = "your_secret_key"          # Add a secure secret key
+app.config["JWT_SECRET_KEY"] = "65fdb492fc9b1d5b9292634541f8c78d9766c3927c1d2e622a6753fb22c7bf4b"  # Add a secure JWT secret key
+app.config["SECRET_KEY"] = "f61db736681431c33beffc7f6f059236caeb186e87141595c4bc279d04b0ceb1"          # Add a secure secret key
 
 # Initialize Extensions
 db.init_app(app)
@@ -24,6 +30,22 @@ CORS(app)
 
 # Store revoked tokens (use a database in production)
 blacklist = set()
+
+print("DATABASE_URL:", os.environ.get('DATABASE_URL'))
+
+from sqlalchemy import create_engine
+
+def test_db_connection():
+    try:
+        engine = create_engine(os.environ.get('DATABASE_URL'))
+        connection = engine.connect()
+        connection.close()
+        print("Database connection successful!")
+    except Exception as e:
+        print(f"Database connection failed: {e}")
+
+# Call the function to test the connection
+test_db_connection()
 
 # -------------------------
 # Other Resources (Signup, Login, Owner, Customer, Outlet, Foods, etc.)
