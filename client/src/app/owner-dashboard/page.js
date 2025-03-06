@@ -10,7 +10,7 @@ export default function OwnerDashboard() {
   const router = useRouter();
   const [outlets, setOutlets] = useState([]);
   const [isAddingOutlet, setIsAddingOutlet] = useState(false); // State for modal visibility
-  const [newOutlet, setNewOutlet] = useState({ name: "", photo_url: "" });
+  const [newOutlet, setNewOutlet] = useState({ name: "", photo_url: "" ,description: ""});
   const [selectedOutletOrders, setSelectedOutletOrders] = useState([]); // State for orders of a specific outlet
   const [isViewingOrders, setIsViewingOrders] = useState(false); // State to toggle orders modal
 
@@ -28,7 +28,7 @@ export default function OwnerDashboard() {
   // Handle adding a new outlet
   const handleAddOutletSubmit = async (e) => {
     e.preventDefault();
-    if (!newOutlet.name || !newOutlet.photo_url) return;
+    if (!newOutlet.name || !newOutlet.photo_url || !newOutlet.description) return;
 
     const outletData = {
       ...newOutlet,
@@ -39,7 +39,7 @@ export default function OwnerDashboard() {
       const addedOutlet = await addOutlet(outletData);
       if (addedOutlet?.id) {
         setOutlets((prevOutlets) => [...prevOutlets, addedOutlet]);
-        setNewOutlet({ name: "", photo_url: "" });
+        setNewOutlet({ name: "", photo_url: "" , description: ""});
         setIsAddingOutlet(false);
         alert("Outlet added successfully!");
       }
@@ -214,6 +214,14 @@ export default function OwnerDashboard() {
                 placeholder="Photo URL"
                 value={newOutlet.photo_url}
                 onChange={(e) => setNewOutlet({ ...newOutlet, photo_url: e.target.value })}
+                className="w-full p-2 border rounded"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Outlet Description"
+                value={newOutlet.description}
+                onChange={(e) => setNewOutlet({ ...newOutlet, description: e.target.value })}
                 className="w-full p-2 border rounded"
                 required
               />
