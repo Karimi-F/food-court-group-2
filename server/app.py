@@ -251,6 +251,8 @@ class OutletResource(Resource):
 
         return outlet.to_dict(), 200    
 
+    
+
 # -------------------------------
 # Food Endpoints (Collection)
 # -------------------------------
@@ -646,47 +648,49 @@ class OrdersResource(Resource):
         print(order_dict)
 
         return jsonify(order_dict), 201
-    # def post(self):
-    #     data = request.get_json()
-    #     if not data:
-    #         return {"error": "No input data provided"}, 400
-
-    #     try:
-    #         table_id = data.get('tableId')
-    #         datetime_str = data.get('datetime')
-    #         total = data.get('total')
-    #         customer_id = data.get('customer_id', None)
-
-    #         if not customer_id:
-    #             return {"error":"customer_id is required"}, 400
-
-    #         # Convert the datetime string into a datetime object.
-    #         order_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M")
-
-    #         new_order = Order(
-    #             customer_id=customer_id,
-    #             tablereservation_id=table_id,
-    #             datetime=order_datetime,
-    #             total=total,
-    #             status="pending"
-    #         )
-
-    #         db.session.add(new_order)
-    #         db.session.commit()
-    #         return new_order.to_dict(), 201
-
-    #     except Exception as e:
-    #         db.session.rollback()
-    #         return {"error": str(e)}, 500
 
     def get(self, id=None):
+        # Get query parameters
+        outlet_id = request.args.get('outlet_id')
+
         if id:
-            order = Order.query.get(id)
+            # Fetch a single order by ID with customer name
+            order = (
+                db.session.query(Order, Customer.name)
+                .join(Customer, Order.customer_id == Customer.id)
+                .filter(Order.id == id)
+                .first()
+            )
+
             if not order:
                 return {"error": "Order not found"}, 404
-            return order.to_dict(), 200
-        orders = Order.query.all()
-        return [order.to_dict() for order in orders], 200
+
+            # Convert to dictionary and add customer_name
+            order_dict = order.Order.to_dict()
+            order_dict["customer_name"] = order.name
+            return order_dict, 200
+
+        # Query all orders with customer names
+        query = (
+            db.session.query(Order, Customer.name)
+            .join(Customer, Order.customer_id == Customer.id)
+        )
+
+        if outlet_id:
+            # Filter orders by outlet_id using a join with OrderItem
+            query = query.join(OrderItem).filter(OrderItem.outlet_id == outlet_id)
+
+        orders = query.all()
+
+        # Convert to list of dictionaries with customer names
+        orders_list = []
+        for order, customer_name in orders:
+            order_dict = order.to_dict()
+            order_dict["customer_name"] = customer_name
+            orders_list.append(order_dict)
+
+        return orders_list, 200
+
 
     def patch(self, id=None):
         if id is None:
@@ -700,10 +704,14 @@ class OrdersResource(Resource):
         if not data:
             return {"error": "No update data provided"}, 400
 
+        # Update the order status if provided
         if "status" in data:
             order.status = data["status"]
 
+        # Commit changes to the database
         db.session.commit()
+
+        # Return the updated order
         return order.to_dict(), 200
 
     def delete(self, id=None):
@@ -717,7 +725,6 @@ class OrdersResource(Resource):
         db.session.delete(order)
         db.session.commit()
         return {"message": "Order deleted successfully"}, 200
-
 class OwnerOutletResource(Resource):
     def get(self, owner_id):  # Accept owner_id from URL
         owner = Owner.query.get(owner_id)
@@ -807,6 +814,23 @@ class PlaceOrder(Resource):
             app.logger.error(f"Error placing order:v{str(e)}")
             return{"error":"Error placing order.", "details":str(e)}, 400        
 
+# class RecentOrderResource(Resource):
+#     def get(customer_id):
+#         try: 
+#             recent_order = Order.query.filter_by(customer_id=customer_id).order_by(Order.order_date.desc()).first()           
+
+#             if not recent_order:
+#                 return jsonify({"message":"No recent orders found"}),404
+            
+#             return jsonify({
+#                 "orderItems": recent_order.items,
+#                 "orderTime":recent_order.order_date,
+#                 "status": recent_order.status
+#             })
+#         except Exception as e:
+#             return jsonify({"error": str(e)}), 500
+        
+
 class CustomerOrders(Resource):
     def get(self, customer_id):
         # Fetch the customer by ID
@@ -883,6 +907,12 @@ class CheckToast(Resource):
         return jsonify({'toast_message': toast_message}) 
     
 class TableReservationResource(Resource):
+
+    def get(self):
+        """Fetch all table reservations."""
+        reservations = TableReservation.query.all()
+        return jsonify([reservation.to_dict() for reservation in reservations])
+
     def post(self):
         data = request.get_json()
         table_name = data.get('table_name')
@@ -895,6 +925,21 @@ class TableReservationResource(Resource):
         db.session.commit()
 
         return new_reservation.to_dict(), 201             
+
+@app.route("/orders/<int:order_id>", methods=["PATCH"])
+def update_order(order_id):
+    data = request.get_json()
+    new_status = data.get("status")
+
+    # Find the order and update its status
+    order = Order.query.get(order_id)
+    if not order:
+        return jsonify({"error": "Order not found"}), 404
+
+    order.status = new_status
+    db.session.commit()
+
+    return jsonify(order.to_dict()), 200  # Use to_dict() to serialize the order
 
 # Register resources with the API
 api.add_resource(FoodsResource, "/foods")
@@ -915,6 +960,8 @@ api.add_resource(AddToCart, '/add-to-cart')
 api.add_resource(ViewCart, '/view-cart')
 api.add_resource(CheckToast, '/check-toast')
 api.add_resource(TableReservationResource, '/reservations')
+# api.add_resource(RecentOrderResource, '/customers/<int:customer_id>/recent-order')
+
 
 
 # api.add_resource(OutletResource, "/api/outlets", "/api/outlets/<int:id>")

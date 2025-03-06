@@ -107,7 +107,7 @@ export default function HomePage() {
             </Link>
 
             <nav className="hidden md:flex items-center gap-8">
-              {["Home", "About", "Contact us", "My orders"].map((item, index) => (
+              {["Home", "About", "Contact us"].map((item, index) => (
                 <motion.div
                   key={item}
                   initial={{ opacity: 0, y: -10 }}
@@ -382,7 +382,7 @@ export default function HomePage() {
       </section>
 
       {/* Download App Section */}
-      <section className="relative py-20 bg-[#ff575a]">
+      <section className="relative py-20 bg-[#ffeeee]">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -391,8 +391,8 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="text-white"
             >
-              <h2 className="text-4xl font-bold leading-tight">Get the BiteScape App</h2>
-              <p className="text-white/80 mt-6 text-lg">
+              <h2 className="text-4xl font-bold leading-tight text-black">Get the BiteScape App</h2>
+              <p className="text-black/80 mt-6 text-lg">
                 Download our mobile app and never miss the best food deals. Order food and track your delivery in
                 real-time.
               </p>
@@ -421,7 +421,7 @@ export default function HomePage() {
             >
               <div className="relative h-[600px]">
                 <Image
-                  src="/placeholder.svg?height=600&width=300"
+                  src="/images/pizza.webp"
                   alt="BiteScape App"
                   layout="fill"
                   objectFit="contain"
@@ -429,7 +429,7 @@ export default function HomePage() {
                 />
               </div>
               {/* Floating Elements */}
-              <div className="absolute top-1/4 -left-8 bg-white p-4 rounded-2xl shadow-xl">
+    {/* <div className="absolute top-1/4 -left-8 bg-white p-4 rounded-2xl shadow-xl">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gray-100 rounded-full"></div>
                   <div>
@@ -437,8 +437,8 @@ export default function HomePage() {
                     <div className="h-3 w-16 bg-gray-100 rounded mt-2"></div>
                   </div>
                 </div>
-              </div>
-              <div className="absolute bottom-1/4 -right-8 bg-white p-4 rounded-2xl shadow-xl">
+              </div>           */}
+              {/* <div className="absolute bottom-1/4 -right-8 bg-white p-4 rounded-2xl shadow-xl">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gray-100 rounded-full"></div>
                   <div>
@@ -446,11 +446,42 @@ export default function HomePage() {
                     <div className="h-3 w-16 bg-gray-100 rounded mt-2"></div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </motion.div>
           </div>
         </div>
       </section>
+
+
+      {/* Decorative Border Between Story and Footer */}
+      <div className="relative">
+        {/* Wave Border */}
+        <div className="absolute left-0 right-0 h-24 overflow-hidden">
+          <svg
+            viewBox="0 0 1200 120"
+            preserveAspectRatio="none"
+            className="absolute bottom-0 w-full h-full transform rotate-180"
+            style={{ fill: "#111827" }} // matches footer bg-gray-900
+          >
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+          </svg>
+        </div>
+
+        {/* Food Icons Border */}
+        <div className="relative z-10 flex justify-center items-center py-8">
+          <div className="flex space-x-8 md:space-x-16 px-4 py-2 bg-white rounded-full shadow-lg transform -translate-y-1/2">
+            {["🍕", "🍔", "🍣", "🍜", "🍰"].map((emoji, index) => (
+              <div
+                key={index}
+                className="text-2xl md:text-3xl animate-bounce"
+                style={{ animationDelay: `${index * 0.2}s`, animationDuration: "1s" }}
+              >
+                {emoji}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-20">
@@ -502,7 +533,7 @@ export default function HomePage() {
             ))}
           </div>
           <div className="border-t border-gray-800 mt-16 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 BiteScape. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} BiteScape. All rights reserved.</p>
           </div>
         </div>
       </footer>

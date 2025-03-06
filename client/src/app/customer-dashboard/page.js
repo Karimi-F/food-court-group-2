@@ -11,11 +11,10 @@ export default function CustomerDashboard() {
   const router = useRouter();
   const [searchOutlet, setSearchOutlet] = useState("");
   const [outlets, setOutlets] = useState([]);
-  const [searchFood, setSearchFood] = useState("");
-  const [category, setCategory] = useState("");
   const [recentOrder, setRecentOrder] = useState(null);
   const [pastOrders, setPastOrders] = useState([]);
-  const [confirmedBookings, setConfirmedBookings] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Handle logout functionality
   const handleLogout = async () => {
@@ -25,7 +24,7 @@ export default function CustomerDashboard() {
       alert("You have been logged out successfully");
       router.push("/home");
     }
-};
+  };
 
   // Fetch outlets based on search input
   const getOutlets = async () => {
@@ -56,17 +55,22 @@ export default function CustomerDashboard() {
   useEffect(() => {
     const fetchPastOrders = async () => {
       if (session?.user?.id) {
+        setIsLoading(true);
+        setError(null);
         try {
-          const res = await fetch(`http://localhost:5000/orders?customer_id=${session.user.id}`);
-          const data = await res.json();
-          if (res.ok) {
-            // Assuming your backend returns an array of orders
-            setPastOrders(data);
-          } else {
-            console.error("Error fetching orders:", data.error);
+          const res = await fetch(
+            `http://localhost:5000/orders?customer_id=${session.user.id}`
+          );
+          if (!res.ok) {
+            throw new Error("Failed to fetch orders");
           }
+          const data = await res.json();
+          setPastOrders(data);
         } catch (error) {
           console.error("Error fetching past orders:", error);
+          setError("Failed to fetch orders. Please try again later.");
+        } finally {
+          setIsLoading(false);
         }
       }
     };
@@ -83,7 +87,9 @@ export default function CustomerDashboard() {
       <header className="mb-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl text-[#ff575a] font-bold">
-            {session?.user?.name ? `${session.user.name}'s Dashboard` : "Customer Dashboard"}
+            {session?.user?.name
+              ? `${session.user.name}'s Dashboard`
+              : "Customer Dashboard"}
           </h1>
           <div className="flex gap-2">
             <Link href="/home">
@@ -91,9 +97,12 @@ export default function CustomerDashboard() {
                 ↝ Back to Home
               </button>
             </Link>
-            <button 
-          onClick={handleLogout}
-          className="bg-[#ff575a] text-white p-3 rounded hover:bg-[#e04e50] transition">Log out</button>
+            <button
+              onClick={handleLogout}
+              className="bg-[#ff575a] text-white p-3 rounded hover:bg-[#e04e50] transition"
+            >
+              Log out
+            </button>
           </div>
         </div>
       </header>
@@ -108,7 +117,7 @@ export default function CustomerDashboard() {
             {recentOrder.order_items &&
               recentOrder.order_items.map((item, index) => (
                 <li key={index} className="text-green-800">
-                  {item.food?.name || "Item"} 
+                  {item.food?.name || "Item"}
                   {item.quantity > 1 ? ` x${item.quantity}` : ""}
                 </li>
               ))}
@@ -117,7 +126,9 @@ export default function CustomerDashboard() {
             Time to be served: {recentOrder.orderTime}
           </p>
           {recentOrder.status && (
-            <p className="mt-2 text-green-800">Current Status: {recentOrder.status}</p>
+            <p className="mt-2 text-green-800">
+              Current Status: {recentOrder.status}
+            </p>
           )}
         </div>
       )}
@@ -125,7 +136,11 @@ export default function CustomerDashboard() {
       {/* Past Orders Table */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-blue-700 mb-4">Past Orders</h2>
-        {pastOrders.length === 0 ? (
+        {isLoading ? (
+          <p className="text-gray-600">Loading orders...</p>
+        ) : error ? (
+          <p className="text-red-600">{error}</p>
+        ) : pastOrders.length === 0 ? (
           <p className="text-gray-600">No past orders found.</p>
         ) : (
           <div className="overflow-x-auto">
