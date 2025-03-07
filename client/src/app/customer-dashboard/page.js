@@ -154,7 +154,7 @@ export default function CustomerDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {pastOrders.map((order) => (
+                {pastOrders.slice(-3).map((order) => (
                   <tr key={order.id} className="text-center border-b">
                     <td className="py-2 px-4 border">{order.id}</td>
                     <td className="py-2 px-4 border">{order.datetime}</td>
