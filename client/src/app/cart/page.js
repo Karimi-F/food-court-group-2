@@ -118,14 +118,20 @@ export default function Cart() {
     }
 
     setOrderStatus("Please wait as your order is being confirmed...");
+    console.log("Cart items:", cart);
+
+    
 
     const groupedOrders = cart.reduce((acc, item) => {
-      if (!item.outlet_id) return acc;
+      // if (!item.outlet_id) return acc;
+      // console.log("Skipping item due to missing outlet_id:", item);
+
+      const outlet_id = item.outlet_id || 7;
 
       let outletOrder = acc.find((order) => order.outlet_id === item.outlet_id);
       if (!outletOrder) {
         outletOrder = {
-          outlet_id: item.outlet_id,
+          outlet_id: outlet_id,
           items: [],
         };
         acc.push(outletOrder);
