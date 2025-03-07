@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation"; // For redirection after logout
-import { logoutUser } from "../../lib/utils"; // Import the utility function
+// import { logoutUser } from "../../lib/utils"; // Import the utility function
 
 const API_URL = "https://food-court-group-2-1.onrender.com"; // Adjust this based on your backend URL
 
